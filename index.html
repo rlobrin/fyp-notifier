@@ -2170,7 +2170,7 @@
                     id: Date.now(), 
                     name, type, 
                     multiplier: mult, 
-                    chances: chances, // SAVE CHANCES
+                    chances: chances, // SAVE IMPORTED CHANCES
                     webhookIds: allWebhookIds, 
                     approxDuration: null 
                 }); 
@@ -2399,7 +2399,26 @@
                 if (processedCaptureContainer) processedCaptureContainer.style.display = 'none';
             } else {
                 // --- STARTING LOGIC ---
-                if (moonWeatherList.length === 0 || webhookList.filter(w => w.active).length === 0) { showToast("No items or active webhooks!", "error"); return; }
+                const activeWebhooks = webhookList.filter(w => w.active);
+
+                if (moonWeatherList.length === 0 || activeWebhooks.length === 0) { 
+                    showToast("No items or active webhooks!", "error"); 
+                    return; 
+                }
+                
+                // NEW: Warning if single active webhook has no subscribed events
+                if (activeWebhooks.length === 1) {
+                    const activeWebhookId = activeWebhooks[0].id;
+                    // Check if ANY item has this webhook ID in its list
+                    const eventsLinked = moonWeatherList.some(item => Array.isArray(item.webhookIds) && item.webhookIds.includes(activeWebhookId));
+                    
+                    if (!eventsLinked) {
+                        if (!confirm(`⚠️ Warning: You have 1 active webhook ("${activeWebhooks[0].description}"), but no events are assigned to it.\n\nNo notifications will be sent.\n\nContinue anyway?`)) {
+                            return;
+                        }
+                    }
+                }
+
                 processButton.innerHTML = '<i class="bi bi-stop-circle"></i> Stop OCR'; 
                 processButton.classList.replace('btn-success', 'btn-danger');
                 addLog("OCR started."); saveSettings(); 
