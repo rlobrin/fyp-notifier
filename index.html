@@ -1,0 +1,2487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FYP Weather + Moon Notifier</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.4/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        /* Global Reset for full height app */
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden; /* Prevent body scrollbar */
+            background-color: var(--bs-tertiary-bg); /* Adaptive background */
+            color: var(--bs-body-color);
+        }
+
+        /* --- Main App Grid --- */
+        .app-grid-layout {
+            display: grid;
+            gap: 15px;
+            /* 3 Columns: 1.5fr, 1fr, 1fr */
+            grid-template-columns: 1.5fr 1fr 1fr; 
+            /* Rows: Tabs (auto), Content (remaining space) */
+            grid-template-rows: auto 1fr; 
+            height: 98vh; 
+            width: 98%;
+            margin: 1vh auto;
+            box-sizing: border-box;
+        }
+
+        /* --- Grid Areas --- */
+        .area-tabs { grid-column: 1 / -1; grid-row: 1; }
+        
+        /* The main content container must strictly fill the remaining row height */
+        .area-content { 
+            grid-column: 1 / -1; 
+            grid-row: 2; 
+            min-height: 0; 
+            height: 100%; 
+            overflow: hidden; 
+            background: var(--bs-body-bg); /* Adaptive background */
+            border: 1px solid var(--bs-border-color);
+            border-radius: 0.375rem;
+            box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
+            /* Padding moved to tab-content-wrapper for scrollbar placement */
+            padding: 0; 
+        }
+
+        /* --- Tab System --- */
+        .tab-content-wrapper {
+            height: 100%;
+            width: 100%;
+            display: none;
+            /* Enable scrolling for any tab content that overflows */
+            overflow-y: auto; 
+            /* Padding applies inside the scroll area */
+            padding: 1rem;
+        }
+        .tab-content-wrapper.active { display: block; }
+
+        /* --- Internal Grids --- */
+        .main-tab-grid {
+            display: grid;
+            gap: 15px;
+            grid-template-columns: 1.5fr 1fr 1fr; 
+            grid-template-rows: 1fr; /* Fill height */
+            height: 100%;
+        }
+
+        .moon-tab-grid {
+            display: grid;
+            gap: 15px;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr; /* Fill height */
+            height: 100%;
+        }
+
+        /* --- Custom UI Elements --- */
+        .console-log {
+            background-color: #212529;
+            color: #00ff00;
+            font-family: monospace;
+            font-size: 0.8rem;
+            resize: none;
+            border: 1px solid #495057;
+        }
+
+        .capture-canvas-container {
+            border: 2px dashed var(--bs-border-color);
+            background: var(--bs-tertiary-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        /* --- List Section Styling --- */
+        .list-split-wrapper {
+            flex: 1 1 auto; 
+            height: 0; 
+            min-height: 0;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .list-section {
+            flex: 1; /* Share width equally */
+            display: flex;
+            flex-direction: column;
+            height: 100%; /* Fill the wrapper height */
+            border: 1px solid var(--bs-border-color);
+            border-radius: 4px;
+            background-color: var(--bs-body-bg);
+            overflow: hidden; /* Contain children */
+        }
+
+        .list-section-header { flex-shrink: 0; }
+        .list-scroll-area { 
+            flex-grow: 1; 
+            overflow-y: auto; 
+            background-color: var(--bs-body-bg);
+        }
+
+        .custom-modal-overlay {
+            display: none; 
+            position: fixed; 
+            z-index: 1055; 
+            left: 0; top: 0; 
+            width: 100%; height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.5); 
+            backdrop-filter: blur(2px);
+            align-items: center; /* Vertical Center */
+            justify-content: center; /* Horizontal Center */
+        }
+
+        .custom-modal-dialog {
+            background: var(--bs-body-bg);
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+            overflow: hidden;
+            animation: fadeIn 0.2s ease-out;
+            color: var(--bs-body-color);
+        }
+
+        .custom-modal-lg { max-width: 800px; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .custom-modal-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--bs-border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--bs-tertiary-bg);
+        }
+
+        .custom-modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        /* Hover effect for webhook selection items */
+        .webhook-select-item {
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        .webhook-select-item:hover {
+            background-color: var(--bs-tertiary-bg) !important;
+        }
+
+        /* --- TOAST NOTIFICATIONS --- */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1060;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none; /* Let clicks pass through empty space */
+        }
+        .custom-toast {
+            background: rgba(33, 37, 41, 0.95);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 280px;
+            max-width: 350px;
+            animation: slideInToast 0.3s ease-out forwards;
+            font-size: 0.9rem;
+            pointer-events: auto;
+            border-left: 4px solid #6c757d;
+        }
+        .custom-toast.success { border-left-color: #198754; }
+        .custom-toast.error { border-left-color: #dc3545; }
+        .custom-toast.info { border-left-color: #0dcaf0; }
+
+        @keyframes slideInToast {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOutToast {
+            to { opacity: 0; transform: translateY(10px); }
+        }
+
+        /* Helper for min-height 0 flex children */
+        .min-h-0 { min-height: 0 !important; }
+
+        /* Mobile Breakpoint */
+        @media (max-width: 992px) {
+            html, body { height: auto; overflow: auto; }
+            .app-grid-layout {
+                display: flex;
+                flex-direction: column;
+                height: auto;
+                margin: 10px;
+                width: auto;
+            }
+            .area-content { height: auto; overflow: visible; }
+            .main-tab-grid, .moon-tab-grid { display: flex; flex-direction: column; height: auto; }
+            
+            /* On mobile, stack them and give fixed height */
+            .list-split-wrapper { flex-direction: column; height: auto; }
+            .list-section { height: 250px; flex: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-grid-layout">
+        <div class="area-tabs">
+            <ul class="nav nav-tabs border-bottom-0">
+                <li class="nav-item">
+                    <a class="nav-link active fw-bold" href="#" onclick="openTab(event, 'mainTab')"><i class="bi bi-camera-video"></i> Main Scanner</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-body" href="#" onclick="openTab(event, 'moonWeatherTab')"><i class="bi bi-list-ul"></i> Moons/Weathers</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-body" href="#" onclick="openTab(event, 'settingsTab')"><i class="bi bi-gear"></i> Settings</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-body" href="#" onclick="openTab(event, 'aboutTab')"><i class="bi bi-info-circle"></i> About</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="area-content">
+            
+            <div id="mainTab" class="tab-content-wrapper active">
+                <div class="main-tab-grid">
+                    
+                    <div class="d-flex flex-column gap-2 h-100">
+                        <div class="card h-100 shadow-sm border-0 bg-transparent"> <div class="card h-100 shadow-sm">
+                                <div class="card-header bg-body-tertiary fw-bold py-2 small text-uppercase">
+                                    <i class="bi bi-cast"></i> Screen Source
+                                </div>
+                                <div class="card-body d-flex flex-column gap-2 overflow-hidden p-2">
+                                    
+                                    <div class="overflow-auto pe-1" style="max-height: 50%;"> 
+                                        <div class="d-flex gap-2 mb-2">
+                                            <button id="connectScreenButton" onclick="connectScreen()" class="btn btn-primary w-50 btn-sm">
+                                                <i class="bi bi-display"></i> Connect
+                                            </button>
+                                            <button id="processButton" onclick="toggleProcess()" disabled class="btn btn-success w-50 btn-sm">
+                                                <i class="bi bi-play-circle"></i> Start OCR
+                                            </button>
+                                        </div>
+
+                                        <label class="form-label fw-bold small mb-1">Configuration Preset</label>
+                                        <div class="input-group input-group-sm mb-2">
+                                            <select id="configSelect" onchange="handleConfigSelect()" class="form-select">
+                                                <option value="-1">-- Custom Preset --</option>
+                                            </select>
+                                            <button onclick="resetToNewCustomConfig()" class="btn btn-info text-white" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="top" title="New / Reset to Defaults">
+                                                <i class="bi bi-plus-lg"></i>
+                                            </button>
+                                            <button onclick="handleSaveButton()" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="top" title="Save Current Config">
+                                                <i class="bi bi-save"></i>
+                                            </button>
+                                            <button id="deleteConfigButton" onclick="deleteCurrentConfig()" class="btn btn-danger" disabled data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="top" title="Delete Preset">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <small class="text-muted" id="configNameDisplay" style="font-size: 0.75rem;">Current: Custom</small>
+                                        </div>
+
+                                        <div class="row g-1">
+                                            <div class="col-6">
+                                                <label class="form-label small mb-0" style="font-size: 0.75rem;">X (Left)</label>
+                                                <input type="number" id="regionX" value="0" min="0" class="form-control form-control-sm">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label small mb-0" style="font-size: 0.75rem;">Y (Top)</label>
+                                                <input type="number" id="regionY" value="0" min="0" class="form-control form-control-sm">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label small mb-0" style="font-size: 0.75rem;">Width</label>
+                                                <input type="number" id="regionW" value="300" min="10" class="form-control form-control-sm">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label small mb-0" style="font-size: 0.75rem;">Height</label>
+                                                <input type="number" id="regionH" value="50" min="10" class="form-control form-control-sm">
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-2">
+                                            <label class="form-label small mb-0" style="font-size: 0.75rem;">OCR Zoom</label>
+                                            <input type="number" id="zoomFactor" value="3" min="1" max="5" step="1" class="form-control form-control-sm">
+                                        </div>
+                                    </div>
+
+                                    <hr class="my-1">
+                                    <label class="form-label fw-bold small mb-1">Live Preview</label>
+                                    
+                                    <div id="viewPanel" class="capture-canvas-container rounded flex-grow-1">
+                                        <span id="viewPlaceholder" class="text-muted small">No source connected</span>
+                                        <div id="rawCaptureContainer" style="display:none;" class="text-center w-100">
+                                            <small class="text-muted d-block mb-1" style="font-size: 0.7em;">Raw</small>
+                                            <canvas id="captureView" width="300" height="50" class="border"></canvas>
+                                        </div>
+                                        <div id="processedCaptureContainer" style="display:none;" class="text-center w-100 mt-2 pt-1 border-top">
+                                            <small class="text-muted d-block mb-1" style="font-size: 0.7em;">Processed</small>
+                                            <canvas id="canvasElement" width="1200" height="200" class="border border-primary" style="max-width: 100%; height: auto;"></canvas> 
+                                        </div>
+                                    </div>
+                                    <video id="videoElement" autoplay muted playsinline style="display:none;"></video>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-column gap-2 h-100">
+                        
+                        <div class="card shadow-sm min-h-0" style="height: 20%;">
+                            <div class="card-header bg-body-tertiary fw-bold text-success py-2 small text-uppercase">
+                                <i class="bi bi-activity"></i> Active Events
+                            </div>
+                            <div class="card-body p-0 overflow-auto">
+                                <div id="cooldowns-card-content" class="list-group list-group-flush small"></div>
+                                <div id="cooldownsPlaceholder" class="p-3 text-center text-muted small">
+                                    No events currently active.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card shadow-sm flex-fill min-h-0">
+                            <div class="card-header bg-body-tertiary d-flex justify-content-between align-items-center py-1">
+                                <span class="fw-bold small">System Logs</span>
+                                <button id="clearLogsButton" onclick="clearLogs()" class="btn btn-outline-secondary btn-sm py-0" style="font-size: 0.7rem;">Clear</button>
+                            </div>
+                            <div class="card-body p-0 d-flex flex-column h-100 overflow-hidden">
+                                <div id="cooldownTimerLog" class="bg-warning text-dark px-2 py-1 small fw-bold" style="font-size: 0.7rem;">App Status: Idle</div>
+                                <div id="logContent" class="console-log flex-grow-1 p-2 overflow-auto">
+                                    Application initialized.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-column h-100">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-header bg-body-tertiary fw-bold d-flex justify-content-between align-items-center py-2 small text-uppercase">
+                                <span><i class="bi bi-clock-history"></i> History</span>
+                                <div class="d-flex gap-1">
+                                    <button id="clearHistoryButton" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="clearHistory()" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="left" title="Clear History for this Date">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                    <button id="sortEventsButton" class="btn btn-sm btn-link text-decoration-none p-0" onclick="toggleEventSortOrder()" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="left" title="Toggle Sort (Newest/Oldest)">
+                                        <span id="sortIcon"><i class="bi bi-sort-down"></i></span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body d-flex flex-column p-2 gap-2 overflow-hidden">
+                                <div class="row g-2 mb-2">
+                                    <div class="col-5">
+                                        <input type="date" id="eventDatePicker" class="form-control form-control-sm" style="font-size: 0.8rem;" onchange="updateSearchDatalist(); renderRecentEvents()">
+                                    </div>
+                                    <div class="col-7">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text py-0"><i class="bi bi-search"></i></span>
+                                            <input type="text" id="eventSearchInput" list="eventNamesList" oninput="renderRecentEvents()" class="form-control" placeholder="Search or Select..." style="font-size: 0.8rem;">
+                                            <datalist id="eventNamesList"></datalist>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div class="btn-group btn-group-sm w-100" role="group">
+                                        <input type="radio" class="btn-check" name="typeFilter" id="typeAll" value="All" checked onchange="updateSearchDatalist(); renderRecentEvents()">
+                                        <label class="btn btn-outline-secondary" for="typeAll">All</label>
+
+                                        <input type="radio" class="btn-check" name="typeFilter" id="typeMoon" value="Moon" onchange="updateSearchDatalist(); renderRecentEvents()">
+                                        <label class="btn btn-outline-secondary" for="typeMoon">Moons</label>
+
+                                        <input type="radio" class="btn-check" name="typeFilter" id="typeWeather" value="Weather" onchange="updateSearchDatalist(); renderRecentEvents()">
+                                        <label class="btn btn-outline-secondary" for="typeWeather">Weather</label>
+                                    </div>
+                                </div>
+
+                                <div id="recentEventsList" class="flex-grow-1 overflow-auto border rounded bg-body-tertiary p-1">
+                                    <p class="text-center text-muted small mt-2">Select a date.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="moonWeatherTab" class="tab-content-wrapper">
+                <div class="moon-tab-grid">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-body-tertiary fw-bold d-flex justify-content-between align-items-center py-2">
+                            <span><i class="bi bi-card-list"></i> Event Management</span>
+                            <div class="d-flex gap-2">
+                                <button onclick="showItemModal(-1)" class="btn btn-sm btn-primary py-0"><i class="bi bi-plus-circle"></i> Add</button>
+                            </div>
+                        </div>
+                        
+                        <div class="card-body d-flex flex-column h-100 overflow-hidden gap-2 p-2">
+                            
+                            <div id="listSplitWrapper" class="list-split-wrapper flex-column flex-lg-row">
+                                
+                                <div class="list-section">
+                                    <div class="list-section-header bg-body-tertiary px-2 py-1 small fw-bold border-bottom text-primary sticky-top"><i class="bi bi-moon-stars"></i> Moons</div>
+                                    <div id="moonListContainer" class="list-scroll-area">
+                                        <p class="text-muted small text-center p-3">No moons added.</p>
+                                    </div>
+                                </div>
+
+                                <div class="list-section">
+                                    <div class="list-section-header bg-body-tertiary px-2 py-1 small fw-bold border-bottom text-info-emphasis sticky-top"><i class="bi bi-cloud-haze"></i> Weathers</div>
+                                    <div id="weatherListContainer" class="list-scroll-area">
+                                        <p class="text-muted small text-center p-3">No weather added.</p>
+                                    </div>
+                                </div>
+
+                            </div>
+                            
+                            <div class="card bg-body-tertiary border-0 flex-shrink-0 mt-auto">
+                                <div class="card-body p-2">
+                                    <label class="form-label small fw-bold mb-1" style="font-size: 0.75rem;">Data Management</label>
+                                    <div class="d-flex gap-2">
+                                        <div class="input-group input-group-sm flex-grow-1">
+                                            <input type="file" id="fileUpload" accept=".csv" class="form-control" onchange="updateUploadLabel(this)">
+                                            <label class="input-group-text" for="fileUpload"><i class="bi bi-upload"></i> Import</label>
+                                        </div>
+                                        <button onclick="exportEvents()" class="btn btn-sm btn-outline-success">
+                                            <i class="bi bi-download"></i> Export
+                                        </button>
+                                    </div>
+                                    <div class="form-text small mt-1" style="font-size: 0.7rem;">Required: Name, Type, Multiplier, Chances</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-body-tertiary fw-bold py-2">
+                            <i class="bi bi-bar-chart-line"></i> Statistics
+                        </div>
+                        <div class="card-body d-flex flex-column p-2 overflow-hidden">
+                            <div class="row g-2 mb-2">
+                                <div class="col-4">
+                                    <label class="form-label small mb-0" style="font-size: 0.75rem;">Timeframe</label>
+                                    <select id="statsTimeframeFilter" onchange="updateItemListDropdown()" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                                        <option value="hour">Past Hour</option>
+                                        <option value="today" selected>Today</option>
+                                        <option value="day">Past 24 Hours</option>
+                                        <option value="week">Past Week</option>
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small mb-0" style="font-size: 0.75rem;">Metric</label>
+                                    <select id="statsMetricFilter" onchange="updateEventStatistics()" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                                        <option value="count">Occurrences</option>
+                                        <option value="avgTime">Avg Time</option>
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small mb-0" style="font-size: 0.75rem;">Event</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text py-0"><i class="bi bi-search"></i></span>
+                                        <input type="text" id="statsItemFilter" list="statsItemDataList" oninput="updateEventStatistics()" class="form-control" placeholder="Search or Select..." style="font-size: 0.8rem;">
+                                        <datalist id="statsItemDataList"></datalist>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small mb-0" style="font-size: 0.75rem;">Type</label>
+                                    <div class="btn-group btn-group-sm w-100" role="group">
+                                        <input type="radio" class="btn-check" name="statsTypeFilter" id="statsTypeAll" value="All" checked onchange="updateItemListDropdown()">
+                                        <label class="btn btn-outline-secondary" for="statsTypeAll">All</label>
+
+                                        <input type="radio" class="btn-check" name="statsTypeFilter" id="statsTypeMoon" value="Moon" onchange="updateItemListDropdown()">
+                                        <label class="btn btn-outline-secondary" for="statsTypeMoon">Moons</label>
+
+                                        <input type="radio" class="btn-check" name="statsTypeFilter" id="statsTypeWeather" value="Weather" onchange="updateItemListDropdown()">
+                                        <label class="btn btn-outline-secondary" for="statsTypeWeather">Weather</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-none">
+                                <span id="avgDurationDisplay"></span>
+                            </div>
+
+                            <div class="flex-grow-1 position-relative border rounded p-1 min-h-0">
+                                <canvas id="eventStatsChart"></canvas>
+                                <div id="chartPlaceholder" class="position-absolute top-50 start-50 translate-middle text-muted small">
+                                    No Data
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="settingsTab" class="tab-content-wrapper">
+                <div class="container-fluid p-0 pb-4" style="max-width: 800px;">
+                    <!-- Appearance Card -->
+                    <div class="card shadow-sm mb-3">
+                        <div class="card-header bg-body-tertiary fw-bold text-primary">
+                            <i class="bi bi-palette"></i> Appearance
+                        </div>
+                        <div class="card-body">
+                            <label class="form-label fw-bold small">Theme</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="themeOptions" id="themeLight" value="light" checked onchange="setTheme('light')">
+                                <label class="btn btn-outline-secondary" for="themeLight"><i class="bi bi-sun"></i> Light</label>
+
+                                <input type="radio" class="btn-check" name="themeOptions" id="themeDark" value="dark" onchange="setTheme('dark')">
+                                <label class="btn btn-outline-secondary" for="themeDark"><i class="bi bi-moon"></i> Dark</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mb-3">
+                        <div class="card-header bg-body-tertiary fw-bold text-primary">
+                            <i class="bi bi-discord"></i> Discord Webhooks
+                        </div>
+                        <div class="card-body">
+                            <div id="webhookListContainer" class="d-flex flex-column gap-2 mb-3">
+                                <p class="text-muted small text-center">No webhooks configured.</p>
+                            </div>
+                            <button onclick="showWebhookModal(-1)" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-plus-lg"></i> Add Webhook
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mb-3">
+                        <div class="card-header bg-body-tertiary fw-bold">
+                            <i class="bi bi-stopwatch"></i> Timing
+                        </div>
+                        <div class="card-body">
+                            <label for="gracePeriodSeconds" class="form-label fw-bold">Event Disappear Grace Period (Seconds)</label>
+                            <input type="number" id="gracePeriodSeconds" value="5" min="1" max="60" step="1" class="form-control w-50">
+                            <div class="form-text">Time to wait after text disappears before ending the event.</div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm border-danger">
+                        <div class="card-body">
+                            <h5 class="card-title text-danger"><i class="bi bi-exclamation-octagon"></i> Application Reset</h5>
+                            <p class="card-text small text-muted">This action will wipe all local storage data and reset the app.</p>
+                            <button onclick="removeSettings()" class="btn btn-danger btn-sm">
+                                <i class="bi bi-trash"></i> Clear All Saved Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="aboutTab" class="tab-content-wrapper">
+                <div class="container-fluid p-0 pb-4" style="max-width: 800px;">
+                    <div class="card shadow-sm mb-3">
+                        <div class="card-header bg-body-tertiary fw-bold text-info-emphasis">
+                            <i class="bi bi-info-circle"></i> About This Tool
+                        </div>
+                        <div class="card-body">
+                            <p class="lead fs-6">
+                                This automated tool is created for the Roblox game: <strong>Feed Your Pet</strong>. 
+                                It is designed to automate the sending of notifications to Discord when specific Events (Moons/Weathers) are detected on screen.
+                            </p>
+                            <hr>
+                            <h6 class="fw-bold">How it Works</h6>
+                            <ul class="list-group list-group-flush small">
+                                <li class="list-group-item border-0 ps-0"><i class="bi bi-camera-video text-primary me-2"></i> <strong>Screen Capture:</strong> The tool captures a specific region of your screen where event text appears.</li>
+                                <li class="list-group-item border-0 ps-0"><i class="bi bi-eye text-success me-2"></i> <strong>OCR Detection:</strong> It uses optical character recognition to read text from the video stream in real-time.</li>
+                                <li class="list-group-item border-0 ps-0"><i class="bi bi-robot text-warning me-2"></i> <strong>Event Matching:</strong> It compares detected text against your custom list of events.</li>
+                                <li class="list-group-item border-0 ps-0"><i class="bi bi-discord text-info me-2"></i> <strong>Discord Alert:</strong> When a match occurs, it instantly sends a notification to your configured Discord Webhooks.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm border-0 bg-transparent">
+                        <div class="card-body text-center text-muted">
+                            <div class="mb-3">
+                                <small class="text-uppercase fw-bold" style="letter-spacing: 1px;">Created By</small>
+                                <div class="mt-1">
+                                    <span class="badge bg-dark p-2"><i class="bi bi-discord"></i> BlackBox (@rlobrin)</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <small class="text-uppercase fw-bold" style="letter-spacing: 1px;">Supported By</small>
+                                <div class="mt-1">
+                                    <span class="badge bg-secondary p-2"><i class="bi bi-discord"></i> Gunnster247 (@gunnster247)</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <small class="text-uppercase fw-bold" style="letter-spacing: 1px;">Special Thanks</small>
+                                <div class="mt-1 d-flex justify-content-center flex-wrap gap-2">
+                                    <span class="badge bg-body-tertiary text-body border">Queen Branana (@queen_branana)</span>
+                                </div>
+                                <div class="mt-2 small text-muted">
+                                    And all members of <br>
+                                    <a href="https://discord.gg/YFy8s5E5" target="_blank" class="text-decoration-none fw-bold">FYP-TBND</a> & 
+                                    <a href="https://discord.gg/YFy8s5E5" target="_blank" class="text-decoration-none fw-bold">RMTG</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="itemWebhookModal" class="custom-modal-overlay">
+        <div class="custom-modal-dialog">
+            <div class="custom-modal-header">
+                <h5 class="modal-title fw-bold"><i class="bi bi-bell"></i> Manage Notifications</h5>
+                <button type="button" class="btn-close" onclick="hideItemWebhookModal()"></button>
+            </div>
+            <div class="custom-modal-body d-flex flex-column h-100">
+                <p class="small text-muted mb-2" id="webhookModalItemName">Select webhooks:</p>
+                
+                <div class="d-flex gap-2 mb-3">
+                    <div class="input-group input-group-sm flex-grow-1">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" id="webhookSearchInput" placeholder="Filter webhooks..." oninput="filterWebhookSelection()">
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" onclick="toggleSelectAllWebhooks(true)">All</button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="toggleSelectAllWebhooks(false)">None</button>
+                </div>
+
+                <div id="itemWebhookListContainer" class="flex-grow-1 overflow-auto border rounded bg-body-tertiary p-2" style="max-height: 400px;">
+                    </div>
+            </div>
+            <div class="modal-footer p-2 border-top bg-body-tertiary">
+                <button type="button" class="btn btn-primary w-100" onclick="saveItemWebhooks()">
+                    <i class="bi bi-save"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW: Webhook Events Management Modal -->
+    <div id="webhookEventsModal" class="custom-modal-overlay">
+        <div class="custom-modal-dialog">
+            <div class="custom-modal-header">
+                <h5 class="modal-title fw-bold"><i class="bi bi-list-check"></i> Select Events</h5>
+                <button type="button" class="btn-close" onclick="hideWebhookEventsModal()"></button>
+            </div>
+            <div class="custom-modal-body d-flex flex-column h-100">
+                <p class="small text-muted mb-2" id="webhookEventsModalTitle">Select events for this webhook:</p>
+                
+                <div class="d-flex gap-2 mb-3">
+                    <div class="input-group input-group-sm flex-grow-1">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" id="webhookEventsSearchInput" placeholder="Filter events..." oninput="filterWebhookEventsSelection()">
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" onclick="toggleSelectAllEventsForWebhook(true)">All</button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="toggleSelectAllEventsForWebhook(false)">None</button>
+                </div>
+
+                <div id="webhookEventsListContainer" class="flex-grow-1 overflow-auto border rounded bg-body-tertiary p-2" style="max-height: 400px;">
+                </div>
+            </div>
+            <div class="modal-footer p-2 border-top bg-body-tertiary">
+                <button type="button" class="btn btn-primary w-100" onclick="saveWebhookEvents()">
+                    <i class="bi bi-save"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="webhookModal" class="custom-modal-overlay">
+        <div class="custom-modal-dialog custom-modal-lg">
+            <div class="custom-modal-header">
+                <h5 class="modal-title fw-bold" id="webhookModalTitle">Add Webhook</h5>
+                <button type="button" class="btn-close" onclick="hideWebhookModal()"></button>
+            </div>
+            <div class="custom-modal-body">
+                <form id="webhookForm">
+                    <input type="hidden" id="webhookIndex" value="-1">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Description</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-tag"></i></span>
+                            <input type="text" id="modalWebhookDescription" class="form-control" placeholder="e.g. Main Channel" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Webhook URL</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                            <input type="text" id="modalWebhookUrl" class="form-control" placeholder="https://discord.com/api/webhooks/..." required>
+                            <button class="btn btn-outline-info" type="button" onclick="testNewWebhook()" title="Send Test Message">
+                                <i class="bi bi-send"></i> Test
+                            </button>
+                        </div>
+                        <div class="form-text small">Click "Test" to verify the URL works.</div>
+                    </div>
+                    <button type="submit" id="webhookFormSubmitButton" class="btn btn-primary w-100"><i class="bi bi-save"></i> Save Webhook</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="itemModal" class="custom-modal-overlay">
+        <div class="custom-modal-dialog custom-modal-lg">
+            <div class="custom-modal-header">
+                <h5 class="modal-title fw-bold" id="modalTitle">Add New Event</h5>
+                <button type="button" class="btn-close" onclick="hideItemModal()"></button>
+            </div>
+            <div class="custom-modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6 border-end">
+                        <form id="itemForm">
+                            <input type="hidden" id="itemIndex" value="-1">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Name</label>
+                                <input type="text" id="itemName" class="form-control" placeholder="e.g. Void Moon" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Type</label>
+                                <select id="itemType" class="form-select" required>
+                                    <option value="Moon">Moon</option>
+                                    <option value="Weather">Weather</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Multiplier</label>
+                                <input type="number" step="0.01" id="itemMultiplier" value="3" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small">Chances (e.g. 1/1k)</label>
+                                <input type="text" id="itemChances" class="form-control" placeholder="1/1000">
+                            </div>
+                            <button type="submit" id="formSubmitButton" class="btn btn-primary w-100"><i class="bi bi-save"></i> Save Event</button>
+                        </form>
+                    </div>
+                    <div class="col-md-6 d-flex flex-column" style="height: 100%; min-height: 350px;">
+                        <h6 class="fw-bold small mb-2">Existing Events</h6>
+                        
+                        <div class="d-flex flex-column gap-2 flex-grow-1 min-h-0">
+                            <div class="border rounded d-flex flex-column" style="flex: 1; min-height: 0;">
+                                <div class="bg-body-tertiary px-2 py-1 small fw-bold border-bottom text-primary sticky-top">Moons</div>
+                                <div id="modalMoonPreview" class="overflow-auto flex-grow-1"></div>
+                            </div>
+                            
+                            <div class="border rounded d-flex flex-column" style="flex: 1; min-height: 0;">
+                                <div class="bg-body-tertiary px-2 py-1 small fw-bold border-bottom text-info-emphasis sticky-top">Weathers</div>
+                                <div id="modalWeatherPreview" class="overflow-auto flex-grow-1"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="configModal" class="custom-modal-overlay">
+        <div class="custom-modal-dialog" style="max-width: 400px;">
+            <div class="custom-modal-header">
+                <h5 class="modal-title fw-bold" id="configModalTitle">Save Config</h5>
+                <button type="button" class="btn-close" onclick="hideConfigModal()"></button>
+            </div>
+            <div class="custom-modal-body">
+                <form id="saveConfigForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Preset Name</label>
+                        <input type="text" id="configName" class="form-control" placeholder="My Screen Layout" required>
+                    </div>
+                    <button type="submit" id="saveConfigFormButton" class="btn btn-primary w-100"><i class="bi bi-save"></i> Save Preset</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // --- Global Variables ---
+        const logContentDiv = document.getElementById('logContent');
+        const cooldownsCardContent = document.getElementById('cooldowns-card-content');
+        const cooldownsPlaceholder = document.getElementById('cooldownsPlaceholder');
+        const cooldownTimerLog = document.getElementById('cooldownTimerLog');
+        
+        // --- View Panel Elements ---
+        const rawCaptureContainer = document.getElementById('rawCaptureContainer');
+        const processedCaptureContainer = document.getElementById('processedCaptureContainer');
+        const viewPlaceholder = document.getElementById('viewPlaceholder');
+        
+        // --- Recent Event Filters ---
+        const eventDatePicker = document.getElementById('eventDatePicker');
+        const recentEventsListDiv = document.getElementById('recentEventsList');
+        const eventSearchInput = document.getElementById('eventSearchInput');
+        const eventNamesList = document.getElementById('eventNamesList');
+
+        const itemForm = document.getElementById('itemForm');
+        const itemNameInput = document.getElementById('itemName');
+        const itemTypeInput = document.getElementById('itemType');
+        const itemMultiplierInput = document.getElementById('itemMultiplier');
+        const itemChancesInput = document.getElementById('itemChances'); // NEW
+        const itemIndexInput = document.getElementById('itemIndex');
+        const itemModal = document.getElementById('itemModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const formSubmitButton = document.getElementById('formSubmitButton');
+        const modalListPreviewContent = document.getElementById('modalListPreviewContent');
+
+        const webhookModal = document.getElementById('webhookModal');
+        const webhookForm = document.getElementById('webhookForm');
+        // Ensure we catch the container element safely
+        const webhookListContainer = document.getElementById('webhookListContainer');
+        const modalWebhookDescriptionInput = document.getElementById('modalWebhookDescription');
+        const modalWebhookUrlInput = document.getElementById('modalWebhookUrl');
+        const webhookIndexInput = document.getElementById('webhookIndex');
+        const webhookModalTitle = document.getElementById('webhookModalTitle');
+        const webhookFormSubmitButton = document.getElementById('webhookFormSubmitButton');
+
+        // New Item Webhook Modal Elements
+        const itemWebhookModal = document.getElementById('itemWebhookModal');
+        const itemWebhookListContainer = document.getElementById('itemWebhookListContainer');
+        const webhookModalItemName = document.getElementById('webhookModalItemName');
+        const webhookSearchInput = document.getElementById('webhookSearchInput');
+        let currentEditingItemIndex = -1;
+
+        // NEW: Webhook Events Modal Elements
+        const webhookEventsModal = document.getElementById('webhookEventsModal');
+        const webhookEventsListContainer = document.getElementById('webhookEventsListContainer');
+        const webhookEventsModalTitle = document.getElementById('webhookEventsModalTitle');
+        const webhookEventsSearchInput = document.getElementById('webhookEventsSearchInput');
+        let currentEditingWebhookIndex = -1;
+
+        // Config Elements
+        const configModal = document.getElementById('configModal');
+        const configModalTitle = document.getElementById('configModalTitle');
+        const configSelect = document.getElementById('configSelect');
+        const deleteConfigButton = document.getElementById('deleteConfigButton');
+        const saveConfigForm = document.getElementById('saveConfigForm');
+
+        const regionXInput = document.getElementById('regionX');
+        const regionYInput = document.getElementById('regionY');
+        const regionWInput = document.getElementById('regionW');
+        const regionHInput = document.getElementById('regionH');
+        const zoomFactorInput = document.getElementById('zoomFactor');
+        const captureViewCanvas = document.getElementById('captureView');
+        const videoElement = document.getElementById('videoElement');
+        const processButton = document.getElementById('processButton');
+        const connectScreenButton = document.getElementById('connectScreenButton');
+        const canvasElement = document.getElementById('canvasElement');
+        const fileUpload = document.getElementById('fileUpload');
+        
+        // MOON/WEATHER LIST CONTAINERS
+        const moonListContainer = document.getElementById('moonListContainer');
+        const weatherListContainer = document.getElementById('weatherListContainer');
+        
+        const gracePeriodSecondsInput = document.getElementById('gracePeriodSeconds');
+        
+        // --- Core App Variables ---
+        let moonWeatherList = [];
+        let webhookList = [];
+        let ocrConfigs = [];
+        let currentConfigIndex = -1; 
+        let configIsDirty = false; 
+        let activeItems = {}; 
+        let ocrScanInterval = null;
+        let previewInterval = null;
+        let activeStatusInterval = null;
+        let eventSortOrder = 'desc'; 
+        
+        // --- Chart Variables ---
+        let eventStatsChartInstance = null;
+
+        // --- Initial Load & Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTheme();
+            loadSettings();
+        });
+        
+        // Updated listeners for filters
+        eventDatePicker.addEventListener('change', () => { updateSearchDatalist(); renderRecentEvents(); });
+        
+        // --- Utility Functions ---
+        
+        // --- NEW: Theme Management ---
+        window.setTheme = function(theme) {
+            document.documentElement.setAttribute('data-bs-theme', theme);
+            localStorage.setItem('theme', theme);
+            
+            // Update radio buttons if not triggered by them
+            if(document.getElementById('themeLight')) {
+                document.getElementById('themeLight').checked = (theme === 'light');
+                document.getElementById('themeDark').checked = (theme === 'dark');
+            }
+        }
+
+        window.loadTheme = function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            setTheme(savedTheme);
+        }
+
+        // --- NEW: Toast Notification Helper ---
+        function showToast(message, type='success') {
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                container.className = 'toast-container';
+                document.body.appendChild(container);
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `custom-toast ${type}`;
+            
+            let icon = '';
+            if(type === 'success') icon = '<i class="bi bi-check-circle-fill text-success"></i>';
+            else if(type === 'error') icon = '<i class="bi bi-exclamation-triangle-fill text-danger"></i>';
+            else icon = '<i class="bi bi-info-circle-fill text-info"></i>';
+
+            toast.innerHTML = `${icon} <span>${message}</span>`;
+            container.appendChild(toast);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = 'fadeOutToast 0.3s ease-out forwards';
+                toast.addEventListener('animationend', () => toast.remove());
+            }, 3000);
+        }
+
+        window.refreshTooltips = function() {
+            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            [...tooltipTriggerList].forEach(el => {
+                const instance = bootstrap.Tooltip.getInstance(el);
+                if (instance) instance.dispose();
+            });
+            const ghostTooltips = document.querySelectorAll('.tooltip');
+            ghostTooltips.forEach(el => el.remove());
+            [...tooltipTriggerList].map(tooltipTriggerEl => 
+                new bootstrap.Tooltip(tooltipTriggerEl, { trigger: 'hover', container: 'body' })
+            );
+        }
+
+        // NEW: Helper to calculate Chances Percentage
+        function formatChanceToPercent(input) {
+            if (!input) return '';
+            let clean = input.toString().toLowerCase().replace(/,/g, '');
+            
+            // Handle 'k' notation in denominators (e.g. 1/1k)
+            if(clean.includes('/')) {
+                let [numStr, denStr] = clean.split('/');
+                let num = parseFloat(numStr);
+                let den = parseFloat(denStr);
+                
+                // Check for 'k' in denominator
+                if(denStr.includes('k')) {
+                    den = parseFloat(denStr.replace('k', '')) * 1000;
+                }
+                
+                if (!isNaN(num) && !isNaN(den) && den !== 0) {
+                    const pct = (num / den) * 100;
+                    // Format nicer: up to 4 decimals, but remove trailing zeros
+                    return parseFloat(pct.toFixed(5)) + '%';
+                }
+            }
+            return input; // Fallback if not a fraction
+        }
+
+        function formatMultiplier(n) {
+            return parseFloat(n).toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1');
+        }
+        
+        function formatDuration(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            const hours = Math.floor(minutes / 60);
+            let human = '';
+            if (hours > 0) human += `${hours}h `;
+            if (minutes % 60 > 0 || hours > 0) human += `${minutes % 60}m `;
+            if (totalSeconds < 60) human = `${totalSeconds}s`;
+            else if (seconds > 0) human += `${seconds}s`;
+            return { human: human.trim(), mins: minutes, secs: totalSeconds };
+        }
+        
+        function formatTime(date) {
+             return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+        }
+
+        // --- Event Statistics Functions ---
+        function getTimeRange(timeframe) {
+            const now = new Date();
+            let startTime;
+            switch (timeframe) {
+                case 'hour': startTime = new Date(now.getTime() - (60 * 60 * 1000)); break;
+                case 'today': 
+                    startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate()); 
+                    break;
+                case 'day': startTime = new Date(now.getTime() - (24 * 60 * 60 * 1000)); break;
+                case 'week': startTime = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000)); break;
+                default: startTime = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000)); break;
+            }
+            return { startTime, now };
+        }
+
+        window.updateItemListDropdown = function() {
+            const timeframeEl = document.getElementById('statsTimeframeFilter');
+            if (!timeframeEl) return;
+            const timeframe = timeframeEl.value;
+            const typeFilter = document.querySelector('input[name="statsTypeFilter"]:checked').value;
+            const dataList = document.getElementById('statsItemDataList');
+            const dailyEvents = JSON.parse(localStorage.getItem('dailyEvents')) || {};
+            const { startTime, now } = getTimeRange(timeframe);
+
+            const availableItems = new Set();
+            Object.keys(dailyEvents).forEach(dateKey => {
+                const events = dailyEvents[dateKey];
+                events.forEach(event => {
+                    if (event.start >= startTime.getTime() && event.start <= now.getTime()) {
+                        if (typeFilter === 'All' || event.type === typeFilter) {
+                            availableItems.add(event.name);
+                        }
+                    }
+                });
+            });
+
+            dataList.innerHTML = '';
+            const sortedItems = Array.from(availableItems).sort((a, b) => a.localeCompare(b));
+            sortedItems.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                dataList.appendChild(option);
+            });
+            updateEventStatistics(); 
+        };
+
+        function getItemColor(name, type) {
+            const lowerName = name.toLowerCase();
+            if (lowerName.includes('blood') || lowerName.includes('red') || lowerName.includes('crimson')) 
+                return { bg: 'rgba(220, 53, 69, 0.7)', border: 'rgba(220, 53, 69, 1)' };
+            if (lowerName.includes('blue') || lowerName.includes('water') || lowerName.includes('rain') || lowerName.includes('storm')) 
+                return { bg: 'rgba(13, 110, 253, 0.7)', border: 'rgba(13, 110, 253, 1)' };
+            if (lowerName.includes('gold') || lowerName.includes('sun') || lowerName.includes('sand') || lowerName.includes('yellow')) 
+                return { bg: 'rgba(255, 193, 7, 0.7)', border: 'rgba(255, 193, 7, 1)' };
+            if (lowerName.includes('void') || lowerName.includes('black') || lowerName.includes('dark')) 
+                return { bg: 'rgba(33, 37, 41, 0.7)', border: 'rgba(33, 37, 41, 1)' };
+            if (lowerName.includes('pink')) 
+                return { bg: 'rgba(214, 51, 132, 0.7)', border: 'rgba(214, 51, 132, 1)' };
+            if (lowerName.includes('emerald') || lowerName.includes('green') || lowerName.includes('toxic')) 
+                return { bg: 'rgba(25, 135, 84, 0.7)', border: 'rgba(25, 135, 84, 1)' };
+            if (lowerName.includes('snow') || lowerName.includes('ice') || lowerName.includes('fog') || lowerName.includes('white')) 
+                return { bg: 'rgba(222, 226, 230, 0.9)', border: 'rgba(173, 181, 189, 1)' };
+            if (type === 'Moon') return { bg: 'rgba(111, 66, 193, 0.7)', border: 'rgba(111, 66, 193, 1)' };
+            if (type === 'Weather') return { bg: 'rgba(253, 126, 20, 0.7)', border: 'rgba(253, 126, 20, 1)' };
+            return { bg: 'rgba(108, 117, 125, 0.7)', border: 'rgba(108, 117, 125, 1)' };
+        }
+
+        window.updateEventStatistics = function() {
+            const dailyEvents = JSON.parse(localStorage.getItem('dailyEvents')) || {};
+            const timeframeEl = document.getElementById('statsTimeframeFilter');
+            if (!timeframeEl) return;
+            const timeframe = timeframeEl.value;
+            const typeFilter = document.querySelector('input[name="statsTypeFilter"]:checked').value;
+            const itemFilterVal = document.getElementById('statsItemFilter').value.trim().toLowerCase();
+            const metric = document.getElementById('statsMetricFilter').value; 
+            const { startTime, now } = getTimeRange(timeframe);
+            
+            const aggregatedData = {};
+            
+            Object.keys(dailyEvents).forEach(dateKey => {
+                dailyEvents[dateKey].forEach(event => {
+                    if (event.start >= startTime.getTime() && event.start <= now.getTime()) {
+                        const passesTypeFilter = (typeFilter === 'All') || (event.type === typeFilter);
+                        const passesItemFilter = (itemFilterVal === '') || (event.name.toLowerCase().includes(itemFilterVal));
+
+                        if (passesTypeFilter && passesItemFilter) {
+                            if (!aggregatedData[event.name]) {
+                                aggregatedData[event.name] = { count: 0, totalDuration: 0, type: event.type };
+                            }
+                            aggregatedData[event.name].count++;
+                            aggregatedData[event.name].totalDuration += event.duration;
+                        }
+                    }
+                });
+            });
+            
+            const labels = [];
+            const dataPoints = [];
+            const backgroundColors = [];
+            const borderColors = [];
+
+            const sortedKeys = Object.keys(aggregatedData).sort((a, b) => {
+                const valA = metric === 'count' ? aggregatedData[a].count : aggregatedData[a].totalDuration;
+                const valB = metric === 'count' ? aggregatedData[b].count : aggregatedData[b].totalDuration;
+                return valB - valA; 
+            });
+
+            sortedKeys.forEach(key => {
+                const item = aggregatedData[key];
+                labels.push(key);
+                let val = metric === 'count' ? item.count : (item.totalDuration / item.count) / 60000; 
+                dataPoints.push(val);
+                const colors = getItemColor(key, item.type);
+                backgroundColors.push(colors.bg);
+                borderColors.push(colors.border);
+            });
+
+            const placeholder = document.getElementById('chartPlaceholder');
+            if (dataPoints.length === 0) {
+                placeholder.style.display = 'block';
+                if (eventStatsChartInstance) {
+                    eventStatsChartInstance.destroy();
+                    eventStatsChartInstance = null;
+                }
+            } else {
+                placeholder.style.display = 'none';
+                let labelText = metric === 'avgTime' ? "Avg Time" : "Occurrences"; 
+                renderEventStatsChart(dataPoints, labels, backgroundColors, borderColors, labelText);
+            }
+        };
+
+        window.renderEventStatsChart = function(data, labels, bgColors, borderColors, labelText) {
+            const ctx = document.getElementById('eventStatsChart').getContext('2d');
+            if (eventStatsChartInstance) {
+                eventStatsChartInstance.destroy();
+                eventStatsChartInstance = null;
+            }
+            eventStatsChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{ 
+                        label: labelText, data: data, backgroundColor: bgColors, borderColor: borderColors, borderWidth: 1 
+                    }]
+                },
+                options: {
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: labelText },
+                            ticks: { 
+                                callback: function(value) { 
+                                    if (labelText === 'Occurrences') { if (value % 1 === 0) return value; } 
+                                    else { return value + 'm'; }
+                                } 
+                            }
+                        }
+                    },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    if (context.parsed.y !== null) {
+                                        if (labelText.includes('Time')) {
+                                            const decimalMins = context.parsed.y;
+                                            const mins = Math.floor(decimalMins);
+                                            const secs = Math.round((decimalMins - mins) * 60);
+                                            label += `${mins}m ${secs}s`;
+                                        } else {
+                                            label += context.parsed.y;
+                                        }
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        };
+
+        function sendDiscordNotification(item, status, durationMs = 0) {
+            // Updated logic: Check if webhook is active globally AND subscribed by this item
+            const subscribedIds = item.webhookIds || []; // Array of webhook IDs this item is subscribed to
+            const activeWebhooks = webhookList.filter(w => w.active && subscribedIds.includes(w.id));
+            
+            if (activeWebhooks.length === 0) {
+                return;
+            }
+            
+            let messageContent;
+            let multiplierValue = formatMultiplier(item.multiplier);
+            if (status === 'start') {
+                messageContent = `${item.name} (Gives **x${multiplierValue}**) **has started!**`;
+            } else if (status === 'end') {
+                const duration = formatDuration(durationMs).human;
+                messageContent = `${item.name} **ended**. (Duration: ${duration})`;
+            }
+            
+            activeWebhooks.forEach(webhook => {
+                fetch(webhook.url, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: messageContent }),
+                })
+                .then(response => {
+                    if (!response.ok) addLog(`[DISCORD] ERROR: Failed to send to **${webhook.description}**.`);
+                    else addLog(`[DISCORD] Notification for **${item.name}** (${status}) sent to ${webhook.description}.`);
+                })
+                .catch(error => addLog(`[DISCORD] CRITICAL ERROR: ${error.message}`));
+            });
+        }
+
+        window.addLog = function(message) {
+            const now = new Date();
+            const timestamp = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            logContentDiv.innerHTML = `<span style="color:#adb5bd;">[${timestamp}]</span> ${message}<br>` + logContentDiv.innerHTML;
+            document.getElementById('logContent').scrollTop = 0;
+        }
+        
+        window.updateCooldownLog = function(message) { cooldownTimerLog.textContent = `App Status: ${message}`; }
+        
+        window.clearLogs = function() {
+            logContentDiv.innerHTML = 'Logs cleared by user.';
+            updateCooldownLog("Idle");
+            addLog("Logs cleared.");
+        }
+        
+        function renderActiveStatus() {
+            const itemEntries = Object.entries(activeItems);
+            if (itemEntries.length > 0) {
+                let html = '';
+                itemEntries.sort((a, b) => b[1].item.multiplier - a[1].item.multiplier)
+                .forEach(([name, state]) => {
+                    const elapsedMs = Date.now() - state.startTime;
+                    const elapsed = formatDuration(elapsedMs);
+                    const multiplier = formatMultiplier(state.item.multiplier);
+                    let statusText = `Active for ${elapsed.human}`;
+                    if (state.endTimeTimeout !== null) {
+                        const GRACE_PERIOD_SECONDS = parseInt(gracePeriodSecondsInput.value) || 5;
+                        const graceStartMs = state.actualEndTime;
+                        const graceElapsedMs = Date.now() - graceStartMs;
+                        const graceTimeLeftMs = (GRACE_PERIOD_SECONDS * 1000) - graceElapsedMs;
+                        const timeLeftSec = Math.max(0, Math.ceil(graceTimeLeftMs / 1000));
+                        statusText = `<span class="text-danger fw-bold">[GRACE: ${timeLeftSec}s]</span> <span class="text-muted">(${elapsed.human})</span>`;
+                    }
+                    html += `
+                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-bold">${state.item.name} (${multiplier}x)</div>
+                            <small class="text-muted">${statusText}</small>
+                        </div>
+                        <span class="badge bg-success rounded-pill">Active</span>
+                    </div>`;
+                });
+                cooldownsCardContent.innerHTML = html;
+                cooldownsPlaceholder.style.display = 'none';
+                if (!ocrScanInterval) updateCooldownLog(`${itemEntries.length} event(s) active.`);
+            } else {
+                cooldownsCardContent.innerHTML = '';
+                cooldownsPlaceholder.style.display = 'block';
+                updateCooldownLog("Idle");
+            }
+        }
+
+        function applyImagePreprocessing(context, width, height) {
+            let imageData = context.getImageData(0, 0, width, height);
+            let data = imageData.data;
+            const threshold = 180; 
+            for (let i = 0; i < data.length; i += 4) {
+                const avg = 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+                let color = avg > threshold ? 0 : 255; 
+                data[i] = color; data[i + 1] = color; data[i + 2] = color;
+            }
+            context.putImageData(imageData, 0, 0);
+        }
+        
+        function addRecentEvent(item, durationMs, startTime) {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const dateKey = `${year}-${month}-${day}`;
+            
+            const dailyEvents = JSON.parse(localStorage.getItem('dailyEvents')) || {};
+            if (!dailyEvents[dateKey]) dailyEvents[dateKey] = [];
+            
+            const newEvent = { name: item.name, type: item.type, duration: durationMs, start: startTime };
+            dailyEvents[dateKey].push(newEvent);
+            if (dailyEvents[dateKey].length > 50) dailyEvents[dateKey] = dailyEvents[dateKey].slice(-50);
+            localStorage.setItem('dailyEvents', JSON.stringify(dailyEvents));
+            
+            if (eventDatePicker.value === dateKey) renderRecentEvents();
+            updateEventStatistics();
+        }
+        
+        window.toggleTimePeriodInputs = function() {
+            const periodVal = eventPeriodFilter.value;
+            if (periodVal === 'Specific') { specificTimeInputGroup.style.display = 'block'; } else {
+                specificTimeInputGroup.style.display = 'none'; renderRecentEvents(); 
+            }
+        }
+
+        window.updateRecentEventNameDropdown = function() { updateSearchDatalist(); }
+
+        window.updateSearchDatalist = function() {
+            const dateKey = eventDatePicker.value;
+            if (!dateKey) return;
+            const dailyEvents = JSON.parse(localStorage.getItem('dailyEvents')) || {};
+            const events = dailyEvents[dateKey] || [];
+            const typeFilter = document.querySelector('input[name="typeFilter"]:checked').value;
+            const filteredEvents = events.filter(event => {
+                if (typeFilter === 'All') return true;
+                return event.type === typeFilter;
+            });
+            const uniqueNames = [...new Set(filteredEvents.map(event => event.name))];
+            uniqueNames.sort((a, b) => a.localeCompare(b));
+            eventNamesList.innerHTML = '';
+            uniqueNames.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                eventNamesList.appendChild(option);
+            });
+        }
+
+        function renderRecentEvents() {
+            const dateKey = eventDatePicker.value;
+            const dailyEvents = JSON.parse(localStorage.getItem('dailyEvents')) || {};
+            let events = dailyEvents[dateKey];
+            const typeFilter = document.querySelector('input[name="typeFilter"]:checked').value;
+            const searchVal = document.getElementById('eventSearchInput').value.toLowerCase();
+
+            if (!dateKey) { recentEventsListDiv.innerHTML = `<p class="text-center text-muted small mt-2">Please select a date.</p>`; return; }
+            if (!events || events.length === 0) { recentEventsListDiv.innerHTML = `<p class="text-center text-muted small mt-2">No events recorded for ${dateKey}.</p>`; return; }
+
+            if (typeFilter !== 'All') { events = events.filter(event => event.type === typeFilter); }
+            if (searchVal) { events = events.filter(event => event.name.toLowerCase().includes(searchVal)); }
+
+            if (events.length === 0) { recentEventsListDiv.innerHTML = `<p class="text-center text-muted small mt-2">No events match filters.</p>`; return; }
+
+            events.sort((a, b) => eventSortOrder === 'desc' ? b.start - a.start : a.start - b.start);
+
+            let html = '<div class="list-group list-group-flush">';
+            events.forEach(event => {
+                const startTime = new Date(event.start);
+                const endTime = new Date(event.start + event.duration);
+                const duration = formatDuration(event.duration);
+                const startStr = formatTime(startTime);
+                const endStr = formatTime(endTime);
+                html += `
+                <div class="list-group-item py-1 px-2 small d-flex justify-content-between align-items-center">
+                    <div class="text-truncate">
+                        <span class="text-primary fw-bold">${startStr} - ${endStr}</span>
+                        <span class="fw-bold ms-1">${event.name}</span>
+                    </div>
+                    <span class="text-muted fst-italic ms-2 text-nowrap">${duration.human}</span>
+                </div>`;
+            });
+            html += '</div>';
+            recentEventsListDiv.innerHTML = html;
+            refreshTooltips();
+        }
+        
+        window.toggleEventSortOrder = function() {
+            eventSortOrder = eventSortOrder === 'desc' ? 'asc' : 'desc';
+            const sortIcon = document.getElementById('sortIcon');
+            sortIcon.innerHTML = eventSortOrder === 'desc' ? '<i class="bi bi-sort-down"></i>' : '<i class="bi bi-sort-up"></i>'; 
+            renderRecentEvents();
+        }
+        
+        window.clearHistory = function() {
+            const dateKey = eventDatePicker.value;
+            if (!dateKey) return;
+            if (confirm(`Clear history for ${dateKey} and reset item durations?`)) {
+                const dailyEvents = JSON.parse(localStorage.getItem('dailyEvents')) || {};
+                delete dailyEvents[dateKey];
+                localStorage.setItem('dailyEvents', JSON.stringify(dailyEvents));
+                moonWeatherList.forEach(item => { item.approxDuration = null; });
+                saveSettings(); 
+                renderRecentEvents();
+                updateEventStatistics();
+                renderList(); 
+                updateSearchDatalist(); 
+                showToast(`History cleared for ${dateKey}.`);
+            }
+        }
+
+        // --- Core Logic: Load, Save, Display ---
+        function loadSettings() {
+            const savedWebhookList = localStorage.getItem('webhookList');
+            if (savedWebhookList) {
+                // FIXED: Safer parsing logic
+                try { 
+                    const parsed = JSON.parse(savedWebhookList);
+                    if (Array.isArray(parsed)) {
+                        webhookList = parsed.map(w => { const { publish, ...rest } = w; return rest; });
+                    } else {
+                        webhookList = [];
+                    }
+                } catch (e) { webhookList = []; }
+            }
+            const savedList = localStorage.getItem('moonWeatherList');
+            if (savedList) { 
+                try { 
+                    moonWeatherList = JSON.parse(savedList);
+                    // --- MIGRATION LOGIC FOR NEW WEBHOOK SYSTEM ---
+                    // Convert old 'notify' boolean to 'webhookIds' array
+                    let migrationOccurred = false;
+                    moonWeatherList.forEach(item => {
+                        if (!Array.isArray(item.webhookIds)) {
+                            item.webhookIds = [];
+                            // If notify was true (or undefined/legacy), enable all current webhooks by default
+                            if (item.notify !== false) { 
+                                item.webhookIds = webhookList.map(w => w.id);
+                            }
+                            delete item.notify;
+                            migrationOccurred = true;
+                        }
+                    });
+                    if (migrationOccurred) { saveSettings(); }
+                } catch (e) { moonWeatherList = []; } 
+            }
+            const savedOcrConfigs = localStorage.getItem('ocrConfigs');
+            if (savedOcrConfigs) { try { ocrConfigs = JSON.parse(savedOcrConfigs); } catch (e) { ocrConfigs = []; } }
+            
+            const savedIndex = localStorage.getItem('currentConfigIndex');
+            currentConfigIndex = savedIndex ? parseInt(savedIndex) : -1;
+
+            regionXInput.value = localStorage.getItem('regionX') || '0';
+            regionYInput.value = localStorage.getItem('regionY') || '0';
+            regionWInput.value = localStorage.getItem('regionW') || '300';
+            regionHInput.value = localStorage.getItem('regionH') || '50';
+            zoomFactorInput.value = localStorage.getItem('zoomFactor') || '3';
+            gracePeriodSecondsInput.value = localStorage.getItem('gracePeriodSeconds') || '5';
+
+            addLog("Application initialized.");
+            
+            // FIXED: Isolated try-catch blocks for rendering
+            try { renderList(); } catch(e) { console.error("Error rendering item list:", e); }
+            try { renderWebhookList(); } catch(e) { console.error("Error rendering webhook list:", e); }
+            
+            updateConfigDropdown(); 
+            updateCaptureView(false);
+            
+            const now = new Date();
+            const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            eventDatePicker.value = today;
+            
+            updateSearchDatalist(); 
+            renderRecentEvents(); 
+            try { updateItemListDropdown(); } catch(e) {}
+
+            if (!activeStatusInterval) activeStatusInterval = setInterval(renderActiveStatus, 500);
+            refreshTooltips();
+        }
+
+        function saveSettings() {
+            localStorage.setItem('moonWeatherList', JSON.stringify(moonWeatherList));
+            localStorage.setItem('webhookList', JSON.stringify(webhookList));
+            localStorage.setItem('ocrConfigs', JSON.stringify(ocrConfigs));
+            localStorage.setItem('currentConfigIndex', currentConfigIndex);
+            localStorage.setItem('regionX', regionXInput.value);
+            localStorage.setItem('regionY', regionYInput.value);
+            localStorage.setItem('regionW', regionWInput.value);
+            localStorage.setItem('regionH', regionHInput.value);
+            localStorage.setItem('zoomFactor', zoomFactorInput.value);
+            localStorage.setItem('gracePeriodSeconds', gracePeriodSecondsInput.value);
+        }
+        
+        function removeSettings() {
+            if (confirm("Are you sure you want to clear ALL saved settings?")) {
+                localStorage.clear();
+                moonWeatherList = []; webhookList = []; ocrConfigs = [];
+                currentConfigIndex = -1; activeItems = {};
+                loadSettings(); renderActiveStatus(); addLog("ALL settings cleared.");
+                showToast("All settings wiped.", "error");
+            }
+        }
+        
+        // --- NEW: Export Events Logic ---
+        window.exportEvents = function() {
+            if (moonWeatherList.length === 0) {
+                showToast("No events to export.", "info");
+                return;
+            }
+
+            // CSV Header
+            let csvContent = "Name,Type,Multiplier,Chances\n";
+
+            // Add Data Rows
+            moonWeatherList.forEach(item => {
+                // Wrap strings in quotes to handle commas in names
+                const name = `"${item.name.replace(/"/g, '""')}"`; // Escape double quotes
+                const type = `"${item.type}"`;
+                const multiplier = item.multiplier;
+                // Clean Chances (no quotes needed usually, but safe)
+                const chances = item.chances || ""; 
+                csvContent += `${name},${type},${multiplier},${chances}\n`;
+            });
+
+            // Create Download Blob
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "fyp_events_export.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("CSV Export downloaded.");
+        }
+        
+        function updateConfigDropdown() {
+            configSelect.innerHTML = '<option value="-1">-- Custom Preset --</option>';
+            ocrConfigs.forEach((config, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = config.name;
+                configSelect.appendChild(option);
+            });
+            configSelect.value = currentConfigIndex;
+            deleteConfigButton.disabled = (currentConfigIndex === -1);
+            configIsDirty = false; 
+            
+            const configNameDisplay = document.getElementById('configNameDisplay');
+            if (currentConfigIndex === -1) {
+                configNameDisplay.textContent = "Current: Custom";
+            } else {
+                configNameDisplay.textContent = `Current: ${ocrConfigs[currentConfigIndex].name}`;
+            }
+        }
+
+        window.handleConfigSelect = function() {
+            const selectedValue = parseInt(configSelect.value);
+            currentConfigIndex = selectedValue;
+            
+            if (selectedValue !== -1 && ocrConfigs[selectedValue]) {
+                const config = ocrConfigs[selectedValue];
+                regionXInput.value = config.x;
+                regionYInput.value = config.y;
+                regionWInput.value = config.w;
+                regionHInput.value = config.h;
+                zoomFactorInput.value = config.zoom;
+                addLog(`Loaded config: ${config.name}`);
+                configIsDirty = false;
+                saveSettings(); 
+                updatePreviewAndSize();
+                showToast(`Loaded preset "${config.name}".`);
+            }
+            updateConfigDropdown();
+            localStorage.setItem('currentConfigIndex', currentConfigIndex);
+        }
+
+        function markConfigAsUnsaved() {
+            if (currentConfigIndex !== -1 && !configIsDirty) {
+                configIsDirty = true;
+                const option = configSelect.options[configSelect.selectedIndex];
+                if (option && !option.text.includes("(Unsaved)")) {
+                    option.text = option.text + " (Unsaved)";
+                }
+            }
+            saveSettings();
+        }
+
+        window.openNewConfigModal = function() {
+            document.getElementById('configName').value = "";
+            configModalTitle.textContent = "Create New Preset";
+            configModal.style.display = 'flex';
+            document.getElementById('configName').focus();
+        }
+        
+        window.resetToNewCustomConfig = function() {
+            currentConfigIndex = -1;
+            regionXInput.value = 0;
+            regionYInput.value = 0;
+            regionWInput.value = 300;
+            regionHInput.value = 50;
+            zoomFactorInput.value = 3;
+            updateConfigDropdown(); 
+            configIsDirty = false;
+            saveSettings();
+            updatePreviewAndSize();
+            addLog("Reset to Custom Preset (Defaults).");
+            showToast("Reset to default custom config.");
+        }
+
+        window.handleSaveButton = function() {
+            if (currentConfigIndex !== -1) {
+                const config = ocrConfigs[currentConfigIndex];
+                config.x = parseInt(regionXInput.value)||0;
+                config.y = parseInt(regionYInput.value)||0;
+                config.w = parseInt(regionWInput.value)||300;
+                config.h = parseInt(regionHInput.value)||50;
+                config.zoom = parseInt(zoomFactorInput.value)||3;
+                
+                configIsDirty = false;
+                saveSettings();
+                updateConfigDropdown(); 
+                addLog(`Saved preset: ${config.name}`);
+                showToast(`Saved preset "${config.name}"`);
+            } else {
+                openNewConfigModal();
+            }
+        }
+
+        window.hideConfigModal = function() { configModal.style.display = 'none'; }
+
+        saveConfigForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('configName').value.trim();
+            if (!name) return;
+
+            const newConfig = {
+                name: name,
+                x: parseInt(regionXInput.value)||0,
+                y: parseInt(regionYInput.value)||0,
+                w: parseInt(regionWInput.value)||300,
+                h: parseInt(regionHInput.value)||50,
+                zoom: parseInt(zoomFactorInput.value)||3
+            };
+
+            const existingIndex = ocrConfigs.findIndex(c => c.name === name);
+            if (existingIndex !== -1) {
+                ocrConfigs[existingIndex] = newConfig;
+                currentConfigIndex = existingIndex;
+                addLog(`Updated config: ${name}`);
+                showToast(`Updated preset "${name}".`);
+            } else {
+                ocrConfigs.push(newConfig);
+                currentConfigIndex = ocrConfigs.length - 1;
+                addLog(`Created new config: ${name}`);
+                showToast(`Created new preset "${name}".`);
+            }
+
+            saveSettings();
+            updateConfigDropdown();
+            hideConfigModal();
+        });
+
+        window.deleteCurrentConfig = function() {
+            if (currentConfigIndex === -1) return;
+            const configName = ocrConfigs[currentConfigIndex].name;
+            if (confirm(`Delete configuration "${configName}"?`)) {
+                ocrConfigs.splice(currentConfigIndex, 1);
+                currentConfigIndex = -1; 
+                saveSettings();
+                updateConfigDropdown();
+                addLog(`Deleted config: ${configName}`);
+                showToast(`Deleted preset "${configName}".`);
+            }
+        }
+
+        window.openTab = function(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content-wrapper");
+            for (i = 0; i < tabcontent.length; i++) tabcontent[i].classList.remove("active");
+            
+            tablinks = document.querySelectorAll(".nav-link");
+            for (i = 0; i < tablinks.length; i++) tablinks[i].classList.remove("active", "fw-bold");
+            
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active", "fw-bold");
+            
+            if (tabName === 'mainTab') renderActiveStatus();
+        }
+
+        // --- NEW: Webhook Test Function ---
+        window.testNewWebhook = function() {
+            const url = document.getElementById('modalWebhookUrl').value.trim();
+            if (!url) { showToast("Enter a Webhook URL first.", "error"); return; }
+            if (!url.startsWith('http')) { showToast("Invalid URL format.", "error"); return; }
+
+            const btn = document.querySelector('#webhookModal .btn-outline-info');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Sending...';
+            btn.disabled = true;
+
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: "🔔 **Test Message** from FYP Notifier! If you see this, your webhook is working correctly." }),
+            })
+            .then(response => {
+                if (response.ok) {
+                    showToast("Test message sent successfully!");
+                } else {
+                    showToast("Failed to send. Check URL.", "error");
+                }
+            })
+            .catch(error => {
+                showToast("Error sending test: " + error.message, "error");
+            })
+            .finally(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        }
+
+        // --- ENHANCED: Notification Management ---
+        window.showItemWebhookModal = function(itemIndex) {
+            if (!moonWeatherList[itemIndex]) return;
+            
+            currentEditingItemIndex = itemIndex;
+            const item = moonWeatherList[itemIndex];
+            webhookModalItemName.innerHTML = `Configure alerts for <strong>${item.name}</strong>:`;
+            
+            // Reset search input
+            if(webhookSearchInput) webhookSearchInput.value = "";
+            renderWebhookSelectionList(item);
+            
+            itemWebhookModal.style.display = 'flex';
+        }
+
+        function renderWebhookSelectionList(item, filterText = "") {
+            let html = '';
+            if (webhookList.length === 0) {
+                html = '<div class="alert alert-warning small mb-0">No webhooks available. Go to Settings to add one.</div>';
+            } else {
+                let visibleCount = 0;
+                webhookList.forEach(webhook => {
+                    // Filter Logic
+                    if (filterText && !webhook.description.toLowerCase().includes(filterText.toLowerCase())) return;
+                    
+                    visibleCount++;
+                    const isChecked = (item.webhookIds || []).includes(webhook.id) ? 'checked' : '';
+                    const statusDot = webhook.active ? '<span class="text-success" title="Active Global">●</span>' : '<span class="text-secondary" title="Inactive Global">○</span>';
+                    const opacityClass = webhook.active ? '' : 'opacity-75';
+
+                    html += `
+                    <div class="webhook-select-item d-flex align-items-center justify-content-between p-2 border-bottom ${opacityClass}" onclick="toggleWebhookCheckbox('${webhook.id}')">
+                        <div class="overflow-hidden me-2">
+                            <div class="d-flex align-items-center gap-1 small fw-bold">
+                                ${statusDot} ${webhook.description}
+                            </div>
+                            <div class="small text-muted text-truncate" style="font-size: 0.75em;">${webhook.url}</div>
+                        </div>
+                        <div class="form-check form-switch m-0">
+                            <input class="form-check-input item-webhook-checkbox" type="checkbox" value="${webhook.id}" id="wbCheck-${webhook.id}" ${isChecked} onclick="event.stopPropagation()">
+                        </div>
+                    </div>`;
+                });
+                
+                if (visibleCount === 0) {
+                    html = '<div class="text-center text-muted small p-3">No matching webhooks found.</div>';
+                }
+            }
+            itemWebhookListContainer.innerHTML = html;
+        }
+
+        window.filterWebhookSelection = function() {
+            if (currentEditingItemIndex === -1) return;
+            const item = moonWeatherList[currentEditingItemIndex];
+            const filterText = webhookSearchInput.value.trim();
+            renderWebhookSelectionList(item, filterText);
+        }
+
+        window.toggleWebhookCheckbox = function(id) {
+            const cb = document.getElementById(`wbCheck-${id}`);
+            if (cb) cb.checked = !cb.checked;
+        }
+
+        window.toggleSelectAllWebhooks = function(selectAll) {
+            const checkboxes = document.querySelectorAll('.item-webhook-checkbox');
+            checkboxes.forEach(cb => cb.checked = selectAll);
+        }
+
+        window.hideItemWebhookModal = function() {
+            itemWebhookModal.style.display = 'none';
+            currentEditingItemIndex = -1;
+        }
+
+        window.saveItemWebhooks = function() {
+            if (currentEditingItemIndex === -1) return;
+            
+            const checkboxes = document.querySelectorAll('.item-webhook-checkbox');
+            const selectedIds = [];
+            checkboxes.forEach(cb => {
+                if (cb.checked) {
+                    selectedIds.push(parseInt(cb.value)); 
+                }
+            });
+            
+            moonWeatherList[currentEditingItemIndex].webhookIds = selectedIds;
+            const itemName = moonWeatherList[currentEditingItemIndex].name;
+            saveSettings();
+            renderList();
+            hideItemWebhookModal();
+            showToast(`Notification settings for "${itemName}" updated!`);
+        }
+        
+        // --- Webhook Management ---
+        window.toggleWebhookActive = function(index) {
+            if (webhookList[index]) { webhookList[index].active = !webhookList[index].active; saveSettings(); renderWebhookList(); }
+        }
+
+        // NEW: Toggle subscription for a category on a specific webhook
+        window.toggleWebhookSubscription = function(webhookId, type) {
+            // type is 'Moon' or 'Weather'
+            const targetItems = moonWeatherList.filter(i => i.type === type);
+            if (targetItems.length === 0) {
+                showToast(`No ${type}s to assign.`, 'info');
+                renderWebhookList(); // Re-render to reset checkbox visual state if needed
+                return;
+            }
+
+            // Check if ALL are currently subscribed to this webhook
+            const allSubscribed = targetItems.every(i => (i.webhookIds || []).includes(webhookId));
+            
+            // Toggle Logic: If all are subscribed -> Unsubscribe all. Otherwise -> Subscribe all.
+            let modifiedCount = 0;
+            targetItems.forEach(item => {
+                if (!item.webhookIds) item.webhookIds = [];
+                const hasId = item.webhookIds.includes(webhookId);
+                
+                if (allSubscribed) {
+                    // Remove ID
+                    if (hasId) {
+                        item.webhookIds = item.webhookIds.filter(id => id !== webhookId);
+                        modifiedCount++;
+                    }
+                } else {
+                    // Add ID
+                    if (!hasId) {
+                        item.webhookIds.push(webhookId);
+                        modifiedCount++;
+                    }
+                }
+            });
+            
+            if (modifiedCount > 0) {
+                saveSettings();
+                renderList(); // Update main list bells
+                renderWebhookList(); // Update webhook list counts
+                const action = allSubscribed ? "Unsubscribed from" : "Subscribed to";
+                showToast(`${action} all ${type}s for this webhook.`);
+            }
+        }
+
+        function renderWebhookList() {
+            if (!Array.isArray(webhookList)) webhookList = [];
+            if (!webhookListContainer) return; 
+
+            const activeItems = [];
+            const inactiveItems = [];
+            
+            // Pre-calculate totals for badges
+            const totalMoons = moonWeatherList.filter(i => i.type === 'Moon').length;
+            const totalWeathers = moonWeatherList.filter(i => i.type === 'Weather').length;
+
+            webhookList.forEach((webhook, index) => {
+                // Calculate per-webhook stats
+                const moonSubs = moonWeatherList.filter(i => i.type === 'Moon' && (i.webhookIds || []).includes(webhook.id)).length;
+                const weatherSubs = moonWeatherList.filter(i => i.type === 'Weather' && (i.webhookIds || []).includes(webhook.id)).length;
+                
+                const moonChecked = (totalMoons > 0 && moonSubs === totalMoons) ? 'checked' : '';
+                const weatherChecked = (totalWeathers > 0 && weatherSubs === totalWeathers) ? 'checked' : '';
+                
+                // We'll set indeterminate via JS after render
+                const moonIndeterminate = (moonSubs > 0 && moonSubs < totalMoons);
+                const weatherIndeterminate = (weatherSubs > 0 && weatherSubs < totalWeathers);
+
+                const itemHtml = `
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="overflow-hidden me-2 flex-grow-1">
+                            <div class="d-flex align-items-center gap-2">
+                                <strong class="text-truncate">${webhook.description}</strong>
+                            </div>
+                            <small class="text-muted d-block text-truncate" style="font-size: 0.75rem;">${webhook.url}</small>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="form-check form-switch m-0" data-bs-toggle="tooltip" data-bs-trigger="hover" title="Enable/Disable Webhook Global">
+                                <input class="form-check-input" type="checkbox" ${webhook.active ? 'checked' : ''} onchange="toggleWebhookActive(${index})">
+                            </div>
+                            <button onclick="showWebhookModal(${index})" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" data-bs-trigger="hover" title="Edit Webhook">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button onclick="removeWebhook(${index})" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" data-bs-trigger="hover" title="Delete Webhook">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- New Quick Assign Row -->
+                    <div class="d-flex align-items-center gap-3 pt-2 border-top bg-body-tertiary rounded px-2 py-1">
+                        <small class="text-muted fw-bold" style="font-size: 0.75rem;">Notify For:</small>
+                        
+                        <div class="form-check form-check-inline m-0 d-flex align-items-center">
+                            <input class="form-check-input me-1" type="checkbox" id="wb-moon-${webhook.id}" ${moonChecked} onchange="toggleWebhookSubscription(${webhook.id}, 'Moon')">
+                            <label class="form-check-label small cursor-pointer text-primary" for="wb-moon-${webhook.id}">
+                                <i class="bi bi-moon-stars"></i> Moons <span class="text-muted" style="font-size:0.75em">(${moonSubs}/${totalMoons})</span>
+                            </label>
+                        </div>
+
+                        <div class="form-check form-check-inline m-0 d-flex align-items-center">
+                            <input class="form-check-input me-1" type="checkbox" id="wb-weather-${webhook.id}" ${weatherChecked} onchange="toggleWebhookSubscription(${webhook.id}, 'Weather')">
+                            <label class="form-check-label small cursor-pointer text-warning-emphasis" for="wb-weather-${webhook.id}">
+                                <i class="bi bi-cloud-haze"></i> Weathers <span class="text-muted" style="font-size:0.75em">(${weatherSubs}/${totalWeathers})</span>
+                            </label>
+                        </div>
+
+                        <div class="ms-auto">
+                            <button class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.75rem;" onclick="showWebhookEventsModal(${index})" title="Select Specific Events">
+                                <i class="bi bi-list-check"></i> Select
+                            </button>
+                        </div>
+                    </div>
+                    <!-- End Quick Assign -->
+
+                </div>
+                <!-- Inline script to set indeterminate state immediately -->
+                <script>
+                    (function(){
+                        const m = document.getElementById('wb-moon-${webhook.id}');
+                        if(m) m.indeterminate = ${moonIndeterminate};
+                        const w = document.getElementById('wb-weather-${webhook.id}');
+                        if(w) w.indeterminate = ${weatherIndeterminate};
+                    })();
+                <\/script>
+                `;
+
+                if (webhook.active) {
+                    activeItems.push(itemHtml);
+                } else {
+                    inactiveItems.push(itemHtml);
+                }
+            });
+
+            let fullHtml = '';
+            
+            fullHtml += '<h6 class="fw-bold text-success mb-2"><i class="bi bi-check-circle-fill"></i> Active Webhooks</h6>';
+            if (activeItems.length > 0) {
+                fullHtml += `<div class="list-group mb-4 shadow-sm gap-2">${activeItems.join('')}</div>`;
+            } else {
+                fullHtml += '<div class="alert alert-light border mb-4 small text-center">No active webhooks.</div>';
+            }
+
+            fullHtml += '<h6 class="fw-bold text-secondary mb-2"><i class="bi bi-pause-circle-fill"></i> Inactive Webhooks</h6>';
+            if (inactiveItems.length > 0) {
+                fullHtml += `<div class="list-group mb-2 shadow-sm opacity-75 gap-2">${inactiveItems.join('')}</div>`;
+            } else {
+                fullHtml += '<div class="alert alert-light border mb-2 small text-center">No inactive webhooks.</div>';
+            }
+
+            webhookListContainer.innerHTML = fullHtml;
+            
+            // Execute the inline scripts we injected (innerHTML doesn't auto-execute scripts)
+            // We need a manual pass to set indeterminate because innerHTML script tags don't run.
+            webhookList.forEach(webhook => {
+                const moonSubs = moonWeatherList.filter(i => i.type === 'Moon' && (i.webhookIds || []).includes(webhook.id)).length;
+                const weatherSubs = moonWeatherList.filter(i => i.type === 'Weather' && (i.webhookIds || []).includes(webhook.id)).length;
+                
+                const m = document.getElementById(`wb-moon-${webhook.id}`);
+                if(m) m.indeterminate = (moonSubs > 0 && moonSubs < totalMoons);
+                
+                const w = document.getElementById(`wb-weather-${webhook.id}`);
+                if(w) w.indeterminate = (weatherSubs > 0 && weatherSubs < totalWeathers);
+            });
+
+            refreshTooltips(); 
+        }
+
+        window.showWebhookModal = function(index) {
+            webhookModal.style.display = "flex"; webhookForm.reset(); webhookIndexInput.value = index;
+            if (index > -1) { const w = webhookList[index]; modalWebhookDescriptionInput.value = w.description; modalWebhookUrlInput.value = w.url; }
+        }
+        window.hideWebhookModal = function() { webhookModal.style.display = "none"; }
+        webhookForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const desc = modalWebhookDescriptionInput.value.trim(); const url = modalWebhookUrlInput.value.trim(); const idx = parseInt(webhookIndexInput.value);
+            if (!url.startsWith('http')) { showToast('Invalid URL format', 'error'); return; }
+            if (idx > -1) { webhookList[idx].description = desc; webhookList[idx].url = url; }
+            else { webhookList.push({ id: Date.now(), description: desc, url, active: webhookList.length === 0 }); }
+            saveSettings(); renderWebhookList(); hideWebhookModal();
+            showToast(idx > -1 ? 'Webhook updated successfully!' : 'Webhook added successfully!');
+        });
+        window.removeWebhook = function(index) { 
+            if (webhookList[index] && confirm(`Are you sure you want to delete webhook "${webhookList[index].description}"?`)) { 
+                webhookList.splice(index, 1); saveSettings(); renderWebhookList(); 
+                showToast("Webhook removed successfully.");
+            } 
+        }
+
+        // --- Item List Management ---
+        window.showItemModal = function(index) {
+            itemModal.style.display = "flex"; itemForm.reset(); itemIndexInput.value = -1; itemMultiplierInput.value = 3; itemChancesInput.value = ""; renderModalPreview();
+            if (index > -1) {
+                const item = moonWeatherList[index]; 
+                itemNameInput.value = item.name; 
+                itemTypeInput.value = item.type; 
+                itemMultiplierInput.value = item.multiplier; 
+                itemChancesInput.value = item.chances || ""; // Pre-fill chances
+                itemIndexInput.value = index;
+                modalTitle.textContent = `Edit Event: ${item.name}`; formSubmitButton.textContent = 'Update';
+            } else { modalTitle.textContent = 'Add New Event'; formSubmitButton.textContent = 'Save'; }
+        }
+        window.hideItemModal = function() { itemModal.style.display = "none"; }
+
+        function renderList() {
+            moonWeatherList.sort((a, b) => b.multiplier - a.multiplier);
+            const moonList = moonWeatherList.filter(item => item.type === 'Moon');
+            const weatherList = moonWeatherList.filter(item => item.type === 'Weather');
+            
+            moonListContainer.innerHTML = '';
+            weatherListContainer.innerHTML = '';
+            
+            const generateHTML = (list) => {
+                if (list.length === 0) return '<p class="text-muted small text-center p-3">No items.</p>';
+                
+                let html = '<div class="list-group list-group-flush">';
+                list.forEach((item) => {
+                    const originalIndex = moonWeatherList.findIndex(i => i.id === item.id);
+					let approxDurFormatted = item.approxDuration ? formatDuration(item.approxDuration * 60000).human : '';
+					let approxDurHtml = approxDurFormatted ? `<br><small class="text-muted">Last: ${approxDurFormatted}</small>` : '';
+                    
+                    // Chances Badge Logic
+                    const chancePct = formatChanceToPercent(item.chances);
+                    const chanceBadge = chancePct ? `<span class="badge bg-info text-dark ms-1" style="font-size: 0.7em;">${chancePct}</span>` : '';
+
+                    const activeCount = (item.webhookIds || []).length;
+                    const bellClass = activeCount > 0 ? 'bi-bell-fill text-primary' : 'bi-bell text-muted';
+                    const tooltipText = activeCount > 0 ? `Notify on ${activeCount} webhook(s)` : 'Notifications Disabled';
+
+                    html += `
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${item.name}</strong> 
+                            <span class="badge bg-secondary">${formatMultiplier(item.multiplier)}x</span>
+                            ${chanceBadge}
+                            ${approxDurHtml}
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button onclick="showItemWebhookModal(${originalIndex})" class="btn btn-sm btn-outline-light text-dark border-0" data-bs-toggle="tooltip" data-bs-trigger="hover" title="${tooltipText}">
+                                <i class="bi ${bellClass}"></i>
+                            </button>
+                            <button onclick="showItemModal(${originalIndex})" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" data-bs-trigger="hover" title="Edit Event">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button onclick="removeItem(${originalIndex})" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" data-bs-trigger="hover" title="Delete Event">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>`;
+                });
+                html += '</div>';
+                return html;
+            };
+            
+            moonListContainer.innerHTML = generateHTML(moonList);
+            weatherListContainer.innerHTML = generateHTML(weatherList);
+            
+            updateItemListDropdown(); updateRecentEventNameDropdown();
+            refreshTooltips(); 
+        }
+
+        function renderModalPreview() {
+            moonWeatherList.sort((a, b) => b.multiplier - a.multiplier);
+            
+            const moons = moonWeatherList.filter(i => i.type === 'Moon');
+            const weathers = moonWeatherList.filter(i => i.type === 'Weather');
+
+            const generateHTML = (items) => {
+                if (items.length === 0) return '<p class="text-muted small text-center p-2">None.</p>';
+                return items.map(item => 
+                    `<div class="px-2 py-1 border-bottom small d-flex justify-content-between">
+                        <span>${item.name}</span>
+                        <span class="badge bg-secondary">${formatMultiplier(item.multiplier)}x</span>
+                    </div>`
+                ).join('');
+            };
+
+            document.getElementById('modalMoonPreview').innerHTML = generateHTML(moons);
+            document.getElementById('modalWeatherPreview').innerHTML = generateHTML(weathers);
+        }
+
+        itemForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = itemNameInput.value.trim(); const type = itemTypeInput.value; const mult = parseFloat(itemMultiplierInput.value); const idx = parseInt(itemIndexInput.value);
+            const chances = itemChancesInput.value.trim(); // NEW
+
+            if (idx > -1) { 
+                moonWeatherList[idx].name = name; 
+                moonWeatherList[idx].type = type; 
+                moonWeatherList[idx].multiplier = mult; 
+                moonWeatherList[idx].chances = chances; // SAVE CHANCES
+            } else { 
+                const allWebhookIds = webhookList.map(w => w.id);
+                moonWeatherList.push({ 
+                    id: Date.now(), 
+                    name, type, 
+                    multiplier: mult, 
+                    chances: chances, // SAVE CHANCES
+                    webhookIds: allWebhookIds, 
+                    approxDuration: null 
+                }); 
+            }
+            saveSettings(); renderList(); hideItemModal();
+            showToast(idx > -1 ? `Event "${name}" updated successfully!` : `Event "${name}" added successfully!`);
+        });
+        window.removeItem = function(index) { 
+            if (moonWeatherList[index] && confirm(`Are you sure you want to delete "${moonWeatherList[index].name}"?`)) { 
+                moonWeatherList.splice(index, 1); saveSettings(); renderList(); 
+                showToast("Event removed successfully.");
+            } 
+        }
+
+        function updateUploadLabel(input) {
+            if (input.files && input.files.length > 0) {
+                const file = input.files[0];
+                if (file.name.toLowerCase().endsWith('.csv')) {
+                    Papa.parse(file, { header: true, skipEmptyLines: true, complete: function(results) { processUploadedData(results.data); } });
+                } else showToast("CSV only.", "error");
+            }
+        }
+        
+        function processUploadedData(data) {
+            let count = 0;
+            const allWebhookIds = webhookList.map(w => w.id);
+            
+            data.forEach(row => {
+                const name = row.Name || row.name; const type = row.Type || row.type; const mult = parseFloat(row.Multiplier || row.multiplier);
+                const chances = row.Chances || row.chances || ""; // IMPORT CHANCES
+
+                if (name && (type === 'Moon' || type === 'Weather') && !isNaN(mult) && mult > 0) {
+                    if (!moonWeatherList.some(i => i.name.toLowerCase() === name.toLowerCase())) {
+                        moonWeatherList.push({ 
+                            id: Date.now()+count, 
+                            name: name.trim(), 
+                            type: type.trim(), 
+                            multiplier: mult, 
+                            chances: chances, // SAVE IMPORTED CHANCES
+                            webhookIds: allWebhookIds, 
+                            approxDuration: null 
+                        });
+                        count++;
+                    }
+                }
+            });
+            if (count > 0) { 
+                addLog(`Imported ${count} items.`); 
+                saveSettings(); 
+                renderList();
+                showToast(`Successfully imported ${count} items.`);
+            } else {
+                showToast("No valid items found in CSV.", "info");
+            }
+        }
+
+        // --- Screen Capture & OCR ---
+        let worker = null;
+        function updateCaptureView(showCanvas) {
+            if (showCanvas) {
+                // Show raw
+                if (rawCaptureContainer) rawCaptureContainer.style.display = 'block';
+                viewPlaceholder.style.display = 'none';
+                
+                // Show processed if OCR is active
+                if (ocrScanInterval && processedCaptureContainer) {
+                    processedCaptureContainer.style.display = 'block';
+                    canvasElement.style.display = 'block';
+                }
+            } else {
+                if (rawCaptureContainer) rawCaptureContainer.style.display = 'none';
+                if (processedCaptureContainer) processedCaptureContainer.style.display = 'none';
+                canvasElement.style.display = 'none';
+                viewPlaceholder.style.display = 'block';
+            }
+        }
+        
+        function drawLivePreview() {
+            if (videoElement.readyState >= videoElement.HAVE_ENOUGH_DATA) {
+                const w = parseInt(regionWInput.value)||300; const h = parseInt(regionHInput.value)||50;
+                const x = parseInt(regionXInput.value)||0; const y = parseInt(regionYInput.value)||0;
+                captureViewCanvas.width = w; captureViewCanvas.height = h;
+                captureViewCanvas.getContext('2d').drawImage(videoElement, x, y, w, h, 0, 0, w, h);
+            }
+        }
+        
+        function updateProcessedView() {
+             if (videoElement.readyState >= videoElement.HAVE_ENOUGH_DATA) {
+                const w = parseInt(regionWInput.value)||300; const h = parseInt(regionHInput.value)||50;
+                const x = parseInt(regionXInput.value)||0; const y = parseInt(regionYInput.value)||0; const z = parseInt(zoomFactorInput.value)||1;
+                canvasElement.width = w * z; canvasElement.height = h * z;
+                const ctx = canvasElement.getContext('2d');
+                ctx.drawImage(videoElement, x, y, w, h, 0, 0, w * z, h * z);
+                applyImagePreprocessing(ctx, w * z, h * z);
+            }
+        }
+        
+        function updatePreviewAndSize() { drawLivePreview(); if (ocrScanInterval) updateProcessedView(); }
+
+        window.connectScreen = async function() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) return;
+            connectScreenButton.disabled = true; connectScreenButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Connecting...';
+            try {
+                const stream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: "always" }, audio: false });
+                videoElement.srcObject = stream;
+                videoElement.onloadedmetadata = () => {
+                    videoElement.play(); addLog("Screen connected.");
+                    connectScreenButton.innerHTML = '<i class="bi bi-display"></i> Connected (Stop)'; 
+                    connectScreenButton.classList.replace('btn-primary', 'btn-outline-primary');
+                    connectScreenButton.disabled = false; processButton.disabled = false;
+                    if (previewInterval) clearInterval(previewInterval);
+                    previewInterval = setInterval(drawLivePreview, 100); 
+                    updateCaptureView(true);
+                };
+                stream.getVideoTracks()[0].onended = () => {
+                    if (ocrScanInterval) toggleProcess();
+                    connectScreenButton.innerHTML = '<i class="bi bi-display"></i> Connect Screen'; 
+                    connectScreenButton.classList.replace('btn-outline-primary', 'btn-primary');
+                    processButton.disabled = true; updateCaptureView(false);
+                    if (previewInterval) clearInterval(previewInterval);
+                };
+            } catch (err) { 
+                connectScreenButton.disabled = false; 
+                connectScreenButton.innerHTML = '<i class="bi bi-display"></i> Connect Screen'; 
+            }
+        }
+
+        window.toggleProcess = function() {
+            if (ocrScanInterval) {
+                clearInterval(ocrScanInterval); ocrScanInterval = null;
+                processButton.innerHTML = '<i class="bi bi-play-circle"></i> Start OCR'; 
+                processButton.classList.replace('btn-danger', 'btn-success');
+                addLog("OCR stopped."); updateCooldownLog("Idle");
+                Object.values(activeItems).forEach(state => { if (state.endTimeTimeout) clearTimeout(state.endTimeTimeout); });
+                activeItems = {}; renderActiveStatus(); 
+                
+                // Hide processed view when stopped
+                if (processedCaptureContainer) processedCaptureContainer.style.display = 'none';
+            } else {
+                if (moonWeatherList.length === 0 || webhookList.filter(w => w.active).length === 0) { showToast("No items or active webhooks!", "error"); return; }
+                processButton.innerHTML = '<i class="bi bi-stop-circle"></i> Stop OCR'; 
+                processButton.classList.replace('btn-success', 'btn-danger');
+                addLog("OCR started."); saveSettings(); canvasElement.style.display = 'block';
+                
+                // Show processed view when started
+                if (processedCaptureContainer) processedCaptureContainer.style.display = 'block';
+                
+                updateProcessedView(); scanCameraImage(); 
+                ocrScanInterval = setInterval(scanCameraImage, 1000); 
+                cooldownsCardContent.innerHTML = ''; cooldownsPlaceholder.style.display = 'block';
+            }
+        }
+
+        function scanCameraImage() {
+            if (videoElement.readyState < videoElement.HAVE_ENOUGH_DATA) return;
+            
+            if (!ocrScanInterval) return;
+
+            const GRACE_PERIOD_MS = (parseInt(gracePeriodSecondsInput.value)||5) * 1000;
+            if (!worker) worker = Tesseract.createWorker({ logger: () => {} });
+
+            updateProcessedView(); 
+            new Promise(resolve => {
+                worker.load().then(() => worker.loadLanguage('eng')).then(() => worker.initialize('eng')).then(() => {
+                    worker.setParameters({ tessedit_pageseg_mode: 7 }); worker.recognize(canvasElement).then(resolve);
+                });
+            }).then(({ data: { text } }) => { 
+                if (!ocrScanInterval) return;
+
+                const detectedText = text.trim(); 
+                let statusList = [];
+                
+                const detectedItemsMap = new Map(); 
+                moonWeatherList.forEach(item => { if (detectedText.toLowerCase().includes(item.name.toLowerCase())) detectedItemsMap.set(item.name, item); }); 
+                const previousActive = Object.keys(activeItems); 
+                
+                detectedItemsMap.forEach((item, itemName) => {
+                    if (activeItems[itemName]) {
+                        if (activeItems[itemName].endTimeTimeout) {
+                            clearTimeout(activeItems[itemName].endTimeTimeout);
+                            activeItems[itemName].endTimeTimeout = null; activeItems[itemName].actualEndTime = null;
+                            addLog(`**${itemName}** re-detected.`);
+                        }
+                        statusList.push(`ACTIVE(${itemName})`);
+                    } else {
+                        addLog(`**[START]** **${itemName}** detected!`);
+                        activeItems[itemName] = { item, startTime: Date.now(), endTimeTimeout: null, actualEndTime: null }; 
+                        sendDiscordNotification(item, "start");
+                        statusList.push(`STARTED(${itemName})`);
+                    }
+                });
+                
+                previousActive.forEach(itemName => {
+                    if (!detectedItemsMap.has(itemName)) {
+                        const state = activeItems[itemName];
+                        if (!state.endTimeTimeout) {
+                            state.actualEndTime = Date.now(); 
+                            statusList.push(`GRACE(${itemName})`);
+                            state.endTimeTimeout = setTimeout(() => {
+                                if (activeItems[itemName] && activeItems[itemName].endTimeTimeout) {
+                                    const duration = state.actualEndTime - state.startTime;
+                                    addLog(`**[END]** **${itemName}** ended.`);
+                                    const idx = moonWeatherList.findIndex(i => i.name === itemName);
+                                    if (idx > -1) { moonWeatherList[idx].approxDuration = duration / 60000; saveSettings(); renderList(); }
+                                    addRecentEvent(state.item, duration, state.startTime);
+                                    sendDiscordNotification(state.item, "end", duration);
+                                    delete activeItems[itemName]; renderActiveStatus();
+                                }
+                            }, GRACE_PERIOD_MS);
+                        } else {
+                             statusList.push(`GRACE-WAIT(${itemName})`);
+                        }
+                    }
+                });
+                
+                const logStatus = statusList.length > 0 ? 'Detected: ' + statusList.join(', ') : 'Scanning...';
+                if (detectedText.length >= 3) updateCooldownLog(logStatus);
+
+                Tesseract.release(worker).then(() => { worker = null; });
+            });
+        }
+        
+        [regionXInput, regionYInput, regionWInput, regionHInput, zoomFactorInput].forEach(input => {
+             input.addEventListener('input', () => { updatePreviewAndSize(); markConfigAsUnsaved(); });
+        });
+        gracePeriodSecondsInput.addEventListener('change', saveSettings);
+        window.onclick = function(e) {
+            if (e.target.classList.contains('custom-modal-overlay')) {
+                hideItemModal();
+                hideWebhookModal();
+                hideConfigModal();
+                hideItemWebhookModal();
+                hideWebhookEventsModal();
+            }
+        }
+
+        // NEW: Webhook Specific Event Selection
+        window.showWebhookEventsModal = function(webhookIndex) {
+            if (!webhookList[webhookIndex]) return;
+            currentEditingWebhookIndex = webhookIndex;
+            const webhook = webhookList[webhookIndex];
+            
+            webhookEventsModalTitle.innerHTML = `Select events for <strong>${webhook.description}</strong>:`;
+            if(webhookEventsSearchInput) webhookEventsSearchInput.value = "";
+            
+            renderWebhookEventsList(webhook.id);
+            webhookEventsModal.style.display = 'flex';
+        }
+
+        window.hideWebhookEventsModal = function() {
+            webhookEventsModal.style.display = 'none';
+            currentEditingWebhookIndex = -1;
+        }
+
+        function renderWebhookEventsList(webhookId, filterText = "") {
+            let html = '';
+            
+            // Sort events: Type (Moon first), then Multiplier (Desc), then Name (Asc)
+            const sortedEvents = [...moonWeatherList].sort((a, b) => {
+                // 1. Sort by Type (Moon first)
+                if(a.type !== b.type) return a.type === 'Moon' ? -1 : 1;
+                // 2. Sort by Multiplier (Descending)
+                if(b.multiplier !== a.multiplier) return b.multiplier - a.multiplier;
+                // 3. Sort by Name (Ascending) as fallback
+                return a.name.localeCompare(b.name);
+            });
+
+            if (sortedEvents.length === 0) {
+                html = '<div class="alert alert-warning small mb-0">No events found. Go to Moons/Weathers tab to add some.</div>';
+            } else {
+                let visibleCount = 0;
+                let lastType = null;
+                
+                sortedEvents.forEach(item => {
+                    if (filterText && !item.name.toLowerCase().includes(filterText.toLowerCase())) return;
+                    
+                    // Add header if type changes
+                    if (item.type !== lastType) {
+                        const typeIcon = item.type === 'Moon' ? '<i class="bi bi-moon-stars"></i>' : '<i class="bi bi-cloud-haze"></i>';
+                        const typeColor = item.type === 'Moon' ? 'text-primary' : 'text-warning-emphasis';
+                        html += `<div class="small fw-bold ${typeColor} bg-body-tertiary border-bottom pt-2 pb-1 sticky-top mb-1" style="top:0;">${typeIcon} ${item.type}s</div>`;
+                        lastType = item.type;
+                    }
+
+                    visibleCount++;
+                    const isChecked = (item.webhookIds || []).includes(webhookId) ? 'checked' : '';
+                    const mult = formatMultiplier(item.multiplier);
+                    
+                    html += `
+                    <div class="webhook-select-item d-flex align-items-center justify-content-between p-2 border-bottom" onclick="toggleWebhookEventCheckbox('${item.id}')">
+                        <div class="overflow-hidden me-2">
+                            <div class="d-flex align-items-center gap-1 small fw-bold">
+                                ${item.name}
+                            </div>
+                            <div class="small text-muted" style="font-size: 0.75em;">${mult}x Multiplier</div>
+                        </div>
+                        <div class="form-check m-0">
+                            <input class="form-check-input webhook-event-checkbox" type="checkbox" value="${item.id}" id="weCheck-${item.id}" ${isChecked} onclick="event.stopPropagation()">
+                        </div>
+                    </div>`;
+                });
+                
+                if (visibleCount === 0) {
+                    html = '<div class="text-center text-muted small p-3">No matching events found.</div>';
+                }
+            }
+            webhookEventsListContainer.innerHTML = html;
+        }
+
+        window.filterWebhookEventsSelection = function() {
+            if (currentEditingWebhookIndex === -1) return;
+            const webhookId = webhookList[currentEditingWebhookIndex].id;
+            const filterText = webhookEventsSearchInput.value.trim();
+            renderWebhookEventsList(webhookId, filterText);
+        }
+
+        window.toggleWebhookEventCheckbox = function(id) {
+            const cb = document.getElementById(`weCheck-${id}`);
+            if (cb) cb.checked = !cb.checked;
+        }
+
+        window.toggleSelectAllEventsForWebhook = function(selectAll) {
+            const checkboxes = document.querySelectorAll('.webhook-event-checkbox');
+            checkboxes.forEach(cb => cb.checked = selectAll);
+        }
+
+        window.saveWebhookEvents = function() {
+            if (currentEditingWebhookIndex === -1) return;
+            const webhookId = webhookList[currentEditingWebhookIndex].id;
+            const webhookName = webhookList[currentEditingWebhookIndex].description;
+            
+            const checkboxes = document.querySelectorAll('.webhook-event-checkbox');
+            const selectedItemIds = new Set();
+            checkboxes.forEach(cb => {
+                if (cb.checked) selectedItemIds.add(parseInt(cb.value));
+            });
+
+            // We iterate through the DOM checkboxes to update state for visible items
+            checkboxes.forEach(cb => {
+                const itemId = parseInt(cb.value);
+                const isChecked = cb.checked;
+                const item = moonWeatherList.find(i => i.id === itemId);
+                if (item) {
+                    if (!item.webhookIds) item.webhookIds = [];
+                    if (isChecked) {
+                        if (!item.webhookIds.includes(webhookId)) item.webhookIds.push(webhookId);
+                    } else {
+                        item.webhookIds = item.webhookIds.filter(id => id !== webhookId);
+                    }
+                }
+            });
+
+            saveSettings();
+            renderList();
+            renderWebhookList();
+            hideWebhookEventsModal();
+            showToast(`Events updated for "${webhookName}"`);
+        }
+    </script>
+</body>
+</html>
