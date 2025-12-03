@@ -311,6 +311,11 @@
                                             <small class="text-muted" id="configNameDisplay" style="font-size: 0.75rem;">Current: Custom</small>
                                         </div>
 
+                                        <!-- NEW: Region Selector Button -->
+                                        <button id="btnSelectRegion" class="btn btn-sm btn-outline-primary w-100 mb-2" onclick="startRegionSelection()">
+                                            <i class="bi bi-bounding-box-circles"></i> Drag & Select Region
+                                        </button>
+
                                         <div class="row g-1">
                                             <div class="col-6">
                                                 <label class="form-label small mb-0" style="font-size: 0.75rem;">X (Left)</label>
@@ -339,13 +344,15 @@
                                     <hr class="my-1">
                                     <label class="form-label fw-bold small mb-1">Live Preview</label>
                                     
-                                    <div id="viewPanel" class="capture-canvas-container rounded flex-grow-1">
+                                    <div id="viewPanel" class="capture-canvas-container rounded flex-grow-1" style="overflow: auto;">
                                         <span id="viewPlaceholder" class="text-muted small">No source connected</span>
-                                        <div id="rawCaptureContainer" style="display:none;" class="text-center w-100">
+                                        <!-- Removed 'd-flex' class here to prevent override of display:none -->
+                                        <div id="rawCaptureContainer" style="display:none;" class="flex-column align-items-center w-100">
                                             <small class="text-muted d-block mb-1" style="font-size: 0.7em;">Raw</small>
                                             <canvas id="captureView" width="300" height="50" class="border"></canvas>
                                         </div>
-                                        <div id="processedCaptureContainer" style="display:none;" class="text-center w-100 mt-2 pt-1 border-top">
+                                        <!-- Removed 'd-flex' class here to prevent override of display:none -->
+                                        <div id="processedCaptureContainer" style="display:none;" class="flex-column align-items-center w-100 mt-2 pt-1 border-top">
                                             <small class="text-muted d-block mb-1" style="font-size: 0.7em;">Processed</small>
                                             <canvas id="canvasElement" width="1200" height="200" class="border border-primary" style="max-width: 100%; height: auto;"></canvas> 
                                         </div>
@@ -487,23 +494,27 @@
                         </div>
                         <div class="card-body d-flex flex-column p-2 overflow-hidden">
                             <div class="row g-2 mb-2">
-                                <div class="col-4">
-                                    <label class="form-label small mb-0" style="font-size: 0.75rem;">Timeframe</label>
-                                    <select id="statsTimeframeFilter" onchange="updateItemListDropdown()" class="form-select form-select-sm" style="font-size: 0.8rem;">
-                                        <option value="hour">Past Hour</option>
-                                        <option value="today" selected>Today</option>
-                                        <option value="day">Past 24 Hours</option>
-                                        <option value="week">Past Week</option>
-                                    </select>
+                                <div class="col-12">
+                                    <label class="form-label small mb-0" style="font-size: 0.75rem;">Date Range</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text py-0" style="font-size: 0.75rem;">From</span>
+                                        <input type="date" id="statsDateStart" class="form-control form-control-sm" 
+                                            onchange="if(this.value > document.getElementById('statsDateEnd').value) { showToast('Start date cannot be after End date.', 'error'); this.value = document.getElementById('statsDateEnd').value; } updateItemListDropdown();" 
+                                            style="font-size: 0.8rem;">
+                                        <span class="input-group-text py-0" style="font-size: 0.75rem;">To</span>
+                                        <input type="date" id="statsDateEnd" class="form-control form-control-sm" 
+                                            onchange="if(this.value < document.getElementById('statsDateStart').value) { showToast('End date cannot be before Start date.', 'error'); this.value = document.getElementById('statsDateStart').value; } updateItemListDropdown();" 
+                                            style="font-size: 0.8rem;">
+                                    </div>
                                 </div>
-                                <div class="col-4">
+                                <div class="col-6">
                                     <label class="form-label small mb-0" style="font-size: 0.75rem;">Metric</label>
                                     <select id="statsMetricFilter" onchange="updateEventStatistics()" class="form-select form-select-sm" style="font-size: 0.8rem;">
                                         <option value="count">Occurrences</option>
                                         <option value="avgTime">Avg Time</option>
                                     </select>
                                 </div>
-                                <div class="col-4">
+                                <div class="col-6">
                                     <label class="form-label small mb-0" style="font-size: 0.75rem;">Event</label>
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text py-0"><i class="bi bi-search"></i></span>
@@ -642,10 +653,15 @@
                                 </div>
                                 <div class="mt-2 small text-muted">
                                     And all members of <br>
-                                    <a href="https://discord.gg/YFy8s5E5" target="_blank" class="text-decoration-none fw-bold">FYP-TBND</a> & 
+                                    <a href="https://discord.gg/aE7e6SnB" target="_blank" class="text-decoration-none fw-bold">FYP-TBND</a> & 
                                     <a href="https://discord.gg/YFy8s5E5" target="_blank" class="text-decoration-none fw-bold">RMTG</a>
                                 </div>
                             </div>
+                            
+                            <div class="mt-4 border-top pt-3 small text-muted">
+                                &copy; <span id="currentYear"></span> All Rights Reserved.
+                            </div>
+                            <script>document.getElementById('currentYear').textContent = new Date().getFullYear();</script>
                         </div>
                     </div>
                 </div>
@@ -817,6 +833,24 @@
         </div>
     </div>
 
+    <!-- NEW: Region Selection Modal -->
+    <div id="regionSelectionModal" class="custom-modal-overlay" style="z-index: 2000;">
+        <div class="d-flex flex-column align-items-center justify-content-center w-100 h-100 p-4">
+            <div class="bg-dark rounded p-2 d-flex flex-column gap-2" style="max-width: 95vw; max-height: 90vh;">
+                <div class="d-flex justify-content-between align-items-center text-white px-2">
+                    <span><i class="bi bi-mouse"></i> Drag to select area</span>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-success" onclick="confirmRegionSelection()"><i class="bi bi-check-lg"></i> Confirm</button>
+                        <button class="btn btn-sm btn-secondary" onclick="closeRegionSelection()"><i class="bi bi-x-lg"></i> Cancel</button>
+                    </div>
+                </div>
+                <div id="selectionCanvasContainer" style="position: relative; overflow: hidden; background: #000; border: 1px solid #444;">
+                    <canvas id="selectionCanvas" style="cursor: crosshair; display: block; max-width: 100%; max-height: 80vh; object-fit: contain;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <script>
         // --- Global Variables ---
@@ -910,6 +944,8 @@
         
         // --- Chart Variables ---
         let eventStatsChartInstance = null;
+        
+        let localStream = null; // Explicit stream tracker
 
         // --- Initial Load & Event Listeners ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -1027,29 +1063,34 @@
         }
 
         // --- Event Statistics Functions ---
-        function getTimeRange(timeframe) {
-            const now = new Date();
-            let startTime;
-            switch (timeframe) {
-                case 'hour': startTime = new Date(now.getTime() - (60 * 60 * 1000)); break;
-                case 'today': 
-                    startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate()); 
-                    break;
-                case 'day': startTime = new Date(now.getTime() - (24 * 60 * 60 * 1000)); break;
-                case 'week': startTime = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000)); break;
-                default: startTime = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000)); break;
+        function getTimeRange() {
+            const startInput = document.getElementById('statsDateStart');
+            const endInput = document.getElementById('statsDateEnd');
+            
+            if (!startInput || !endInput) {
+                // Fallback if inputs missing
+                const now = new Date();
+                const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                return { startTime: start, now: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999) };
             }
+
+            // Parse inputs as local dates
+            const startDateParts = startInput.value.split('-');
+            const startTime = new Date(startDateParts[0], startDateParts[1] - 1, startDateParts[2], 0, 0, 0);
+
+            const endDateParts = endInput.value.split('-');
+            const now = new Date(endDateParts[0], endDateParts[1] - 1, endDateParts[2], 23, 59, 59, 999);
+
             return { startTime, now };
         }
 
         window.updateItemListDropdown = function() {
-            const timeframeEl = document.getElementById('statsTimeframeFilter');
-            if (!timeframeEl) return;
-            const timeframe = timeframeEl.value;
+            // Use new date range logic
+            const { startTime, now } = getTimeRange();
+            
             const typeFilter = document.querySelector('input[name="statsTypeFilter"]:checked').value;
             const dataList = document.getElementById('statsItemDataList');
             const dailyEvents = JSON.parse(localStorage.getItem('dailyEvents')) || {};
-            const { startTime, now } = getTimeRange(timeframe);
 
             const availableItems = new Set();
             Object.keys(dailyEvents).forEach(dateKey => {
@@ -1096,18 +1137,21 @@
 
         window.updateEventStatistics = function() {
             const dailyEvents = JSON.parse(localStorage.getItem('dailyEvents')) || {};
-            const timeframeEl = document.getElementById('statsTimeframeFilter');
-            if (!timeframeEl) return;
-            const timeframe = timeframeEl.value;
+            
+            // FIXED: Removed dependency on the deleted 'statsTimeframeFilter' element
+            // Now uses the date inputs directly via getTimeRange()
+            const { startTime, now } = getTimeRange();
+            
             const typeFilter = document.querySelector('input[name="statsTypeFilter"]:checked').value;
             const itemFilterVal = document.getElementById('statsItemFilter').value.trim().toLowerCase();
             const metric = document.getElementById('statsMetricFilter').value; 
-            const { startTime, now } = getTimeRange(timeframe);
             
             const aggregatedData = {};
             
             Object.keys(dailyEvents).forEach(dateKey => {
-                dailyEvents[dateKey].forEach(event => {
+                const events = dailyEvents[dateKey];
+                events.forEach(event => {
+                    // Filter by date range
                     if (event.start >= startTime.getTime() && event.start <= now.getTime()) {
                         const passesTypeFilter = (typeFilter === 'All') || (event.type === typeFilter);
                         const passesItemFilter = (itemFilterVal === '') || (event.name.toLowerCase().includes(itemFilterVal));
@@ -1422,7 +1466,6 @@
         function loadSettings() {
             const savedWebhookList = localStorage.getItem('webhookList');
             if (savedWebhookList) {
-                // FIXED: Safer parsing logic
                 try { 
                     const parsed = JSON.parse(savedWebhookList);
                     if (Array.isArray(parsed)) {
@@ -1477,7 +1520,11 @@
             
             const now = new Date();
             const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-            eventDatePicker.value = today;
+            
+            // Initialize Date Pickers
+            if(eventDatePicker) eventDatePicker.value = today;
+            if(document.getElementById('statsDateStart')) document.getElementById('statsDateStart').value = today;
+            if(document.getElementById('statsDateEnd')) document.getElementById('statsDateEnd').value = today;
             
             updateSearchDatalist(); 
             renderRecentEvents(); 
@@ -1712,7 +1759,7 @@
             fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content: "🔔 **Test Message** from FYP Notifier! If you see this, your webhook is working correctly." }),
+                body: JSON.stringify({ content: "🔔 **Test Message** from FYP Event Notifier! If you see this, your webhook is working correctly." }),
             })
             .then(response => {
                 if (response.ok) {
@@ -2184,20 +2231,31 @@
         let worker = null;
         function updateCaptureView(showCanvas) {
             if (showCanvas) {
-                // Show raw
-                if (rawCaptureContainer) rawCaptureContainer.style.display = 'block';
-                viewPlaceholder.style.display = 'none';
+                // 1. Connected State
+                if (viewPlaceholder) viewPlaceholder.style.display = 'none';
+
+                // Always show Raw when connected (Use 'flex' to maintain centering)
+                if (rawCaptureContainer) {
+                    rawCaptureContainer.style.display = 'flex'; 
+                }
                 
-                // Show processed if OCR is active
-                if (ocrScanInterval && processedCaptureContainer) {
-                    processedCaptureContainer.style.display = 'block';
-                    canvasElement.style.display = 'block';
+                // Show Processed ONLY if OCR is active
+                if (processedCaptureContainer) {
+                    if (ocrScanInterval) {
+                        processedCaptureContainer.style.display = 'flex'; 
+                        if (canvasElement) canvasElement.style.display = 'block';
+                    } else {
+                        processedCaptureContainer.style.display = 'none';
+                    }
                 }
             } else {
+                // 2. Disconnected State
                 if (rawCaptureContainer) rawCaptureContainer.style.display = 'none';
                 if (processedCaptureContainer) processedCaptureContainer.style.display = 'none';
-                canvasElement.style.display = 'none';
-                viewPlaceholder.style.display = 'block';
+                if (canvasElement) canvasElement.style.display = 'none';
+                
+                // Show Placeholder
+                if (viewPlaceholder) viewPlaceholder.style.display = 'block';
             }
         }
         
@@ -2223,53 +2281,132 @@
         
         function updatePreviewAndSize() { drawLivePreview(); if (ocrScanInterval) updateProcessedView(); }
 
+        // Helper to stop stream and reset UI
+        function stopStream() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            videoElement.srcObject = null;
+            
+            // Force stop OCR if running (no confirm dialog when stream dies/is cut)
+            if (ocrScanInterval) toggleProcess(true);
+            
+            connectScreenButton.innerHTML = '<i class="bi bi-display"></i> Connect'; 
+            connectScreenButton.classList.replace('btn-outline-primary', 'btn-primary');
+            connectScreenButton.disabled = false;
+            
+            processButton.disabled = true; 
+            updateCaptureView(false);
+            
+            if (previewInterval) clearInterval(previewInterval);
+        }
+
         window.connectScreen = async function() {
+            // 1. Check if connected -> Stop
+            if (localStream && localStream.active) {
+                stopStream();
+                return; 
+            }
+
+            // 2. Connect
             if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) return;
-            connectScreenButton.disabled = true; connectScreenButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Connecting...';
+            
+            connectScreenButton.disabled = true; 
+            connectScreenButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Connecting...';
+            
             try {
                 const stream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: "always" }, audio: false });
+                localStream = stream; // Store reference
                 videoElement.srcObject = stream;
+                
                 videoElement.onloadedmetadata = () => {
-                    videoElement.play(); addLog("Screen connected.");
+                    videoElement.play(); 
+                    addLog("Screen connected.");
                     connectScreenButton.innerHTML = '<i class="bi bi-display"></i> Connected (Stop)'; 
                     connectScreenButton.classList.replace('btn-primary', 'btn-outline-primary');
-                    connectScreenButton.disabled = false; processButton.disabled = false;
+                    connectScreenButton.disabled = false; 
+                    processButton.disabled = false;
+                    
                     if (previewInterval) clearInterval(previewInterval);
                     previewInterval = setInterval(drawLivePreview, 100); 
                     updateCaptureView(true);
                 };
+
+                // Handle stream ending (via Stop button or Chrome UI)
                 stream.getVideoTracks()[0].onended = () => {
-                    if (ocrScanInterval) toggleProcess();
-                    connectScreenButton.innerHTML = '<i class="bi bi-display"></i> Connect Screen'; 
-                    connectScreenButton.classList.replace('btn-outline-primary', 'btn-primary');
-                    processButton.disabled = true; updateCaptureView(false);
-                    if (previewInterval) clearInterval(previewInterval);
+                    stopStream();
                 };
             } catch (err) { 
+                console.error(err);
                 connectScreenButton.disabled = false; 
-                connectScreenButton.innerHTML = '<i class="bi bi-display"></i> Connect Screen'; 
+                connectScreenButton.innerHTML = '<i class="bi bi-display"></i> Connect'; 
+                showToast("Connection cancelled or failed.", "error");
             }
         }
 
-        window.toggleProcess = function() {
+        window.toggleProcess = function(forceStop = false) {
             if (ocrScanInterval) {
-                clearInterval(ocrScanInterval); ocrScanInterval = null;
+                // --- STOPPING LOGIC ---
+                const activeKeys = Object.keys(activeItems);
+                
+                // 1. Check for active items and warn user (unless forced)
+                if (!forceStop && activeKeys.length > 0) {
+                    const confirmMsg = `⚠️ Warning: ${activeKeys.length} event(s) are currently active.\n\nStopping OCR now will mark them as ENDED and send final notifications.\n\nAre you sure you want to stop?`;
+                    if (!confirm(confirmMsg)) return; // Abort stop if user cancels
+                }
+
+                // 2. Gracefully end all active items
+                if (activeKeys.length > 0) {
+                    activeKeys.forEach(key => {
+                        const state = activeItems[key];
+                        if(state) {
+                            // Clear existing timeout so we don't double-send
+                            if (state.endTimeTimeout) clearTimeout(state.endTimeTimeout);
+                            
+                            const duration = Date.now() - state.startTime;
+                            
+                            // Log
+                            addLog(`**[STOPPED]** **${state.item.name}** ended (OCR Stopped).`);
+                            
+                            // Update Stats (Approx Duration)
+                            const idx = moonWeatherList.findIndex(i => i.name === state.item.name);
+                            if (idx > -1) { 
+                                moonWeatherList[idx].approxDuration = duration / 60000; 
+                            }
+                            
+                            // History & Notification
+                            addRecentEvent(state.item, duration, state.startTime);
+                            sendDiscordNotification(state.item, "end", duration);
+                        }
+                    });
+                    saveSettings(); // Save updated durations
+                }
+
+                // 3. Clear Interval and State
+                clearInterval(ocrScanInterval); 
+                ocrScanInterval = null;
+                activeItems = {}; 
+                renderActiveStatus(); 
+                
+                // 4. UI Updates
                 processButton.innerHTML = '<i class="bi bi-play-circle"></i> Start OCR'; 
                 processButton.classList.replace('btn-danger', 'btn-success');
-                addLog("OCR stopped."); updateCooldownLog("Idle");
-                Object.values(activeItems).forEach(state => { if (state.endTimeTimeout) clearTimeout(state.endTimeTimeout); });
-                activeItems = {}; renderActiveStatus(); 
+                addLog("OCR stopped."); 
+                updateCooldownLog("Idle");
                 
                 // Hide processed view when stopped
                 if (processedCaptureContainer) processedCaptureContainer.style.display = 'none';
             } else {
+                // --- STARTING LOGIC ---
                 if (moonWeatherList.length === 0 || webhookList.filter(w => w.active).length === 0) { showToast("No items or active webhooks!", "error"); return; }
                 processButton.innerHTML = '<i class="bi bi-stop-circle"></i> Stop OCR'; 
                 processButton.classList.replace('btn-success', 'btn-danger');
-                addLog("OCR started."); saveSettings(); canvasElement.style.display = 'block';
+                addLog("OCR started."); saveSettings(); 
+                if (canvasElement) canvasElement.style.display = 'block';
                 
-                // Show processed view when started
-                if (processedCaptureContainer) processedCaptureContainer.style.display = 'block';
+                // Show processed view when started (Use 'flex' for centering)
+                if (processedCaptureContainer) processedCaptureContainer.style.display = 'flex';
                 
                 updateProcessedView(); scanCameraImage(); 
                 ocrScanInterval = setInterval(scanCameraImage, 1000); 
@@ -2357,6 +2494,7 @@
                 hideConfigModal();
                 hideItemWebhookModal();
                 hideWebhookEventsModal();
+                closeRegionSelection(); // NEW: Click outside closes selection too
             }
         }
 
@@ -2482,6 +2620,133 @@
             hideWebhookEventsModal();
             showToast(`Events updated for "${webhookName}"`);
         }
+
+        // --- NEW: Drag & Select Region Logic ---
+        const regionSelectionModal = document.getElementById('regionSelectionModal');
+        const selectionCanvas = document.getElementById('selectionCanvas');
+        let selectionCtx = null;
+        let isDraggingSelection = false;
+        let selectionStartX = 0;
+        let selectionStartY = 0;
+        let selectionEndX = 0;
+        let selectionEndY = 0;
+        let selectionLoopId = null;
+
+        window.startRegionSelection = function() {
+            if (!localStream || !videoElement.srcObject) {
+                showToast("Please connect screen source first.", "error");
+                return;
+            }
+
+            if (videoElement.readyState < videoElement.HAVE_ENOUGH_DATA) {
+                showToast("Waiting for video stream...", "info");
+                return;
+            }
+
+            // Set canvas size to match video resolution exactly
+            selectionCanvas.width = videoElement.videoWidth;
+            selectionCanvas.height = videoElement.videoHeight;
+            selectionCtx = selectionCanvas.getContext('2d');
+
+            // Reset selection
+            selectionStartX = 0; selectionStartY = 0; selectionEndX = 0; selectionEndY = 0;
+            isDraggingSelection = false;
+
+            regionSelectionModal.style.display = 'flex';
+            
+            // Start the draw loop
+            updateSelectionCanvas();
+        }
+
+        function updateSelectionCanvas() {
+            if (regionSelectionModal.style.display === 'none') return;
+
+            // Draw current video frame
+            if (videoElement.readyState >= videoElement.HAVE_ENOUGH_DATA) {
+                selectionCtx.drawImage(videoElement, 0, 0, selectionCanvas.width, selectionCanvas.height);
+            }
+
+            // Draw selection rectangle
+            const w = selectionEndX - selectionStartX;
+            const h = selectionEndY - selectionStartY;
+            
+            if (w !== 0 && h !== 0) {
+                selectionCtx.strokeStyle = 'red';
+                selectionCtx.lineWidth = 3;
+                selectionCtx.strokeRect(selectionStartX, selectionStartY, w, h);
+                
+                selectionCtx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+                selectionCtx.fillRect(selectionStartX, selectionStartY, w, h);
+            }
+
+            selectionLoopId = requestAnimationFrame(updateSelectionCanvas);
+        }
+
+        window.closeRegionSelection = function() {
+            if (selectionLoopId) {
+                cancelAnimationFrame(selectionLoopId);
+                selectionLoopId = null;
+            }
+            regionSelectionModal.style.display = 'none';
+        }
+
+        window.confirmRegionSelection = function() {
+            // Calculate final rect ensuring positive width/height
+            let x = Math.min(selectionStartX, selectionEndX);
+            let y = Math.min(selectionStartY, selectionEndY);
+            let w = Math.abs(selectionEndX - selectionStartX);
+            let h = Math.abs(selectionEndY - selectionStartY);
+
+            if (w < 10 || h < 10) {
+                showToast("Selection too small. Please drag a larger area.", "error");
+                return;
+            }
+
+            // Update inputs
+            regionXInput.value = Math.round(x);
+            regionYInput.value = Math.round(y);
+            regionWInput.value = Math.round(w);
+            regionHInput.value = Math.round(h);
+
+            // Trigger updates
+            updatePreviewAndSize();
+            markConfigAsUnsaved();
+            
+            closeRegionSelection();
+            showToast("Region updated successfully!");
+        }
+
+        // Mouse Event Listeners for Selection Canvas
+        selectionCanvas.addEventListener('mousedown', (e) => {
+            isDraggingSelection = true;
+            const rect = selectionCanvas.getBoundingClientRect();
+            // Map CSS pixel coordinates to Canvas (Video) coordinates
+            const scaleX = selectionCanvas.width / rect.width;
+            const scaleY = selectionCanvas.height / rect.height;
+            
+            selectionStartX = (e.clientX - rect.left) * scaleX;
+            selectionStartY = (e.clientY - rect.top) * scaleY;
+            selectionEndX = selectionStartX; // Init end to start
+            selectionEndY = selectionStartY;
+        });
+
+        selectionCanvas.addEventListener('mousemove', (e) => {
+            if (!isDraggingSelection) return;
+            const rect = selectionCanvas.getBoundingClientRect();
+            const scaleX = selectionCanvas.width / rect.width;
+            const scaleY = selectionCanvas.height / rect.height;
+
+            selectionEndX = (e.clientX - rect.left) * scaleX;
+            selectionEndY = (e.clientY - rect.top) * scaleY;
+        });
+
+        selectionCanvas.addEventListener('mouseup', () => {
+            isDraggingSelection = false;
+        });
+
+        selectionCanvas.addEventListener('mouseout', () => {
+            isDraggingSelection = false;
+        });
     </script>
 </body>
 </html>
