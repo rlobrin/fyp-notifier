@@ -1,765 +1,494 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FYP Notifier (Dual Scan)</title>
     
     <!-- Tab Icon -->
-    <link rel="icon" href="page icon.jpg" type="image/jpeg">
+    <!-- <link rel="icon" href="page icon.jpg" type="image/jpeg"> -->
     
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons (Retained for icon usage) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        gray: {
+                            750: '#2d3748',
+                            850: '#1a202c',
+                            950: '#0d1117',
+                        }
+                    },
+                    gridTemplateColumns: {
+                        'dashboard': '1.5fr 1fr 1fr',
+                    }
+                }
+            }
+        }
+    </script>
     
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.4/dist/tesseract.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <style>
-        /* Global Reset for full height app */
-        html, body {
-            height: 100%;
-            margin: 0;
-            overflow: hidden; /* Prevent body scrollbar */
-            background-color: var(--bs-tertiary-bg); /* Adaptive background */
-            color: var(--bs-body-color);
-            transition: background-color 0.3s, color 0.3s;
-        }
+        /* Custom Scrollbar for Webkit */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px; }
+        .dark ::-webkit-scrollbar-thumb { background: #4a5568; }
+        ::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+        .dark ::-webkit-scrollbar-thumb:hover { background: #718096; }
 
-        /* --- Main App Grid --- */
-        .app-grid-layout {
-            display: grid;
-            gap: 15px;
-            /* 3 Columns: 1.5fr, 1fr, 1fr */
-            grid-template-columns: 1.5fr 1fr 1fr; 
-            /* Rows: Tabs (auto), Content (remaining space) */
-            grid-template-rows: auto 1fr; 
-            height: 98vh; 
-            width: 98%;
-            margin: 1vh auto;
-            box-sizing: border-box;
-        }
-
-        /* --- Grid Areas --- */
-        .area-tabs { 
-            grid-column: 1 / -1; 
-            grid-row: 1; 
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--bs-border-color);
-            padding-bottom: 5px;
-        }
-        
-        /* The main content container must strictly fill the remaining row height */
-        .area-content { 
-            grid-column: 1 / -1; 
-            grid-row: 2; 
-            min-height: 0; 
-            height: 100%; 
-            overflow: hidden; 
-            background: var(--bs-body-bg); /* Adaptive background */
-            border: 1px solid var(--bs-border-color);
-            border-radius: 0.375rem;
-            box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
-            padding: 0; 
-        }
-
-        /* --- Tab System --- */
-        .nav-tabs {
-            border-bottom: none;
-        }
-        .tab-content-wrapper {
-            height: 100%;
-            width: 100%;
-            display: none;
-            overflow-y: auto; 
-            padding: 1rem;
-        }
-        .tab-content-wrapper.active { display: block; }
-
-        /* --- Internal Grids --- */
-        .main-tab-grid {
-            display: grid;
-            gap: 15px;
-            grid-template-columns: 1.5fr 1fr 1fr; 
-            grid-template-rows: 1fr; /* Fill height */
-            height: 100%;
-        }
-
-        .moon-tab-grid {
-            display: grid;
-            gap: 15px;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr; /* Fill height */
-            height: 100%;
-        }
-
-        /* --- Custom UI Elements --- */
-        .console-log {
-            background-color: #212529;
-            color: #00ff00;
-            font-family: monospace;
-            font-size: 0.8rem;
-            resize: none;
-            border: 1px solid #495057;
-        }
-
-        .capture-canvas-container {
-            border: 2px dashed var(--bs-border-color);
-            background: var(--bs-tertiary-bg);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
-            overflow: hidden; /* Changed from auto to hidden to control child size better */
-            position: relative;
-        }
-
-        /* --- List Section Styling --- */
-        .list-split-wrapper {
-            flex: 1 1 auto; 
-            height: 0; 
-            min-height: 0;
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .list-section {
-            flex: 1; /* Share width equally */
-            display: flex;
-            flex-direction: column;
-            height: 100%; /* Fill the wrapper height */
-            border: 1px solid var(--bs-border-color);
-            border-radius: 4px;
-            background-color: var(--bs-body-bg);
-            overflow: hidden; /* Contain children */
-        }
-
-        .list-section-header { flex-shrink: 0; }
-        .list-scroll-area { 
-            flex-grow: 1; 
-            overflow-y: auto; 
-            background-color: var(--bs-body-bg);
-            /* Scrollbar styling for Webkit */
-            scrollbar-width: thin;
-        }
-
-        /* --- Generic Slide-to-Reveal Styling (Buttons slide IN from right) --- */
-        .slide-reveal-wrapper {
-            position: relative;
-            overflow: hidden;
-            border-bottom: 1px solid var(--bs-border-color);
-            background-color: var(--bs-body-bg);
-            padding: 0;
-            cursor: pointer;
-        }
-        .slide-reveal-wrapper:last-child {
-            border-bottom: none;
-        }
-        
-        .slide-reveal-content {
-            position: relative;
-            z-index: 1;
-            background-color: var(--bs-body-bg);
-            width: 100%;
-            /* Content stays put so text remains visible */
-        }
-
+        /* Slide Reveal Animation Helpers */
+        .slide-reveal-wrapper { position: relative; overflow: hidden; transition: background-color 0.2s; }
         .slide-reveal-action {
-            position: absolute;
-            top: 0;
-            right: -100px; /* Initially hidden off-screen to the right */
-            height: 100%;
-            width: 100px; 
-            background-color: var(--bs-body-bg);
-            display: flex;
-            z-index: 10; /* On top of content */
-            transition: right 0.2s ease-out;
+            position: absolute; top: 0; right: -100px; bottom: 0; width: 100px;
+            display: flex; transition: right 0.2s ease-out; z-index: 20;
         }
+        .slide-reveal-wrapper:hover .slide-reveal-action { right: 0; }
         
-        /* Hover Effect: Slide Buttons IN from Right */
-        .slide-reveal-wrapper:hover .slide-reveal-action {
-            right: 0;
-        }
+        /* Modal Animation */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fadeIn { animation: fadeIn 0.2s ease-out; }
+
+        /* Toast Animation */
+        @keyframes slideInToast { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .animate-slideInToast { animation: slideInToast 0.3s ease-out forwards; }
         
-        .slide-btn {
-            width: 50%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .slide-btn-edit { background-color: #6c757d; }
-        .slide-btn-edit:hover { background-color: #5c636a; }
-        .slide-btn-delete { background-color: #dc3545; }
-        .slide-btn-delete:hover { background-color: #bb2d3b; }
-
-        /* --- Modal Styling --- */
-        .custom-modal-overlay {
-            display: none; 
-            position: fixed; 
-            z-index: 1055; 
-            left: 0; top: 0; 
-            width: 100%; height: 100%; 
-            overflow: auto; 
-            background-color: rgba(0,0,0,0.5); 
-            backdrop-filter: blur(2px);
-            align-items: center; 
-            justify-content: center; 
-        }
-
-        .custom-modal-dialog {
-            background: var(--bs-body-bg);
-            border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            width: 90%;
-            max-width: 500px;
-            display: flex;
-            flex-direction: column;
-            max-height: 90vh;
-            overflow: hidden;
-            animation: fadeIn 0.2s ease-out;
-            color: var(--bs-body-color);
-        }
-
-        .custom-modal-lg { max-width: 800px; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .custom-modal-header {
-            padding: 1rem;
-            border-bottom: 1px solid var(--bs-border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: var(--bs-tertiary-bg);
-        }
-
-        .custom-modal-body { padding: 1.5rem; overflow-y: auto; }
-
-        .webhook-select-item {
-            transition: background-color 0.2s;
-            cursor: pointer;
-        }
-        .webhook-select-item:hover { background-color: var(--bs-tertiary-bg) !important; }
-
-        /* --- TOAST NOTIFICATIONS --- */
-        .toast-container {
-            position: fixed; bottom: 20px; right: 20px; z-index: 1060;
-            display: flex; flex-direction: column; gap: 10px;
-            pointer-events: none;
-        }
-        .custom-toast {
-            background: rgba(33, 37, 41, 0.95);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            display: flex; align-items: center; gap: 12px;
-            min-width: 280px; max-width: 350px;
-            animation: slideInToast 0.3s ease-out forwards;
-            font-size: 0.9rem; pointer-events: auto;
-            border-left: 4px solid #6c757d;
-        }
-        .custom-toast.success { border-left-color: #198754; }
-        .custom-toast.error { border-left-color: #dc3545; }
-        .custom-toast.info { border-left-color: #0dcaf0; }
-
-        @keyframes slideInToast {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes fadeOutToast {
-            to { opacity: 0; transform: translateY(10px); }
-        }
-
-        .min-h-0 { min-height: 0 !important; }
-
-        /* Zoom Badge Overlay in Preview */
-        .zoom-badge {
-            position: absolute;
-            top: 5px; right: 5px;
-            background: rgba(0,0,0,0.6);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 2px;
-        }
-
-        /* Scoped Scrollbar Helper */
-        .scroll-y-auto {
-            overflow-y: auto;
-            min-height: 0; /* Important for flex children to shrink */
-        }
-
-        @media (max-width: 992px) {
-            html, body { height: auto; overflow: auto; }
-            .app-grid-layout {
-                display: flex; flex-direction: column;
-                height: auto; margin: 10px; width: auto;
-            }
-            .area-content { height: auto; overflow: visible; }
-            .main-tab-grid, .moon-tab-grid { display: flex; flex-direction: column; height: auto; }
-            .list-split-wrapper { flex-direction: column; height: auto; }
-            .list-section { height: 250px; flex: none; }
+        /* Checkbox Switch Logic handled by Tailwind, but custom styles for indeterminate might be needed */
+        input[type="checkbox"]:indeterminate {
+            background-color: #3b82f6;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10h8'/%3e%3c/svg%3e");
         }
     </style>
 </head>
-<body>
+<body class="h-screen w-screen overflow-hidden bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 transition-colors duration-300">
 
-    <div class="app-grid-layout">
-        <div class="area-tabs">
-            <ul class="nav nav-tabs border-bottom-0">
-                <li class="nav-item">
-                    <a class="nav-link active fw-bold" href="#" onclick="openTab(event, 'mainTab')"><i class="bi bi-camera-video"></i> Main Scanner</a>
+    <!-- Main Grid Layout -->
+    <div class="flex flex-col h-full lg:grid lg:grid-cols-dashboard lg:grid-rows-[auto_1fr] gap-4 p-4 lg:p-2 max-w-[1920px] mx-auto">
+        
+        <!-- Header / Tabs Area -->
+        <div class="col-span-full flex justify-between items-center border-b border-gray-300 dark:border-gray-700 pb-2">
+            <ul class="flex space-x-1">
+                <li>
+                    <button onclick="openTab(event, 'mainTab')" class="nav-link px-4 py-2 rounded-t-lg text-sm font-bold bg-white dark:bg-gray-800 text-blue-600 border-b-2 border-blue-600 transition-colors">
+                        <i class="bi bi-camera-video mr-1"></i> Main Scanner
+                    </button>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link text-body" href="#" onclick="openTab(event, 'moonWeatherTab')"><i class="bi bi-list-ul"></i> Moons/Weathers</a>
+                <li>
+                    <button onclick="openTab(event, 'moonWeatherTab')" class="nav-link px-4 py-2 rounded-t-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors">
+                        <i class="bi bi-list-ul mr-1"></i> Moons/Weathers
+                    </button>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link text-body" href="#" onclick="openTab(event, 'settingsTab')"><i class="bi bi-gear"></i> Settings</a>
+                <li>
+                    <button onclick="openTab(event, 'settingsTab')" class="nav-link px-4 py-2 rounded-t-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors">
+                        <i class="bi bi-gear mr-1"></i> Settings
+                    </button>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link text-body" href="#" onclick="openTab(event, 'aboutTab')"><i class="bi bi-info-circle"></i> About</a>
+                <li>
+                    <button onclick="openTab(event, 'aboutTab')" class="nav-link px-4 py-2 rounded-t-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors">
+                        <i class="bi bi-info-circle mr-1"></i> About
+                    </button>
                 </li>
             </ul>
-            <div class="pe-2">
-                <button class="btn btn-outline-secondary btn-sm rounded-circle" onclick="toggleTheme()" id="themeToggleBtn" title="Toggle Light/Dark Mode">
-                    <i class="bi bi-sun-fill" id="themeIcon"></i>
-                </button>
-            </div>
+            <button onclick="toggleTheme()" class="p-2 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="Toggle Theme">
+                <i class="bi bi-sun-fill" id="themeIcon"></i>
+            </button>
         </div>
 
-        <div class="area-content">
+        <!-- Content Area -->
+        <div class="col-span-full min-h-0 h-full overflow-hidden bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm relative">
             
-            <div id="mainTab" class="tab-content-wrapper active">
-                <div class="main-tab-grid">
+            <!-- MAIN TAB -->
+            <div id="mainTab" class="tab-content w-full h-full p-4 overflow-y-auto lg:overflow-hidden grid grid-cols-1 lg:grid-cols-dashboard gap-4">
+                
+                <!-- Column 1: Video & Controls -->
+                <div class="flex flex-col gap-4 h-full min-h-0">
+                    <div class="flex flex-col gap-2 h-full border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
+                        <div class="bg-gray-50 dark:bg-gray-700 px-3 py-2 text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600 flex items-center">
+                            <i class="bi bi-cast mr-2"></i> Screen Source
+                        </div>
+                        
+                        <div class="flex flex-col gap-3 p-3 h-full overflow-hidden">
+                            <!-- Controls Scroll Area -->
+                            <div class="overflow-y-auto max-h-[60%] pr-1 space-y-3">
+                                <div class="flex gap-2">
+                                    <button id="connectScreenButton" onclick="connectScreen()" class="flex-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors">
+                                        <i class="bi bi-display mr-1"></i> Connect
+                                    </button>
+                                    <button id="processButton" onclick="toggleProcess()" disabled class="flex-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors">
+                                        <i class="bi bi-play-circle mr-1"></i> Start OCR
+                                    </button>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold mb-1">Configuration Preset</label>
+                                    <div class="flex gap-1">
+                                        <select id="configSelect" onchange="handleConfigSelect()" class="flex-1 px-2 py-1 text-sm border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                            <option value="-1">-- Custom Preset --</option>
+                                        </select>
+                                        <button onclick="resetToNewCustomConfig()" class="px-2 py-1 bg-cyan-500 hover:bg-cyan-600 text-white rounded" title="New / Reset"><i class="bi bi-plus-lg"></i></button>
+                                        <button onclick="handleSaveButton()" class="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded" title="Save"><i class="bi bi-save"></i></button>
+                                        <button id="deleteConfigButton" onclick="deleteCurrentConfig()" disabled class="px-2 py-1 bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white rounded" title="Delete"><i class="bi bi-trash"></i></button>
+                                    </div>
+                                    <div class="flex justify-between items-center mt-1">
+                                        <small class="text-xs text-gray-500 dark:text-gray-400" id="configNameDisplay">Current: Custom</small>
+                                    </div>
+                                </div>
+
+                                <!-- Scan Mode -->
+                                <div class="flex rounded shadow-sm" role="group">
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" name="scanMode" id="modeSingle" value="uni" checked onchange="toggleScanMode()" class="peer sr-only">
+                                        <div class="px-3 py-1.5 text-xs font-medium text-center border border-gray-300 dark:border-gray-600 rounded-l peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">Uni-Scan</div>
+                                    </label>
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" name="scanMode" id="modeDual" value="dual" onchange="toggleScanMode()" class="peer sr-only">
+                                        <div class="px-3 py-1.5 text-xs font-medium text-center border border-l-0 border-gray-300 dark:border-gray-600 rounded-r peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">Dual Scan</div>
+                                    </label>
+                                </div>
+
+                                <button id="btnSelectRegion" class="w-full px-3 py-1.5 border border-blue-500 text-blue-500 hover:bg-blue-50 dark:hover:bg-gray-700 rounded text-sm font-medium transition-colors" onclick="startRegionSelection()">
+                                    <i class="bi bi-bounding-box-circles mr-1"></i> Drag & Select Region
+                                </button>
+
+                                <!-- Manual Coordinates -->
+                                <div class="space-y-2">
+                                    <div>
+                                        <div class="text-xs bg-gray-100 dark:bg-gray-700 p-1 border dark:border-gray-600 rounded mb-1 text-center font-medium">Region 1 (Top)</div>
+                                        <div class="grid grid-cols-4 gap-1">
+                                            <input type="number" id="regionX" value="0" min="0" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600" placeholder="X">
+                                            <input type="number" id="regionY" value="0" min="0" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600" placeholder="Y">
+                                            <input type="number" id="regionW" value="300" min="10" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600" placeholder="W">
+                                            <input type="number" id="regionH" value="50" min="10" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600" placeholder="H">
+                                        </div>
+                                    </div>
+                                    <div id="region2Controls" style="display:none;">
+                                        <div class="text-xs bg-gray-100 dark:bg-gray-700 p-1 border dark:border-gray-600 rounded mb-1 text-center font-medium">Region 2 (Bottom)</div>
+                                        <div class="grid grid-cols-4 gap-1">
+                                            <input type="number" id="region2X" value="0" min="0" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600" placeholder="X">
+                                            <input type="number" id="region2Y" value="0" min="0" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600" placeholder="Y">
+                                            <input type="number" id="region2W" value="300" min="10" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600" placeholder="W">
+                                            <input type="number" id="region2H" value="50" min="10" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600" placeholder="H">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="border-gray-300 dark:border-gray-600">
+                            
+                            <!-- Preview Area -->
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-bold">Live Preview</label>
+                            </div>
+                            
+                            <div id="viewPanel" class="flex-grow border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 rounded flex flex-col items-center justify-center relative overflow-hidden p-2">
+                                <span id="viewPlaceholder" class="text-gray-400 text-xs">No source connected</span>
+                                
+                                <div id="rawCaptureContainer" style="display:none;" class="flex flex-col items-center w-full relative">
+                                    <canvas id="captureView" class="border shadow-sm max-w-full" style="width: 60%; height: auto; display: block; image-rendering: pixelated;"></canvas>
+                                    <div id="zoomStatusOverlay" class="absolute top-1 right-1 bg-black/60 text-white rounded px-2 py-1 text-[10px] pointer-events-none flex flex-col items-end gap-0.5">
+                                        <span id="zoom1Status">R1: 1x</span>
+                                        <span id="zoom2Status" style="display:none;">R2: 1x</span>
+                                    </div>
+                                </div>
+                                <canvas id="canvasElement" style="display:none;"></canvas> 
+                                <video id="videoElement" autoplay muted playsinline style="display:none;"></video>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Column 2: Active Events & Logs -->
+                <div class="flex flex-col gap-4 h-full min-h-0">
                     
-                    <div class="d-flex flex-column gap-2 h-100">
-                        <div class="card h-100 shadow-sm border-0 bg-transparent"> 
-                            <div class="card h-100 shadow-sm">
-                                <div class="card-header bg-body-tertiary fw-bold py-2 small text-uppercase">
-                                    <i class="bi bi-cast"></i> Screen Source
-                                </div>
-                                <div class="card-body d-flex flex-column gap-2 overflow-hidden p-2">
-                                    
-                                    <div class="overflow-auto pe-1" style="max-height: 60%;"> 
-                                        <div class="d-flex gap-2 mb-2">
-                                            <button id="connectScreenButton" onclick="connectScreen()" class="btn btn-primary w-50 btn-sm">
-                                                <i class="bi bi-display"></i> Connect
-                                            </button>
-                                            <button id="processButton" onclick="toggleProcess()" disabled class="btn btn-success w-50 btn-sm">
-                                                <i class="bi bi-play-circle"></i> Start OCR
-                                            </button>
-                                        </div>
-
-                                        <label class="form-label fw-bold small mb-1">Configuration Preset</label>
-                                        <div class="input-group input-group-sm mb-2">
-                                            <select id="configSelect" onchange="handleConfigSelect()" class="form-select">
-                                                <option value="-1">-- Custom Preset --</option>
-                                            </select>
-                                            <button onclick="resetToNewCustomConfig()" class="btn btn-info text-white" title="New / Reset">
-                                                <i class="bi bi-plus-lg"></i>
-                                            </button>
-                                            <button onclick="handleSaveButton()" class="btn btn-primary" title="Save">
-                                                <i class="bi bi-save"></i>
-                                            </button>
-                                            <button id="deleteConfigButton" onclick="deleteCurrentConfig()" class="btn btn-danger" disabled title="Delete">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </div>
-
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <small class="text-muted" id="configNameDisplay" style="font-size: 0.75rem;">Current: Custom</small>
-                                        </div>
-
-                                        <!-- Scan Mode Toggle -->
-                                        <div class="btn-group w-100 btn-group-sm mb-2" role="group">
-                                            <input type="radio" class="btn-check" name="scanMode" id="modeSingle" value="uni" checked onchange="toggleScanMode()">
-                                            <label class="btn btn-outline-secondary" for="modeSingle">Uni-Scan</label>
-
-                                            <input type="radio" class="btn-check" name="scanMode" id="modeDual" value="dual" onchange="toggleScanMode()">
-                                            <label class="btn btn-outline-secondary" for="modeDual">Dual Scan</label>
-                                        </div>
-
-                                        <button id="btnSelectRegion" class="btn btn-sm btn-outline-primary w-100 mb-2" onclick="startRegionSelection()">
-                                            <i class="bi bi-bounding-box-circles"></i> Drag & Select Region
-                                        </button>
-
-                                        <!-- Region 1 Controls -->
-                                        <div class="row g-1 mb-2">
-                                            <div class="col-12"><span class="badge bg-light text-dark border w-100 text-start">Region 1 (Top)</span></div>
-                                            <div class="col-3">
-                                                <input type="number" id="regionX" value="0" min="0" class="form-control form-control-sm" placeholder="X">
-                                            </div>
-                                            <div class="col-3">
-                                                <input type="number" id="regionY" value="0" min="0" class="form-control form-control-sm" placeholder="Y">
-                                            </div>
-                                            <div class="col-3">
-                                                <input type="number" id="regionW" value="300" min="10" class="form-control form-control-sm" placeholder="W">
-                                            </div>
-                                            <div class="col-3">
-                                                <input type="number" id="regionH" value="50" min="10" class="form-control form-control-sm" placeholder="H">
-                                            </div>
-                                        </div>
-
-                                        <!-- Region 2 Controls (Hidden by default) -->
-                                        <div id="region2Controls" class="row g-1" style="display:none;">
-                                            <div class="col-12"><span class="badge bg-light text-dark border w-100 text-start">Region 2 (Bottom)</span></div>
-                                            <div class="col-3">
-                                                <input type="number" id="region2X" value="0" min="0" class="form-control form-control-sm" placeholder="X">
-                                            </div>
-                                            <div class="col-3">
-                                                <input type="number" id="region2Y" value="0" min="0" class="form-control form-control-sm" placeholder="Y">
-                                            </div>
-                                            <div class="col-3">
-                                                <input type="number" id="region2W" value="300" min="10" class="form-control form-control-sm" placeholder="W">
-                                            </div>
-                                            <div class="col-3">
-                                                <input type="number" id="region2H" value="50" min="10" class="form-control form-control-sm" placeholder="H">
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <hr class="my-1">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <label class="form-label fw-bold small mb-1">Live Preview</label>
-                                    </div>
-                                    
-                                    <div id="viewPanel" class="capture-canvas-container rounded flex-grow-1">
-                                        <span id="viewPlaceholder" class="text-muted small">No source connected</span>
-                                        
-                                        <!-- Unified Preview Container -->
-                                        <div id="rawCaptureContainer" style="display:none;" class="flex-column align-items-center w-100 position-relative">
-                                            <!-- UPDATED: Width 100% to force zoom/stretch -->
-                                            <canvas id="captureView" class="border shadow-sm" style="width: 60%; height: auto; display: block; image-rendering: pixelated;"></canvas>
-                                            
-                                            <!-- Overlay Badge for locked state -->
-                                            <div id="zoomStatusOverlay" class="zoom-badge">
-                                                <span id="zoom1Status">R1: 1x</span>
-                                                <span id="zoom2Status" style="display:none;">R2: 1x</span>
-                                            </div>
-                                        </div>
-
-                                        <!-- Hidden Logic Canvas for OCR (Processed) -->
-                                        <canvas id="canvasElement" style="display:none;"></canvas> 
-                                    </div>
-                                    <video id="videoElement" autoplay muted playsinline style="display:none;"></video>
-                                </div>
+                    <!-- Active Events -->
+                    <div class="h-[30%] flex flex-col border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
+                        <div class="bg-gray-50 dark:bg-gray-700 px-3 py-2 text-xs font-bold uppercase tracking-wider text-green-600 dark:text-green-400 border-b border-gray-200 dark:border-gray-600">
+                            <i class="bi bi-activity mr-2"></i> Active Events
+                        </div>
+                        <div class="flex-grow overflow-auto p-0 flex flex-col" id="activeEventsContainer">
+                            <div id="activeMoonsSection" class="hidden">
+                                <div class="px-3 py-1 text-xs font-bold text-blue-600 bg-gray-100 dark:bg-gray-900 border-y dark:border-gray-700">Moon</div>
+                                <div id="activeMoonsList" class="divide-y divide-gray-100 dark:divide-gray-700"></div>
+                            </div>
+                            <div id="activeWeatherSection" class="hidden">
+                                <div class="px-3 py-1 text-xs font-bold text-cyan-600 bg-gray-100 dark:bg-gray-900 border-y dark:border-gray-700">Weather</div>
+                                <div id="activeWeatherList" class="divide-y divide-gray-100 dark:divide-gray-700"></div>
+                            </div>
+                            <div id="cooldownsPlaceholder" class="p-4 text-center text-gray-400 text-xs">
+                                No events currently active.
                             </div>
                         </div>
                     </div>
 
-                    <div class="d-flex flex-column gap-2 h-100">
-                        <div class="card shadow-sm min-h-0" style="height: 30%;">
-                            <div class="card-header bg-body-tertiary fw-bold text-success py-2 small text-uppercase">
-                                <i class="bi bi-activity"></i> Active Events
-                            </div>
-                            <div class="card-body p-0 overflow-auto d-flex flex-column">
-                                <div id="activeEventsContainer" class="flex-grow-1 p-0">
-                                    <!-- Dynamic Content will be injected here -->
-                                    <div id="activeMoonsSection" class="d-none">
-                                        <div class="px-2 py-1 small fw-bold text-primary bg-body-tertiary border-bottom border-top">Moon</div>
-                                        <div id="activeMoonsList" class="list-group list-group-flush small"></div>
-                                    </div>
-                                    
-                                    <div id="activeWeatherSection" class="d-none">
-                                        <div class="px-2 py-1 small fw-bold text-info-emphasis bg-body-tertiary border-bottom border-top">Weather</div>
-                                        <div id="activeWeatherList" class="list-group list-group-flush small"></div>
-                                    </div>
-                                    
-                                    <div id="cooldownsPlaceholder" class="p-3 text-center text-muted small">
-                                        No events currently active.
-                                    </div>
-                                </div>
-                            </div>
+                    <!-- Logs -->
+                    <div class="flex-grow min-h-0 flex flex-col border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
+                        <div class="bg-gray-50 dark:bg-gray-700 px-3 py-1 flex justify-between items-center border-b border-gray-200 dark:border-gray-600">
+                            <span class="text-xs font-bold uppercase text-gray-600 dark:text-gray-300">System Logs</span>
+                            <button onclick="clearLogs()" class="text-[10px] px-2 py-0.5 border border-gray-300 dark:border-gray-500 rounded hover:bg-gray-200 dark:hover:bg-gray-600">Clear</button>
                         </div>
-
-                        <div class="card shadow-sm flex-fill min-h-0" style="height: 400px; overflow-y: auto;">
-                            <div class="card-header bg-body-tertiary d-flex justify-content-between align-items-center py-1">
-                                <span class="fw-bold small">System Logs</span>
-                                <button id="clearLogsButton" onclick="clearLogs()" class="btn btn-outline-secondary btn-sm py-0" style="font-size: 0.7rem;">Clear</button>
-                            </div>
-                            <div class="card-body p-0 d-flex flex-column h-100 overflow-hidden">
-                                <div id="cooldownTimerLog" class="bg-warning text-dark px-2 py-1 small fw-bold" style="font-size: 0.7rem;">App Status: Idle</div>
-                                <!-- UPDATED: scroll-y-auto ensures it scrolls and flex-grow ensures it fills height -->
-                                <div id="logContent" class="console-log flex-grow-1 p-2 scroll-y-auto">
-                                    Application initialized.
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="d-flex flex-column h-100">
-                        <div class="card h-100 shadow-sm">
-                            <div class="card-header bg-body-tertiary fw-bold d-flex justify-content-between align-items-center py-2 small text-uppercase">
-                                <span><i class="bi bi-clock-history"></i> History</span>
-                                <div class="d-flex gap-1">
-                                    <button id="clearHistoryButton" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="clearHistory()" title="Clear History">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                    <button id="sortEventsButton" class="btn btn-sm btn-link text-decoration-none p-0" onclick="toggleEventSortOrder()" title="Toggle Sort">
-                                        <span id="sortIcon"><i class="bi bi-sort-down"></i></span>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="card-body d-flex flex-column p-2 gap-2 overflow-hidden">
-                                <div class="row g-2 mb-2 flex-shrink-0">
-                                    <div class="col-5">
-                                        <input type="date" id="eventDatePicker" class="form-control form-control-sm" style="font-size: 0.8rem;" onchange="updateSearchDatalist(); renderRecentEvents()">
-                                    </div>
-                                    <div class="col-7">
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text py-0"><i class="bi bi-search"></i></span>
-                                            <input type="text" id="eventSearchInput" list="eventNamesList" oninput="renderRecentEvents()" class="form-control" placeholder="Search..." style="font-size: 0.8rem;">
-                                            <datalist id="eventNamesList"></datalist>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="d-flex justify-content-between align-items-center mb-1 flex-shrink-0">
-                                    <div class="btn-group btn-group-sm w-100" role="group">
-                                        <input type="radio" class="btn-check" name="typeFilter" id="typeAll" value="All" checked onchange="updateSearchDatalist(); renderRecentEvents()">
-                                        <label class="btn btn-outline-secondary" for="typeAll">All</label>
-
-                                        <input type="radio" class="btn-check" name="typeFilter" id="typeMoon" value="Moon" onchange="updateSearchDatalist(); renderRecentEvents()">
-                                        <label class="btn btn-outline-secondary" for="typeMoon">Moons</label>
-
-                                        <input type="radio" class="btn-check" name="typeFilter" id="typeWeather" value="Weather" onchange="updateSearchDatalist(); renderRecentEvents()">
-                                        <label class="btn btn-outline-secondary" for="typeWeather">Weather</label>
-                                    </div>
-                                </div>
-
-                                <!-- UPDATED: scroll-y-auto for internal scrolling -->
-                                <div id="recentEventsList" class="flex-grow-1 scroll-y-auto border rounded bg-body-tertiary p-0">
-                                    <p class="text-center text-muted small mt-2">Select a date.</p>
-                                </div>
+                        <div class="flex flex-col h-full overflow-hidden">
+                            <div id="cooldownTimerLog" class="bg-yellow-400 text-black px-2 py-1 text-[10px] font-bold">App Status: Idle</div>
+                            <div id="logContent" class="flex-grow p-2 overflow-y-auto bg-gray-900 text-green-400 font-mono text-xs resize-none">
+                                Application initialized.
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div id="moonWeatherTab" class="tab-content-wrapper">
-                <div class="moon-tab-grid">
-                    <div class="card shadow-sm h-100">
-                        <div class="card-header bg-body-tertiary fw-bold d-flex justify-content-between align-items-center py-2">
-                            <span><i class="bi bi-card-list"></i> Event Management</span>
-                            <div class="d-flex gap-2">
-                                <button onclick="showItemModal(-1)" class="btn btn-sm btn-primary py-0"><i class="bi bi-plus-circle"></i> Add</button>
+                <!-- Column 3: History & Search -->
+                <div class="flex flex-col h-full min-h-0">
+                    <div class="h-full flex flex-col border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
+                        <div class="bg-gray-50 dark:bg-gray-700 px-3 py-2 text-xs font-bold uppercase tracking-wider flex justify-between items-center text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600">
+                            <span><i class="bi bi-clock-history mr-2"></i> History</span>
+                            <div class="flex gap-1">
+                                <button onclick="clearHistory()" class="px-2 py-0.5 text-red-500 hover:text-red-700 border border-red-200 dark:border-red-900 rounded text-xs" title="Clear History"><i class="bi bi-trash"></i></button>
+                                <button onclick="toggleEventSortOrder()" class="px-2 py-0.5 text-blue-500 hover:text-blue-700 text-xs" title="Toggle Sort"><i class="bi bi-sort-down"></i></button>
                             </div>
                         </div>
                         
-                        <div class="card-body d-flex flex-column h-100 overflow-hidden gap-2 p-2">
-                            
-                            <div id="listSplitWrapper" class="list-split-wrapper flex-column flex-lg-row">
-                                
-                                <div class="list-section">
-                                    <div class="list-section-header bg-body-tertiary px-2 py-1 small fw-bold border-bottom text-primary sticky-top"><i class="bi bi-moon-stars"></i> Moons</div>
-                                    <div id="moonListContainer" class="list-scroll-area">
-                                        <p class="text-muted small text-center p-3">No moons added.</p>
-                                    </div>
-                                </div>
-
-                                <div class="list-section">
-                                    <div class="list-section-header bg-body-tertiary px-2 py-1 small fw-bold border-bottom text-info-emphasis sticky-top"><i class="bi bi-cloud-haze"></i> Weathers</div>
-                                    <div id="weatherListContainer" class="list-scroll-area">
-                                        <p class="text-muted small text-center p-3">No weather added.</p>
-                                    </div>
-                                </div>
-
-                            </div>
-                            
-                            <div class="card bg-body-tertiary border-0 flex-shrink-0 mt-auto">
-                                <div class="card-body p-2">
-                                    <label class="form-label small fw-bold mb-1" style="font-size: 0.75rem;">Data Management</label>
-                                    <div class="d-flex gap-2">
-                                        <div class="input-group input-group-sm flex-grow-1">
-                                            <input type="file" id="fileUpload" accept=".csv" class="form-control" onchange="updateUploadLabel(this)">
-                                            <label class="input-group-text" for="fileUpload"><i class="bi bi-upload"></i> Import</label>
-                                        </div>
-                                        <button onclick="exportEvents()" class="btn btn-sm btn-outline-success">
-                                            <i class="bi bi-download"></i> Export
-                                        </button>
-                                    </div>
-                                    <div class="form-text small mt-1" style="font-size: 0.7rem;">Required: Name, Type, Multiplier, Chances (Optional)</div>
+                        <div class="p-2 flex flex-col gap-2 h-full overflow-hidden">
+                            <div class="flex gap-2">
+                                <input type="date" id="eventDatePicker" class="w-1/3 px-2 py-1 text-xs border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none" onchange="updateSearchDatalist(); renderRecentEvents()">
+                                <div class="relative flex-grow">
+                                    <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none text-gray-500"><i class="bi bi-search"></i></div>
+                                    <input type="text" id="eventSearchInput" list="eventNamesList" oninput="renderRecentEvents()" class="w-full pl-8 pr-2 py-1 text-xs border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none" placeholder="Search...">
+                                    <datalist id="eventNamesList"></datalist>
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <div class="card shadow-sm h-100">
-                        <div class="card-header bg-body-tertiary fw-bold py-2">
-                            <i class="bi bi-bar-chart-line"></i> Statistics
-                        </div>
-                        <div class="card-body d-flex flex-column p-2 overflow-hidden">
-                            <div class="row g-2 mb-2">
-                                <div class="col-12">
-                                    <label class="form-label small mb-0" style="font-size: 0.75rem;">Date Range</label>
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text py-0" style="font-size: 0.75rem;">From</span>
-                                        <input type="date" id="statsDateStart" class="form-control form-control-sm" 
-                                            onchange="if(this.value > document.getElementById('statsDateEnd').value) { showToast('Start date cannot be after End date.', 'error'); this.value = document.getElementById('statsDateEnd').value; } updateItemListDropdown();" 
-                                            style="font-size: 0.8rem;">
-                                        <span class="input-group-text py-0" style="font-size: 0.75rem;">To</span>
-                                        <input type="date" id="statsDateEnd" class="form-control form-control-sm" 
-                                            onchange="if(this.value < document.getElementById('statsDateStart').value) { showToast('End date cannot be before Start date.', 'error'); this.value = document.getElementById('statsDateStart').value; } updateItemListDropdown();" 
-                                            style="font-size: 0.8rem;">
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label small mb-0" style="font-size: 0.75rem;">Metric</label>
-                                    <select id="statsMetricFilter" onchange="updateEventStatistics()" class="form-select form-select-sm" style="font-size: 0.8rem;">
-                                        <option value="count">Occurrences</option>
-                                        <option value="avgTime">Avg Time</option>
-                                    </select>
-                                </div>
-                                <div class="col-6">
-                                    <label class="form-label small mb-0" style="font-size: 0.75rem;">Event</label>
-                                    <div class="input-group input-group-sm">
-                                        <span class="input-group-text py-0"><i class="bi bi-search"></i></span>
-                                        <input type="text" id="statsItemFilter" list="statsItemDataList" oninput="updateEventStatistics()" class="form-control" placeholder="Search or Select..." style="font-size: 0.8rem;">
-                                        <datalist id="statsItemDataList"></datalist>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label small mb-0" style="font-size: 0.75rem;">Type</label>
-                                    <div class="btn-group btn-group-sm w-100" role="group">
-                                        <input type="radio" class="btn-check" name="statsTypeFilter" id="statsTypeAll" value="All" checked onchange="updateItemListDropdown()">
-                                        <label class="btn btn-outline-secondary" for="statsTypeAll">All</label>
-
-                                        <input type="radio" class="btn-check" name="statsTypeFilter" id="statsTypeMoon" value="Moon" onchange="updateItemListDropdown()">
-                                        <label class="btn btn-outline-secondary" for="statsTypeMoon">Moons</label>
-
-                                        <input type="radio" class="btn-check" name="statsTypeFilter" id="statsTypeWeather" value="Weather" onchange="updateItemListDropdown()">
-                                        <label class="btn btn-outline-secondary" for="statsTypeWeather">Weather</label>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="d-none">
-                                <span id="avgDurationDisplay"></span>
+                            <div class="flex rounded shadow-sm" role="group">
+                                <label class="flex-1 cursor-pointer">
+                                    <input type="radio" name="typeFilter" id="typeAll" value="All" checked onchange="updateSearchDatalist(); renderRecentEvents()" class="peer sr-only">
+                                    <div class="px-2 py-1 text-xs text-center border border-gray-300 dark:border-gray-600 rounded-l peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">All</div>
+                                </label>
+                                <label class="flex-1 cursor-pointer">
+                                    <input type="radio" name="typeFilter" id="typeMoon" value="Moon" onchange="updateSearchDatalist(); renderRecentEvents()" class="peer sr-only">
+                                    <div class="px-2 py-1 text-xs text-center border-t border-b border-gray-300 dark:border-gray-600 peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">Moons</div>
+                                </label>
+                                <label class="flex-1 cursor-pointer">
+                                    <input type="radio" name="typeFilter" id="typeWeather" value="Weather" onchange="updateSearchDatalist(); renderRecentEvents()" class="peer sr-only">
+                                    <div class="px-2 py-1 text-xs text-center border border-gray-300 dark:border-gray-600 rounded-r peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">Weather</div>
+                                </label>
                             </div>
 
-                            <div class="flex-grow-1 position-relative border rounded p-1 min-h-0">
-                                <canvas id="eventStatsChart"></canvas>
-                                <div id="chartPlaceholder" class="position-absolute top-50 start-50 translate-middle text-muted small">
-                                    No Data
-                                </div>
+                            <div id="recentEventsList" class="flex-grow overflow-y-auto border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-900">
+                                <p class="text-center text-gray-400 text-xs mt-4">Select a date.</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div id="settingsTab" class="tab-content-wrapper">
-                <div class="container-fluid p-0 pb-4" style="max-width: 800px;">
-                    <div class="card shadow-sm mb-3">
-                        <div class="card-header bg-body-tertiary fw-bold text-primary">
-                            <i class="bi bi-discord"></i> Discord Webhooks
-                        </div>
-                        <div class="card-body">
-                            <div id="webhookListContainer" class="d-flex flex-column gap-2 mb-3">
-                                <p class="text-muted small text-center">No webhooks configured.</p>
+            <!-- MOON / WEATHER TAB -->
+            <div id="moonWeatherTab" class="hidden tab-content w-full h-full p-4 overflow-y-auto lg:overflow-hidden grid grid-cols-1 lg:grid-cols-2 gap-4">
+                
+                <!-- Management Card -->
+                <div class="flex flex-col h-full border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
+                    <div class="bg-gray-50 dark:bg-gray-700 px-3 py-2 flex justify-between items-center border-b border-gray-200 dark:border-gray-600">
+                        <span class="text-sm font-bold"><i class="bi bi-card-list mr-1"></i> Event Management</span>
+                        <button onclick="showItemModal(-1)" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium"><i class="bi bi-plus-circle mr-1"></i> Add</button>
+                    </div>
+                    
+                    <div class="flex flex-col h-full overflow-hidden p-2 gap-2">
+                        <!-- Split Lists -->
+                        <div class="flex-grow min-h-0 flex flex-col lg:flex-row gap-2">
+                            <!-- Moons -->
+                            <div class="flex-1 flex flex-col border border-gray-200 dark:border-gray-700 rounded overflow-hidden">
+                                <div class="bg-gray-50 dark:bg-gray-700 px-2 py-1 text-xs font-bold border-b border-gray-200 dark:border-gray-600 text-blue-600 sticky top-0"><i class="bi bi-moon-stars mr-1"></i> Moons</div>
+                                <div id="moonListContainer" class="flex-grow overflow-y-auto bg-white dark:bg-gray-800">
+                                    <p class="text-gray-400 text-xs text-center p-4">No moons added.</p>
+                                </div>
                             </div>
-                            <button onclick="showWebhookModal(-1)" class="btn btn-outline-primary btn-sm">
-                                <i class="bi bi-plus-lg"></i> Add Webhook
+                            <!-- Weather -->
+                            <div class="flex-1 flex flex-col border border-gray-200 dark:border-gray-700 rounded overflow-hidden">
+                                <div class="bg-gray-50 dark:bg-gray-700 px-2 py-1 text-xs font-bold border-b border-gray-200 dark:border-gray-600 text-cyan-600 sticky top-0"><i class="bi bi-cloud-haze mr-1"></i> Weathers</div>
+                                <div id="weatherListContainer" class="flex-grow overflow-y-auto bg-white dark:bg-gray-800">
+                                    <p class="text-gray-400 text-xs text-center p-4">No weather added.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Data Actions -->
+                        <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded border border-gray-200 dark:border-gray-600 flex-shrink-0">
+                            <label class="text-[10px] font-bold uppercase mb-1 block">Data Management</label>
+                            <div class="flex gap-2">
+                                <div class="flex-grow flex items-center bg-white dark:bg-gray-800 border rounded overflow-hidden">
+                                    <label class="px-3 py-1 bg-gray-200 dark:bg-gray-600 text-xs cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-500" for="fileUpload"><i class="bi bi-upload mr-1"></i> Import</label>
+                                    <input type="file" id="fileUpload" accept=".csv" class="hidden" onchange="updateUploadLabel(this)">
+                                    <span class="text-xs px-2 text-gray-500 truncate" id="fileNameDisplay">Choose CSV...</span>
+                                </div>
+                                <button onclick="exportEvents()" class="px-3 py-1 border border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-gray-600 rounded text-xs"><i class="bi bi-download mr-1"></i> Export</button>
+                            </div>
+                            <div class="text-[10px] text-gray-500 mt-1">Required: Name, Type, Multiplier, Chances (Optional)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Card -->
+                <div class="flex flex-col h-full border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
+                    <div class="bg-gray-50 dark:bg-gray-700 px-3 py-2 font-bold text-sm border-b border-gray-200 dark:border-gray-600">
+                        <i class="bi bi-bar-chart-line mr-2"></i> Statistics
+                    </div>
+                    <div class="flex flex-col h-full p-2 overflow-hidden gap-2">
+                        <div class="grid grid-cols-12 gap-2">
+                            <div class="col-span-12">
+                                <label class="block text-[10px] font-bold mb-0.5">Date Range</label>
+                                <div class="flex">
+                                    <span class="bg-gray-200 dark:bg-gray-600 px-2 py-1 text-xs flex items-center rounded-l border border-r-0 border-gray-300 dark:border-gray-500">From</span>
+                                    <input type="date" id="statsDateStart" class="flex-1 min-w-0 px-2 py-1 text-xs border bg-white dark:bg-gray-700 dark:border-gray-500 focus:outline-none" onchange="if(this.value > document.getElementById('statsDateEnd').value) { showToast('Start date cannot be after End date.', 'error'); this.value = document.getElementById('statsDateEnd').value; } updateItemListDropdown();">
+                                    <span class="bg-gray-200 dark:bg-gray-600 px-2 py-1 text-xs flex items-center border-y border-gray-300 dark:border-gray-500">To</span>
+                                    <input type="date" id="statsDateEnd" class="flex-1 min-w-0 px-2 py-1 text-xs border rounded-r bg-white dark:bg-gray-700 dark:border-gray-500 focus:outline-none" onchange="if(this.value < document.getElementById('statsDateStart').value) { showToast('End date cannot be before Start date.', 'error'); this.value = document.getElementById('statsDateStart').value; } updateItemListDropdown();">
+                                </div>
+                            </div>
+                            <div class="col-span-6">
+                                <label class="block text-[10px] font-bold mb-0.5">Metric</label>
+                                <select id="statsMetricFilter" onchange="updateEventStatistics()" class="w-full px-2 py-1 text-xs border rounded bg-white dark:bg-gray-700 dark:border-gray-500 focus:outline-none">
+                                    <option value="count">Occurrences</option>
+                                    <option value="avgTime">Avg Time</option>
+                                </select>
+                            </div>
+                            <div class="col-span-6">
+                                <label class="block text-[10px] font-bold mb-0.5">Event</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none text-gray-500"><i class="bi bi-search text-xs"></i></div>
+                                    <input type="text" id="statsItemFilter" list="statsItemDataList" oninput="updateEventStatistics()" class="w-full pl-6 pr-2 py-1 text-xs border rounded bg-white dark:bg-gray-700 dark:border-gray-500 focus:outline-none" placeholder="Search...">
+                                    <datalist id="statsItemDataList"></datalist>
+                                </div>
+                            </div>
+                            <div class="col-span-12">
+                                <div class="flex rounded shadow-sm" role="group">
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" name="statsTypeFilter" id="statsTypeAll" value="All" checked onchange="updateItemListDropdown()" class="peer sr-only">
+                                        <div class="px-1 py-1 text-[10px] text-center border border-gray-300 dark:border-gray-500 rounded-l peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">All</div>
+                                    </label>
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" name="statsTypeFilter" id="statsTypeMoon" value="Moon" onchange="updateItemListDropdown()" class="peer sr-only">
+                                        <div class="px-1 py-1 text-[10px] text-center border-t border-b border-gray-300 dark:border-gray-500 peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">Moons</div>
+                                    </label>
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" name="statsTypeFilter" id="statsTypeWeather" value="Weather" onchange="updateItemListDropdown()" class="peer sr-only">
+                                        <div class="px-1 py-1 text-[10px] text-center border border-gray-300 dark:border-gray-500 rounded-r peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">Weather</div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex-grow relative border border-gray-200 dark:border-gray-700 rounded p-1 min-h-0">
+                            <canvas id="eventStatsChart"></canvas>
+                            <div id="chartPlaceholder" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-400 text-xs">
+                                No Data
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- SETTINGS TAB -->
+            <div id="settingsTab" class="hidden tab-content w-full h-full p-6 overflow-y-auto">
+                <div class="max-w-3xl mx-auto space-y-6">
+                    
+                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
+                        <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 font-bold text-blue-600 border-b border-gray-200 dark:border-gray-600 flex items-center">
+                            <i class="bi bi-discord mr-2"></i> Discord Webhooks
+                        </div>
+                        <div class="p-4">
+                            <div id="webhookListContainer" class="flex flex-col gap-2 mb-4">
+                                <p class="text-gray-400 text-sm text-center">No webhooks configured.</p>
+                            </div>
+                            <button onclick="showWebhookModal(-1)" class="px-4 py-2 border border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700 rounded text-sm font-medium transition-colors">
+                                <i class="bi bi-plus-lg mr-1"></i> Add Webhook
                             </button>
                         </div>
                     </div>
 
-                    <div class="card shadow-sm mb-3">
-                        <div class="card-header bg-body-tertiary fw-bold">
-                            <i class="bi bi-stopwatch"></i> Timing
+                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
+                        <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 font-bold border-b border-gray-200 dark:border-gray-600 flex items-center">
+                            <i class="bi bi-stopwatch mr-2"></i> Timing
                         </div>
-                        <div class="card-body">
-                            <label for="gracePeriodSeconds" class="form-label fw-bold">Event Disappear Grace Period (Seconds)</label>
-                            <input type="number" id="gracePeriodSeconds" value="5" min="1" max="60" step="1" class="form-control w-50">
-                            <div class="form-text">Time to wait after text disappears before ending the event.</div>
+                        <div class="p-4">
+                            <label for="gracePeriodSeconds" class="block font-bold text-sm mb-2">Event Disappear Grace Period (Seconds)</label>
+                            <input type="number" id="gracePeriodSeconds" value="5" min="1" max="60" step="1" class="w-1/2 px-3 py-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                            <p class="text-xs text-gray-500 mt-1">Time to wait after text disappears before ending the event.</p>
                         </div>
                     </div>
 
-                    <div class="card shadow-sm border-danger">
-                        <div class="card-body">
-                            <h5 class="card-title text-danger"><i class="bi bi-exclamation-octagon"></i> Application Reset</h5>
-                            <p class="card-text small text-muted">This action will wipe all local storage data and reset the app.</p>
-                            <button onclick="removeSettings()" class="btn btn-danger btn-sm">
-                                <i class="bi bi-trash"></i> Clear All Saved Settings
+                    <div class="border border-red-200 dark:border-red-900 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
+                        <div class="p-4">
+                            <h5 class="text-red-600 font-bold mb-2 flex items-center"><i class="bi bi-exclamation-octagon mr-2"></i> Application Reset</h5>
+                            <p class="text-sm text-gray-500 mb-3">This action will wipe all local storage data and reset the app.</p>
+                            <button onclick="removeSettings()" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm font-medium transition-colors">
+                                <i class="bi bi-trash mr-1"></i> Clear All Saved Settings
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div id="aboutTab" class="tab-content-wrapper">
-                <div class="container-fluid p-0 pb-4" style="max-width: 800px;">
-                    <div class="card shadow-sm mb-3">
-                        <div class="card-header bg-body-tertiary fw-bold text-info-emphasis">
-                            <i class="bi bi-info-circle"></i> About This Tool
+            <!-- ABOUT TAB -->
+            <div id="aboutTab" class="hidden tab-content w-full h-full p-6 overflow-y-auto">
+                <div class="max-w-3xl mx-auto space-y-6">
+                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
+                        <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 font-bold text-cyan-600 border-b border-gray-200 dark:border-gray-600 flex items-center">
+                            <i class="bi bi-info-circle mr-2"></i> About This Tool
                         </div>
-                        <div class="card-body">
-                            <p class="lead fs-6">
+                        <div class="p-4">
+                            <p class="mb-4">
                                 This automated tool is created for the Roblox game: <strong>Feed Your Pet</strong>. 
                                 It is designed to automate the sending of notifications to Discord when specific Events (Moons/Weathers) are detected on screen.
                             </p>
-                            <hr>
-                            <h6 class="fw-bold">How it Works</h6>
-                            <ul class="list-group list-group-flush small">
-                                <li class="list-group-item border-0 ps-0"><i class="bi bi-camera-video text-primary me-2"></i> <strong>Screen Capture:</strong> The tool captures a specific region of your screen where event text appears.</li>
-                                <li class="list-group-item border-0 ps-0"><i class="bi bi-eye text-success me-2"></i> <strong>OCR Detection:</strong> It uses optical character recognition to read text from the video stream in real-time.</li>
-                                <li class="list-group-item border-0 ps-0"><i class="bi bi-robot text-warning me-2"></i> <strong>Event Matching:</strong> It compares detected text against your custom list of events.</li>
-                                <li class="list-group-item border-0 ps-0"><i class="bi bi-discord text-info me-2"></i> <strong>Discord Alert:</strong> When a match occurs, it instantly sends a notification to your configured Discord Webhooks.</li>
+                            <hr class="my-4 border-gray-200 dark:border-gray-700">
+                            <h6 class="font-bold mb-2">How it Works</h6>
+                            <ul class="space-y-2 text-sm">
+                                <li class="flex items-start"><i class="bi bi-camera-video text-blue-500 mr-2 mt-0.5"></i> <span><strong>Screen Capture:</strong> The tool captures a specific region of your screen where event text appears.</span></li>
+                                <li class="flex items-start"><i class="bi bi-eye text-green-500 mr-2 mt-0.5"></i> <span><strong>OCR Detection:</strong> It uses optical character recognition to read text from the video stream in real-time.</span></li>
+                                <li class="flex items-start"><i class="bi bi-robot text-yellow-500 mr-2 mt-0.5"></i> <span><strong>Event Matching:</strong> It compares detected text against your custom list of events.</span></li>
+                                <li class="flex items-start"><i class="bi bi-discord text-indigo-500 mr-2 mt-0.5"></i> <span><strong>Discord Alert:</strong> When a match occurs, it instantly sends a notification to your configured Discord Webhooks.</span></li>
                             </ul>
                         </div>
                     </div>
 
-                    <div class="card shadow-sm border-0 bg-transparent">
-                        <div class="card-body text-center text-muted">
-                            <div class="mb-3">
-                                <small class="text-uppercase fw-bold" style="letter-spacing: 1px;">Created By</small>
-                                <div class="mt-1">
-                                    <span class="badge bg-dark p-2"><i class="bi bi-discord"></i> BlackBox (@rlobrin)</span>
-                                </div>
+                    <div class="text-center text-gray-500">
+                        <div class="mb-4">
+                            <small class="uppercase font-bold tracking-wider text-xs">Created By</small>
+                            <div class="mt-1">
+                                <span class="bg-gray-800 text-white px-3 py-1 rounded text-sm"><i class="bi bi-discord mr-1"></i> BlackBox (@rlobrin)</span>
                             </div>
-                            
-                            <div class="mb-3">
-                                <small class="text-uppercase fw-bold" style="letter-spacing: 1px;">Supported By</small>
-                                <div class="mt-1">
-                                    <span class="badge bg-secondary p-2"><i class="bi bi-discord"></i> Gunnster247 (@gunnster247)</span>
-                                </div>
-                            </div>
-
-                            <div>
-                                <small class="text-uppercase fw-bold" style="letter-spacing: 1px;">Special Thanks</small>
-                                <div class="mt-1 d-flex justify-content-center flex-wrap gap-2">
-                                    <span class="badge bg-body-tertiary text-body border">Queen Branana (@queen_branana)</span>
-                                </div>
-                                <div class="mt-2 small text-muted">
-                                    And all members of <br>
-                                    <a href="https://discord.gg/aE7e6SnB" target="_blank" class="text-decoration-none fw-bold">FYP-TBND</a> & 
-                                    <a href="https://discord.gg/YFy8s5E5" target="_blank" class="text-decoration-none fw-bold">RMTG</a>
-                                </div>
-                            </div>
-                            
-                            <div class="mt-4 border-top pt-3 small text-muted">
-                                &copy; <span id="currentYear"></span> All Rights Reserved.
-                            </div>
-                            <script>document.getElementById('currentYear').textContent = new Date().getFullYear();</script>
                         </div>
+                        
+                        <div class="mb-4">
+                            <small class="uppercase font-bold tracking-wider text-xs">Supported By</small>
+                            <div class="mt-1">
+                                <span class="bg-gray-500 text-white px-3 py-1 rounded text-sm"><i class="bi bi-discord mr-1"></i> Gunnster247 (@gunnster247)</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <small class="uppercase font-bold tracking-wider text-xs">Special Thanks</small>
+                            <div class="mt-1 flex justify-center flex-wrap gap-2">
+                                <span class="bg-gray-100 dark:bg-gray-700 border dark:border-gray-600 px-3 py-1 rounded text-sm">Queen Branana (@queen_branana)</span>
+                            </div>
+                            <div class="mt-2 text-xs">
+                                And all members of <br>
+                                <a href="https://discord.gg/aE7e6SnB" target="_blank" class="font-bold hover:underline">FYP-TBND</a> & 
+                                <a href="https://discord.gg/YFy8s5E5" target="_blank" class="font-bold hover:underline">RMTG</a>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 border-t border-gray-300 dark:border-gray-700 pt-3 text-xs">
+                            &copy; <span id="currentYear"></span> All Rights Reserved.
+                        </div>
+                        <script>document.getElementById('currentYear').textContent = new Date().getFullYear();</script>
                     </div>
                 </div>
             </div>
@@ -768,70 +497,108 @@
     </div>
 
     <!-- Modals -->
-    <div id="itemWebhookModal" class="custom-modal-overlay">
-        <div class="custom-modal-dialog">
-            <div class="custom-modal-header"><h5 class="modal-title fw-bold">Manage Notifications</h5><button type="button" class="btn-close" onclick="hideItemWebhookModal()"></button></div>
-            <div class="custom-modal-body d-flex flex-column h-100">
-                <p class="small text-muted mb-2" id="webhookModalItemName">Select webhooks:</p>
-                <div id="itemWebhookListContainer" class="flex-grow-1 overflow-auto border rounded bg-body-tertiary p-2" style="max-height: 400px;"></div>
+    <!-- Generic Modal Overlay -->
+    <div id="itemWebhookModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm items-center justify-center animate-fadeIn">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-[90%] max-w-md flex flex-col max-h-[90vh]">
+            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700 rounded-t-lg">
+                <h5 class="font-bold">Manage Notifications</h5>
+                <button type="button" class="text-gray-500 hover:text-gray-800 dark:hover:text-white" onclick="hideItemWebhookModal()"><i class="bi bi-x-lg"></i></button>
             </div>
-            <div class="modal-footer p-2 border-top bg-body-tertiary"><button type="button" class="btn btn-primary w-100" onclick="saveItemWebhooks()">Save Changes</button></div>
+            <div class="p-4 flex flex-col h-full min-h-0">
+                <p class="text-sm text-gray-500 mb-2" id="webhookModalItemName">Select webhooks:</p>
+                <div id="itemWebhookListContainer" class="flex-grow overflow-y-auto border rounded bg-gray-50 dark:bg-gray-900 p-2 dark:border-gray-700"></div>
+            </div>
+            <div class="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 rounded-b-lg">
+                <button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition-colors" onclick="saveItemWebhooks()">Save Changes</button>
+            </div>
         </div>
     </div>
 
-    <div id="webhookEventsModal" class="custom-modal-overlay">
-        <div class="custom-modal-dialog">
-            <div class="custom-modal-header"><h5 class="modal-title fw-bold">Select Events</h5><button type="button" class="btn-close" onclick="hideWebhookEventsModal()"></button></div>
-            <div class="custom-modal-body d-flex flex-column h-100">
-                <p class="small text-muted mb-2" id="webhookEventsModalTitle">Select events:</p>
-                <div class="d-flex gap-2 mb-3">
-                    <div class="input-group input-group-sm flex-grow-1">
-                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input type="text" class="form-control" id="webhookEventsSearchInput" placeholder="Filter events..." oninput="filterWebhookEventsSelection()">
+    <div id="webhookEventsModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm items-center justify-center animate-fadeIn">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-[90%] max-w-md flex flex-col max-h-[90vh]">
+            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700 rounded-t-lg">
+                <h5 class="font-bold">Select Events</h5>
+                <button type="button" class="text-gray-500 hover:text-gray-800 dark:hover:text-white" onclick="hideWebhookEventsModal()"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="p-4 flex flex-col h-full min-h-0">
+                <p class="text-sm text-gray-500 mb-2" id="webhookEventsModalTitle">Select events:</p>
+                <div class="flex gap-2 mb-3">
+                    <div class="flex-grow relative">
+                        <span class="absolute inset-y-0 left-0 pl-2 flex items-center text-gray-500"><i class="bi bi-search"></i></span>
+                        <input type="text" class="w-full pl-8 pr-2 py-1 text-sm border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none" id="webhookEventsSearchInput" placeholder="Filter events..." oninput="filterWebhookEventsSelection()">
                     </div>
-                    <button class="btn btn-sm btn-outline-primary" onclick="toggleSelectAllEventsForWebhook(true)">All</button>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="toggleSelectAllEventsForWebhook(false)">None</button>
+                    <button class="px-2 py-1 text-sm border border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700 rounded" onclick="toggleSelectAllEventsForWebhook(true)">All</button>
+                    <button class="px-2 py-1 text-sm border border-gray-300 text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-gray-400 rounded" onclick="toggleSelectAllEventsForWebhook(false)">None</button>
                 </div>
-                <div id="webhookEventsListContainer" class="flex-grow-1 overflow-auto border rounded bg-body-tertiary p-2" style="max-height: 400px;"></div>
+                <div id="webhookEventsListContainer" class="flex-grow overflow-y-auto border rounded bg-gray-50 dark:bg-gray-900 p-2 dark:border-gray-700"></div>
             </div>
-            <div class="modal-footer p-2 border-top bg-body-tertiary"><button type="button" class="btn btn-primary w-100" onclick="saveWebhookEvents()">Save Changes</button></div>
+            <div class="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 rounded-b-lg">
+                <button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition-colors" onclick="saveWebhookEvents()">Save Changes</button>
+            </div>
         </div>
     </div>
 
-    <div id="webhookModal" class="custom-modal-overlay">
-        <div class="custom-modal-dialog custom-modal-lg">
-            <div class="custom-modal-header"><h5 class="modal-title fw-bold" id="webhookModalTitle">Add Webhook</h5><button type="button" class="btn-close" onclick="hideWebhookModal()"></button></div>
-            <div class="custom-modal-body">
-                <form id="webhookForm">
+    <div id="webhookModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm items-center justify-center animate-fadeIn">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-[90%] max-w-2xl flex flex-col">
+            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700 rounded-t-lg">
+                <h5 class="font-bold" id="webhookModalTitle">Add Webhook</h5>
+                <button type="button" class="text-gray-500 hover:text-gray-800 dark:hover:text-white" onclick="hideWebhookModal()"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="p-6">
+                <form id="webhookForm" class="space-y-4">
                     <input type="hidden" id="webhookIndex" value="-1">
-                    <div class="mb-3"><label class="form-label fw-bold small">Description</label><input type="text" id="modalWebhookDescription" class="form-control" required placeholder="e.g. Main Channel"></div>
-                    <div class="mb-3"><label class="form-label fw-bold small">Webhook URL</label><div class="input-group"><input type="text" id="modalWebhookUrl" class="form-control" required placeholder="e.g. https://discord.com/api/webhooks/..."><button class="btn btn-outline-info" type="button" onclick="testNewWebhook()">Test</button></div></div>
-                    <button type="submit" class="btn btn-primary w-100">Save Webhook</button>
+                    <div>
+                        <label class="block font-bold text-sm mb-1">Description</label>
+                        <input type="text" id="modalWebhookDescription" class="w-full px-3 py-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" required placeholder="e.g. Main Channel">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-sm mb-1">Webhook URL</label>
+                        <div class="flex">
+                            <input type="text" id="modalWebhookUrl" class="flex-1 px-3 py-2 border rounded-l bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" required placeholder="e.g. https://discord.com/api/webhooks/...">
+                            <button class="px-3 py-2 border border-l-0 border-cyan-500 text-cyan-600 hover:bg-cyan-50 dark:hover:bg-gray-600 rounded-r transition-colors" type="button" onclick="testNewWebhook()">Test</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition-colors">Save Webhook</button>
                 </form>
             </div>
         </div>
     </div>
 
-    <div id="itemModal" class="custom-modal-overlay">
-        <div class="custom-modal-dialog custom-modal-lg">
-            <div class="custom-modal-header"><h5 class="modal-title fw-bold" id="modalTitle">Add Event</h5><button type="button" class="btn-close" onclick="hideItemModal()"></button></div>
-            <div class="custom-modal-body">
-                <div class="row g-3">
-                    <div class="col-md-6 border-end">
-                        <form id="itemForm">
+    <div id="itemModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm items-center justify-center animate-fadeIn">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-[90%] max-w-3xl flex flex-col h-[90vh] lg:h-auto">
+            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700 rounded-t-lg">
+                <h5 class="font-bold" id="modalTitle">Add Event</h5>
+                <button type="button" class="text-gray-500 hover:text-gray-800 dark:hover:text-white" onclick="hideItemModal()"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <div class="flex flex-col md:flex-row gap-6 h-full">
+                    <div class="md:w-1/2 md:border-r md:border-gray-200 dark:md:border-gray-700 pr-0 md:pr-6">
+                        <form id="itemForm" class="space-y-4">
                             <input type="hidden" id="itemIndex" value="-1">
-                            <div class="mb-3"><label class="form-label fw-bold small">Name</label><input type="text" id="itemName" class="form-control" required placeholder="e.g. Blue Moon"></div>
-                            <div class="mb-3"><label class="form-label fw-bold small">Type</label><select id="itemType" class="form-select"><option value="Moon">Moon</option><option value="Weather">Weather</option></select></div>
-                            <div class="mb-3"><label class="form-label fw-bold small">Multiplier</label><input type="number" step="0.01" id="itemMultiplier" value="3" class="form-control" required placeholder="e.g. 3.5"></div>
-                            <div class="mb-3"><label class="form-label fw-bold small">Chances</label><input type="text" id="itemChances" class="form-control" placeholder="e.g. 1/1000"></div>
-                            <button type="submit" id="formSubmitButton" class="btn btn-primary w-100">Save</button>
+                            <div><label class="block font-bold text-sm mb-1">Name</label><input type="text" id="itemName" class="w-full px-3 py-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" required placeholder="e.g. Blue Moon"></div>
+                            <div>
+                                <label class="block font-bold text-sm mb-1">Type</label>
+                                <select id="itemType" class="w-full px-3 py-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                    <option value="Moon">Moon</option>
+                                    <option value="Weather">Weather</option>
+                                </select>
+                            </div>
+                            <div><label class="block font-bold text-sm mb-1">Multiplier</label><input type="number" step="0.01" id="itemMultiplier" value="3" class="w-full px-3 py-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" required placeholder="e.g. 3.5"></div>
+                            <div><label class="block font-bold text-sm mb-1">Chances</label><input type="text" id="itemChances" class="w-full px-3 py-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="e.g. 1/1000"></div>
+                            <button type="submit" id="formSubmitButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition-colors">Save</button>
                         </form>
                     </div>
-                    <div class="col-md-6 d-flex flex-column" style="height: 100%; min-height: 350px;">
-                        <h6 class="fw-bold small mb-2">Existing Events</h6>
-                        <div class="d-flex flex-column gap-2 flex-grow-1 min-h-0">
-                            <div class="border rounded d-flex flex-column" style="flex: 1; min-height: 0;"><div class="bg-body-tertiary px-2 py-1 small fw-bold border-bottom text-primary sticky-top">Moons</div><div id="modalMoonPreview" class="overflow-auto flex-grow-1"></div></div>
-                            <div class="border rounded d-flex flex-column" style="flex: 1; min-height: 0;"><div class="bg-body-tertiary px-2 py-1 small fw-bold border-bottom text-info-emphasis sticky-top">Weathers</div><div id="modalWeatherPreview" class="overflow-auto flex-grow-1"></div></div>
+                    <div class="md:w-1/2 flex flex-col h-full min-h-[300px]">
+                        <h6 class="font-bold text-sm mb-2">Existing Events</h6>
+                        <div class="flex flex-col gap-2 flex-grow overflow-hidden">
+                            <div class="border border-gray-200 dark:border-gray-700 rounded flex flex-col flex-1 min-h-0">
+                                <div class="bg-gray-50 dark:bg-gray-700 px-2 py-1 text-xs font-bold border-b border-gray-200 dark:border-gray-600 text-blue-600">Moons</div>
+                                <div id="modalMoonPreview" class="overflow-y-auto flex-grow bg-white dark:bg-gray-800 p-1"></div>
+                            </div>
+                            <div class="border border-gray-200 dark:border-gray-700 rounded flex flex-col flex-1 min-h-0">
+                                <div class="bg-gray-50 dark:bg-gray-700 px-2 py-1 text-xs font-bold border-b border-gray-200 dark:border-gray-600 text-cyan-600">Weathers</div>
+                                <div id="modalWeatherPreview" class="overflow-y-auto flex-grow bg-white dark:bg-gray-800 p-1"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -839,35 +606,39 @@
         </div>
     </div>
 
-    <div id="configModal" class="custom-modal-overlay">
-        <div class="custom-modal-dialog" style="max-width: 400px;">
-            <div class="custom-modal-header"><h5 class="modal-title fw-bold" id="configModalTitle">Save Config</h5><button type="button" class="btn-close" onclick="hideConfigModal()"></button></div>
-            <div class="custom-modal-body">
-                <form id="saveConfigForm">
-                    <div class="mb-3"><label class="form-label fw-bold small">Preset Name</label><input type="text" id="configName" class="form-control" required></div>
-                    <button type="submit" class="btn btn-primary w-100">Save Preset</button>
+    <div id="configModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm items-center justify-center animate-fadeIn">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-[90%] max-w-sm flex flex-col">
+            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700 rounded-t-lg">
+                <h5 class="font-bold" id="configModalTitle">Save Config</h5>
+                <button type="button" class="text-gray-500 hover:text-gray-800 dark:hover:text-white" onclick="hideConfigModal()"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="p-6">
+                <form id="saveConfigForm" class="space-y-4">
+                    <div><label class="block font-bold text-sm mb-1">Preset Name</label><input type="text" id="configName" class="w-full px-3 py-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" required></div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition-colors">Save Preset</button>
                 </form>
             </div>
         </div>
     </div>
 
     <!-- Region Selection Modal -->
-    <div id="regionSelectionModal" class="custom-modal-overlay" style="z-index: 2000;">
-        <div class="d-flex flex-column align-items-center justify-content-center w-100 h-100 p-4">
-            <div class="bg-dark rounded p-2 d-flex flex-column gap-2" style="max-width: 95vw; max-height: 90vh;">
-                <div class="d-flex justify-content-between align-items-center text-white px-2">
-                    <span id="regionSelectionTitle"><i class="bi bi-mouse"></i> Drag to select area</span>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-sm btn-success" onclick="confirmRegionSelection()"><i class="bi bi-check-lg"></i> Confirm</button>
-                        <button class="btn btn-sm btn-secondary" onclick="closeRegionSelection()"><i class="bi bi-x-lg"></i> Cancel</button>
-                    </div>
+    <div id="regionSelectionModal" class="fixed inset-0 z-[60] hidden flex-col items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-gray-900 rounded p-2 flex flex-col gap-2 shadow-2xl max-w-[95vw] max-h-[90vh]">
+            <div class="flex justify-between items-center text-white px-2">
+                <span id="regionSelectionTitle"><i class="bi bi-mouse"></i> Drag to select area</span>
+                <div class="flex gap-2">
+                    <button class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-sm" onclick="confirmRegionSelection()"><i class="bi bi-check-lg"></i> Confirm</button>
+                    <button class="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded text-sm" onclick="closeRegionSelection()"><i class="bi bi-x-lg"></i> Cancel</button>
                 </div>
-                <div id="selectionCanvasContainer" style="position: relative; overflow: hidden; background: #000; border: 1px solid #444;">
-                    <canvas id="selectionCanvas" style="cursor: crosshair; display: block; max-width: 100%; max-height: 80vh; object-fit: contain;"></canvas>
-                </div>
+            </div>
+            <div id="selectionCanvasContainer" class="relative overflow-hidden bg-black border border-gray-700">
+                <canvas id="selectionCanvas" class="cursor-crosshair block max-w-full max-h-[80vh] object-contain"></canvas>
             </div>
         </div>
     </div>
+
+    <!-- Toast Container -->
+    <div class="fixed bottom-5 right-5 z-[70] flex flex-col gap-2 pointer-events-none toast-container"></div>
 
     <script>
         // --- Global Variables ---
@@ -912,7 +683,7 @@
         let activeStatusInterval = null;
         let eventSortOrder = 'desc'; 
         let localStream = null;
-        let isOcrBusy = false; // Prevents overlapping Tesseract calls
+        let isOcrBusy = false; 
 
         // --- DUAL SMART ZOOM VARIABLES ---
         let scanMode = 'uni'; // 'uni' or 'dual'
@@ -920,7 +691,7 @@
         let lock1 = false;
         let zoom2 = 2;
         let lock2 = false;
-        let dragSelectionStep = 0; // 0=None, 1=Region1, 2=Region2
+        let dragSelectionStep = 0; 
         
         // --- Webhook & Modal State ---
         let currentEditingWebhookIndex = -1;
@@ -936,24 +707,32 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadTheme();
             loadSettings();
+            // Show main tab by default
+            document.getElementById('mainTab').classList.remove('hidden');
         });
         
         // --- Theme Management ---
         function setTheme(theme) {
-            document.documentElement.setAttribute('data-bs-theme', theme);
-            localStorage.setItem('theme', theme);
+            const html = document.documentElement;
             const btnIcon = document.getElementById('themeIcon');
+            localStorage.setItem('theme', theme);
+            
             if(theme === 'dark') {
+                html.classList.add('dark');
+                html.classList.remove('light');
                 btnIcon.classList.remove('bi-sun-fill');
                 btnIcon.classList.add('bi-moon-stars-fill');
             } else {
+                html.classList.remove('dark');
+                html.classList.add('light');
                 btnIcon.classList.remove('bi-moon-stars-fill');
                 btnIcon.classList.add('bi-sun-fill');
             }
         }
         function toggleTheme() {
-            const current = localStorage.getItem('theme') || 'light';
-            setTheme(current === 'light' ? 'dark' : 'light');
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+            setTheme(isDark ? 'light' : 'dark');
         }
         function loadTheme() { setTheme(localStorage.getItem('theme') || 'light'); }
 
@@ -964,13 +743,11 @@
                 moonWeatherList = JSON.parse(localStorage.getItem('moonWeatherList')) || [];
                 ocrConfigs = JSON.parse(localStorage.getItem('ocrConfigs')) || [];
                 
-                // Region 1 Load
                 regionXInput.value = localStorage.getItem('regionX') || '0';
                 regionYInput.value = localStorage.getItem('regionY') || '0';
                 regionWInput.value = localStorage.getItem('regionW') || '300';
                 regionHInput.value = localStorage.getItem('regionH') || '50';
                 
-                // Region 2 Load
                 region2XInput.value = localStorage.getItem('region2X') || '0';
                 region2YInput.value = localStorage.getItem('region2Y') || '0';
                 region2WInput.value = localStorage.getItem('region2W') || '300';
@@ -981,12 +758,11 @@
                     document.getElementById('modeSingle').checked = (scanMode === 'uni');
                     document.getElementById('modeDual').checked = (scanMode === 'dual');
                 }
-                toggleScanMode(false); // Apply UI state without saving immediately
+                toggleScanMode(false); 
 
                 currentConfigIndex = parseInt(localStorage.getItem('currentConfigIndex') || '-1');
                 gracePeriodSecondsInput.value = localStorage.getItem('gracePeriodSeconds') || '5';
                 
-                // Initialize Dates (Using Local Time)
                 const now = new Date();
                 const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
                 
@@ -1004,7 +780,6 @@
                 if (!activeStatusInterval) activeStatusInterval = setInterval(renderActiveStatus, 500);
                 
                 addLog("System initialized.");
-                refreshTooltips();
             } catch (e) { console.error(e); }
         }
 
@@ -1032,12 +807,11 @@
             if (confirm("Reset ALL settings?")) { localStorage.clear(); location.reload(); }
         }
 
-        // --- Mode Toggling ---
         function toggleScanMode(save = true) {
             const mode = document.querySelector('input[name="scanMode"]:checked').value;
             scanMode = mode;
             if (mode === 'dual') {
-                region2Controls.style.display = 'flex';
+                region2Controls.style.display = 'block';
                 document.getElementById('zoom2Status').style.display = 'block';
                 document.title = "FYP Notifier (Dual Scan)";
             } else {
@@ -1051,7 +825,6 @@
             }
         }
 
-        // --- Config Management ---
         function updateConfigDropdown() {
             const select = document.getElementById('configSelect');
             select.innerHTML = '<option value="-1">-- Custom Preset --</option>';
@@ -1094,9 +867,15 @@
                 c.mode = scanMode;
                 saveSettings(); showToast(`Updated "${c.name}"`);
             } else {
-                document.getElementById('configModal').style.display = 'flex';
+                document.getElementById('configModal').classList.remove('hidden');
+                document.getElementById('configModal').classList.add('flex');
                 document.getElementById('configName').focus();
             }
+        }
+        
+        function hideConfigModal() {
+            document.getElementById('configModal').classList.add('hidden');
+            document.getElementById('configModal').classList.remove('flex');
         }
 
         document.getElementById('saveConfigForm').addEventListener('submit', (e) => {
@@ -1112,7 +891,7 @@
             ocrConfigs.push(newC);
             currentConfigIndex = ocrConfigs.length - 1;
             saveSettings(); updateConfigDropdown();
-            document.getElementById('configModal').style.display = 'none';
+            hideConfigModal();
             showToast(`Preset "${name}" saved.`);
         });
 
@@ -1149,7 +928,8 @@
                 videoElement.onloadedmetadata = () => {
                     videoElement.play();
                     connectScreenButton.innerHTML = '<i class="bi bi-display"></i> Connected (Stop)';
-                    connectScreenButton.classList.replace('btn-primary', 'btn-outline-primary');
+                    connectScreenButton.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'text-white');
+                    connectScreenButton.classList.add('border', 'border-blue-500', 'text-blue-500', 'hover:bg-blue-50', 'dark:hover:bg-gray-700');
                     connectScreenButton.disabled = false;
                     processButton.disabled = false;
                     
@@ -1174,7 +954,8 @@
             videoElement.srcObject = null;
             if(ocrScanInterval) toggleProcess(true);
             connectScreenButton.innerHTML = '<i class="bi bi-display"></i> Connect';
-            connectScreenButton.classList.replace('btn-outline-primary', 'btn-primary');
+            connectScreenButton.classList.add('bg-blue-600', 'hover:bg-blue-700', 'text-white');
+            connectScreenButton.classList.remove('border', 'border-blue-500', 'text-blue-500', 'hover:bg-blue-50', 'dark:hover:bg-gray-700');
             connectScreenButton.disabled = false;
             processButton.disabled = true;
             rawCaptureContainer.style.display = 'none';
@@ -1193,24 +974,19 @@
             if (scanMode === 'dual') {
                 const r2 = { x: parseInt(region2XInput.value)||0, y: parseInt(region2YInput.value)||0, w: parseInt(region2WInput.value)||300, h: parseInt(region2HInput.value)||50 };
                 
-                // Set canvas size to stack them. Width is max of both. Height is sum + padding.
                 const maxWidth = Math.max(r1.w, r2.w);
-                const totalHeight = r1.h + r2.h + 2; // 2px gap
+                const totalHeight = r1.h + r2.h + 2; 
                 
                 captureViewCanvas.width = maxWidth;
                 captureViewCanvas.height = totalHeight;
                 
                 const ctx = captureViewCanvas.getContext('2d');
-                // Fill bg
                 ctx.fillStyle = '#222';
                 ctx.fillRect(0, 0, maxWidth, totalHeight);
                 
-                // Draw R1
                 ctx.drawImage(videoElement, r1.x, r1.y, r1.w, r1.h, 0, 0, r1.w, r1.h);
-                // Draw separator line
-                ctx.fillStyle = '#0dcaf0'; // Cyan line
+                ctx.fillStyle = '#06b6d4'; // Cyan line
                 ctx.fillRect(0, r1.h, maxWidth, 2);
-                // Draw R2
                 ctx.drawImage(videoElement, r2.x, r2.y, r2.w, r2.h, 0, r1.h + 2, r2.w, r2.h);
                 
             } else {
@@ -1233,7 +1009,6 @@
                     if (!confirm(`⚠️ ${activeKeys.length} event(s) are currently active.\n\nStopping will mark them as ENDED and send final notifications.\n\nContinue?`)) return;
                 }
                 
-                // Process ending for active items
                 activeKeys.forEach(key => {
                     const state = activeItems[key];
                     if (state) {
@@ -1251,7 +1026,8 @@
                 renderActiveStatus();
                 
                 processButton.innerHTML = '<i class="bi bi-play-circle"></i> Start OCR';
-                processButton.classList.replace('btn-danger', 'btn-success');
+                processButton.classList.replace('bg-red-600', 'bg-green-600');
+                processButton.classList.replace('hover:bg-red-700', 'hover:bg-green-700');
                 addLog("OCR stopped.");
                 showToast("OCR Stopped.");
                 
@@ -1278,23 +1054,22 @@
                      return;
                 }
                 
-                // Reset State
                 lock1 = false; zoom1 = 2;
                 lock2 = false; zoom2 = 2;
                 isOcrBusy = false;
                 
                 processButton.innerHTML = '<i class="bi bi-stop-circle"></i> Stop OCR';
-                processButton.classList.replace('btn-success', 'btn-danger');
+                processButton.classList.replace('bg-green-600', 'bg-red-600');
+                processButton.classList.replace('hover:bg-green-700', 'hover:bg-red-700');
                 addLog("OCR started.");
                 showToast("OCR Started.");
                 
-                // Fast interval for smart zoom cycling (250ms)
                 ocrScanInterval = setInterval(scanCameraImage, 250); 
                 activeMoonsList.innerHTML = ''; 
                 activeWeatherList.innerHTML = '';
                 cooldownsPlaceholder.style.display = 'block';
-                activeMoonsSection.classList.add('d-none');
-                activeWeatherSection.classList.add('d-none');
+                activeMoonsSection.classList.add('hidden');
+                activeWeatherSection.classList.add('hidden');
             }
         }
 
@@ -1304,14 +1079,12 @@
 
             const r1 = { x: parseInt(regionXInput.value)||0, y: parseInt(regionYInput.value)||0, w: parseInt(regionWInput.value)||300, h: parseInt(regionHInput.value)||50 };
             
-            // 1. Prepare Logic Canvas (Stitched + Zoomed)
             const ctx = canvasElement.getContext('2d');
-            let boundaryY = 0; // Where R1 ends in the stitched image
+            let boundaryY = 0; 
 
             if (scanMode === 'dual') {
                 const r2 = { x: parseInt(region2XInput.value)||0, y: parseInt(region2YInput.value)||0, w: parseInt(region2WInput.value)||300, h: parseInt(region2HInput.value)||50 };
                 
-                // Canvas width is max of both zoomed regions
                 const w1 = r1.w * zoom1;
                 const h1 = r1.h * zoom1;
                 const w2 = r2.w * zoom2;
@@ -1323,12 +1096,10 @@
                 canvasElement.width = finalW;
                 canvasElement.height = finalH;
                 
-                // Draw R1 Zoomed
                 ctx.drawImage(videoElement, r1.x, r1.y, r1.w, r1.h, 0, 0, w1, h1);
-                // Draw R2 Zoomed below
                 ctx.drawImage(videoElement, r2.x, r2.y, r2.w, r2.h, 0, h1, w2, h2);
                 
-                boundaryY = h1; // Anything below this Y is Region 2
+                boundaryY = h1; 
                 
                 applyImagePreprocessing(ctx, finalW, finalH);
             } else {
@@ -1336,16 +1107,14 @@
                 canvasElement.height = r1.h * zoom1;
                 ctx.drawImage(videoElement, r1.x, r1.y, r1.w, r1.h, 0, 0, r1.w * zoom1, r1.h * zoom1);
                 applyImagePreprocessing(ctx, r1.w * zoom1, r1.h * zoom1);
-                boundaryY = canvasElement.height; // All is R1
+                boundaryY = canvasElement.height; 
             }
             
-            // 2. Initialize Worker if needed
             if (!worker) worker = Tesseract.createWorker({ logger: () => {} });
 
-            // 3. Run OCR
             new Promise(resolve => {
                 worker.load().then(() => worker.loadLanguage('eng')).then(() => worker.initialize('eng')).then(() => {
-                    worker.setParameters({ tessedit_pageseg_mode: 7 }); // Single line mode (or sparse text)
+                    worker.setParameters({ tessedit_pageseg_mode: 7 }); 
                     worker.recognize(canvasElement).then(resolve);
                 });
             }).then(({ data }) => {
@@ -1354,32 +1123,17 @@
                 let foundR1 = false;
                 let foundR2 = false;
 
-                // --- Detection Logic with Spatial Awareness ---
-                // We iterate through detected words to see where they lie
                 const words = data.words || [];
                 const fullText = data.text.trim();
-
-                // If no words but text exists, treat as generic match (fallback)
-                // But better to check bounding boxes
-                
-                const currentMatches = new Map(); // Name -> {item, region}
+                const currentMatches = new Map(); 
 
                 words.forEach(w => {
                     const txt = w.text.toLowerCase();
                     const y = w.bbox.y0;
                     const region = (scanMode === 'dual' && y >= boundaryY) ? 2 : 1;
                     
-                    // Check against list
                     moonWeatherList.forEach(item => {
-                        // Simple check: if word is part of item name
-                        // Note: This is a bit weak for multi-word events like "Blue Moon" if split across lines
-                        // Better: Check if the *Line* bbox contains the match. 
-                        // For simplicity in this constrained env: 
-                        // If detected text *contains* the item name, we define region by the centroid of detected text.
                         if (fullText.toLowerCase().includes(item.name.toLowerCase())) {
-                            // Valid match globally. Assign to region based on word position?
-                            // Issue: "Blue Moon" might have "Blue" in R1 and "Moon" in R1.
-                            // We assume events don't span across the separator.
                             if (txt.includes(item.name.toLowerCase().split(' ')[0])) {
                                 currentMatches.set(item.name, { item: item, region: region });
                             }
@@ -1387,34 +1141,24 @@
                     });
                 });
 
-                // Fallback: If map is empty but fullText has match, assign to R1 (Uni) or try to guess
                 if (currentMatches.size === 0) {
                     moonWeatherList.forEach(item => {
                         if (fullText.toLowerCase().includes(item.name.toLowerCase())) {
-                             // Default to R1 if we can't place it, or R2 if text is clearly at bottom?
-                             // Without word-level bbox for the specific phrase, it's hard.
-                             // We'll assume R1 for Uni. For Dual, if we have words, we use them.
-                             // If no words array, we can't support Smart Zoom Lock properly per region.
-                             // Proceeding with Found Logic updates:
-                             currentMatches.set(item.name, { item: item, region: 1 }); // Fallback
+                             currentMatches.set(item.name, { item: item, region: 1 }); 
                         }
                     });
                 }
 
-                // Process Matches
                 currentMatches.forEach((matchData, name) => {
                     const { item, region } = matchData;
                     
-                    // Update Lock State
                     if (region === 1) foundR1 = true;
                     if (region === 2) foundR2 = true;
 
                     if (activeItems[name]) {
-                        // Extend
                         if(activeItems[name].timeout) clearTimeout(activeItems[name].timeout);
                         activeItems[name].timeout = null;
                     } else {
-                        // Start
                         addLog(`**[START]** ${name} (R${region})`);
                         activeItems[name] = { item, start: Date.now(), timeout: null };
                         sendDiscordNotification(item, "start");
@@ -1422,7 +1166,6 @@
                     }
                 });
 
-                // Check for Ended Events (Grace Period)
                 Object.keys(activeItems).forEach(name => {
                     if (!currentMatches.has(name)) {
                         const state = activeItems[name];
@@ -1443,32 +1186,25 @@
                     }
                 });
 
-                // --- Smart Zoom Update ---
-                
-                // Region 1 Logic
                 if (foundR1) {
-                    if (!lock1) { lock1 = true; }//addLog(`**[ZOOM]** R1 Locked ${zoom1}x`); }
+                    if (!lock1) { lock1 = true; }
                 } else {
-                    if (lock1) { lock1 = false; } // Unlock if lost
-                    // Cycle
+                    if (lock1) { lock1 = false; } 
                     zoom1++; if (zoom1 > 5) zoom1 = 1;
                 }
 
-                // Region 2 Logic
                 if (scanMode === 'dual') {
                     if (foundR2) {
-                        if (!lock2) { lock2 = true; } //addLog(`**[ZOOM]** R2 Locked ${zoom2}x`); }
+                        if (!lock2) { lock2 = true; }
                     } else {
                         if (lock2) { lock2 = false; }
                         zoom2++; if (zoom2 > 5) zoom2 = 1;
                     }
                 }
 
-                // Update Badges
                 document.getElementById('zoom1Status').innerHTML = `R1: ${zoom1}x ${lock1 ? '<i class="bi bi-lock-fill"></i>' : ''}`;
                 document.getElementById('zoom2Status').innerHTML = `R2: ${zoom2}x ${lock2 ? '<i class="bi bi-lock-fill"></i>' : ''}`;
 
-                // Cleanup
                 isOcrBusy = false;
                 Tesseract.release(worker).then(() => { worker = null; });
             }).catch(e => { console.error(e); isOcrBusy = false; });
@@ -1502,12 +1238,13 @@
             selectionCanvas.width = videoElement.videoWidth;
             selectionCanvas.height = videoElement.videoHeight;
             selectionCtx = selectionCanvas.getContext('2d');
-            regionSelectionModal.style.display = 'flex';
+            regionSelectionModal.classList.remove('hidden');
+            regionSelectionModal.classList.add('flex');
             animId = requestAnimationFrame(renderSelectionLoop);
         }
 
         function renderSelectionLoop() {
-            if (regionSelectionModal.style.display === 'none') return;
+            if (regionSelectionModal.classList.contains('hidden')) return;
             selectionCtx.drawImage(videoElement, 0, 0, selectionCanvas.width, selectionCanvas.height);
             
             const w = endX - startX; const h = endY - startY;
@@ -1520,7 +1257,8 @@
 
         function closeRegionSelection() {
             cancelAnimationFrame(animId);
-            regionSelectionModal.style.display = 'none';
+            regionSelectionModal.classList.add('hidden');
+            regionSelectionModal.classList.remove('flex');
             dragSelectionStep = 0;
         }
 
@@ -1531,23 +1269,18 @@
             const title = document.getElementById('regionSelectionTitle');
             
             if (dragSelectionStep === 1) {
-                // Save R1
                 regionXInput.value = Math.round(x); regionYInput.value = Math.round(y); regionWInput.value = Math.round(w); regionHInput.value = Math.round(h);
                 
                 if (scanMode === 'dual') {
-                    // Move to Step 2
                     dragSelectionStep = 2;
                     title.innerHTML = `<i class="bi bi-2-square"></i> Select Region 2 (Bottom)`;
-                    // Reset visual selection
                     startX=0; startY=0; endX=0; endY=0;
                     showToast("Region 1 set. Now select Region 2.");
                 } else {
-                    // Done
                     updatePreviewAndSize(); saveSettings(); closeRegionSelection();
                     showToast("Region set!");
                 }
             } else if (dragSelectionStep === 2) {
-                // Save R2
                 region2XInput.value = Math.round(x); region2YInput.value = Math.round(y); region2WInput.value = Math.round(w); region2HInput.value = Math.round(h);
                 updatePreviewAndSize(); saveSettings(); closeRegionSelection();
                 showToast("Dual Regions set!");
@@ -1564,8 +1297,8 @@
             
             if(list.length === 0) { 
                 cooldownsPlaceholder.style.display='block'; 
-                activeMoonsSection.classList.add('d-none');
-                activeWeatherSection.classList.add('d-none');
+                activeMoonsSection.classList.add('hidden');
+                activeWeatherSection.classList.add('hidden');
                 cooldownTimerLog.textContent = ocrScanInterval ? "Scanning..." : "Idle"; 
                 return; 
             }
@@ -1577,34 +1310,44 @@
             
             const generateHTML = (items) => items.map(s => {
                 const el = Date.now() - s.start;
-                const txt = s.timeout ? `<span class="text-danger">Grace...</span>` : `Active ${formatDuration(el)}`;
-                return `<div class="list-group-item d-flex justify-content-between align-items-center"><div><strong>${s.item.name}</strong></div><small>${txt}</small></div>`;
+                const txt = s.timeout ? `<span class="text-red-500">Grace...</span>` : `Active ${formatDuration(el)}`;
+                return `<div class="px-3 py-2 flex justify-between items-center bg-white dark:bg-gray-800"><div><strong>${s.item.name}</strong></div><small>${txt}</small></div>`;
             }).join('');
 
             if(moons.length > 0) {
-                activeMoonsSection.classList.remove('d-none');
+                activeMoonsSection.classList.remove('hidden');
                 activeMoonsList.innerHTML = generateHTML(moons);
             } else {
-                activeMoonsSection.classList.add('d-none');
+                activeMoonsSection.classList.add('hidden');
             }
 
             if(weathers.length > 0) {
-                activeWeatherSection.classList.remove('d-none');
+                activeWeatherSection.classList.remove('hidden');
                 activeWeatherList.innerHTML = generateHTML(weathers);
             } else {
-                activeWeatherSection.classList.add('d-none');
+                activeWeatherSection.classList.add('hidden');
             }
 
             cooldownTimerLog.textContent = `Active: ${list.length}`;
         }
-        function addLog(msg) { logContentDiv.innerHTML = `<span style="color:#adb5bd;">[${new Date().toLocaleTimeString()}]</span> ${msg}<br>` + logContentDiv.innerHTML; }
+        function addLog(msg) { logContentDiv.innerHTML = `<span class="text-gray-400">[${new Date().toLocaleTimeString()}]</span> ${msg}<br>` + logContentDiv.innerHTML; }
         function clearLogs() { logContentDiv.innerHTML = ""; addLog("Logs cleared."); };
+        
         function showToast(msg, type='success') {
-            const t = document.createElement('div'); t.className = `custom-toast ${type}`;
+            const t = document.createElement('div'); 
+            const borderClass = type === 'success' ? 'border-green-500' : (type === 'error' ? 'border-red-500' : 'border-blue-500');
+            t.className = `bg-gray-800 text-white px-5 py-3 rounded shadow-lg flex items-center gap-3 animate-slideInToast min-w-[280px] border-l-4 ${borderClass}`;
             t.innerHTML = `<span>${msg}</span>`;
-            let c = document.querySelector('.toast-container'); if(!c){c=document.createElement('div');c.className='toast-container';document.body.appendChild(c);}
-            c.appendChild(t); setTimeout(() => t.remove(), 3000);
+            
+            const c = document.querySelector('.toast-container');
+            c.appendChild(t); 
+            setTimeout(() => {
+                t.style.opacity = '0';
+                t.style.transform = 'translateY(10px)';
+                setTimeout(() => t.remove(), 300);
+            }, 3000);
         }
+        
         function formatChanceToPercent(input) {
             if (!input) return '';
             let clean = input.toString().toLowerCase().replace(/,/g, '');
@@ -1628,11 +1371,8 @@
             return `${s}s`;
         }
         
-        function refreshTooltips() { [...document.querySelectorAll('[data-bs-toggle="tooltip"]')].map(e=>new bootstrap.Tooltip(e)); }
-        
         // --- Webhook & Event Lists Logic ---
         
-        // RENDER EVENT LIST (With Slide-to-Delete)
         function renderList() {
             moonWeatherList.sort((a,b)=>b.multiplier-a.multiplier);
             const moons=moonWeatherList.filter(i=>i.type==='Moon'), weathers=moonWeatherList.filter(i=>i.type==='Weather');
@@ -1641,40 +1381,38 @@
                 const originalIndex = moonWeatherList.indexOf(i);
                 const pct = formatChanceToPercent(i.chances);
                 return `
-                <div class="slide-reveal-wrapper">
-                    <div class="slide-reveal-content p-2 border-bottom d-flex justify-content-between align-items-center">
+                <div class="slide-reveal-wrapper group border-b border-gray-100 dark:border-gray-700 last:border-0">
+                    <div class="bg-white dark:bg-gray-800 p-3 flex justify-between items-center relative z-10 transition-transform">
                         <div>
                             <strong>${i.name}</strong> 
-                            <span class="badge bg-secondary">${i.multiplier}x</span>
-                            ${pct ? `<span class="badge bg-info text-dark" style="font-size:0.7em">${pct}</span>` : ''}
+                            <span class="bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded text-xs ml-1">${i.multiplier}x</span>
+                            ${pct ? `<span class="bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-100 px-1.5 py-0.5 rounded text-xs ml-1">${pct}</span>` : ''}
                         </div>
-                        <i class="bi bi-chevron-left text-muted opacity-25"></i>
+                        <i class="bi bi-chevron-left text-gray-300"></i>
                     </div>
                     <div class="slide-reveal-action">
-                        <div class="slide-btn slide-btn-edit" onclick="showItemModal(${originalIndex})">
+                        <div class="w-1/2 flex items-center justify-center bg-gray-500 hover:bg-gray-600 text-white cursor-pointer" onclick="showItemModal(${originalIndex})">
                             <i class="bi bi-pencil"></i>
                         </div>
-                        <div class="slide-btn slide-btn-delete" onclick="removeItem(${originalIndex})">
+                        <div class="w-1/2 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white cursor-pointer" onclick="removeItem(${originalIndex})">
                             <i class="bi bi-trash"></i>
                         </div>
                     </div>
                 </div>`;
-            }).join('') : '<p class="text-muted small text-center p-2">None.</p>';
+            }).join('') : '<p class="text-gray-400 text-xs text-center p-4">None.</p>';
 
             document.getElementById('moonListContainer').innerHTML=gen(moons);
             document.getElementById('weatherListContainer').innerHTML=gen(weathers);
             
-            // Modal Previews
-            document.getElementById('modalMoonPreview').innerHTML = moons.map(i=>`<div class="px-2 py-1 border-bottom small">${i.name}</div>`).join('') || '<p class="small text-muted">None</p>';
-            document.getElementById('modalWeatherPreview').innerHTML = weathers.map(i=>`<div class="px-2 py-1 border-bottom small">${i.name}</div>`).join('') || '<p class="small text-muted">None</p>';
+            document.getElementById('modalMoonPreview').innerHTML = moons.map(i=>`<div class="px-2 py-1 border-b dark:border-gray-700 text-xs">${i.name}</div>`).join('') || '<p class="text-xs text-gray-500">None</p>';
+            document.getElementById('modalWeatherPreview').innerHTML = weathers.map(i=>`<div class="px-2 py-1 border-b dark:border-gray-700 text-xs">${i.name}</div>`).join('') || '<p class="text-xs text-gray-500">None</p>';
             
             updateItemListDropdown();
         }
 
-        // RENDER WEBHOOK LIST (Restored - Reverted Slide-to-Reveal)
         function renderWebhookList() {
             const c = document.getElementById('webhookListContainer');
-            if(!webhookList.length) { c.innerHTML='<p class="text-muted small text-center">No webhooks configured.</p>'; return; }
+            if(!webhookList.length) { c.innerHTML='<p class="text-gray-400 text-sm text-center">No webhooks configured.</p>'; return; }
             
             const totalMoons = moonWeatherList.filter(i => i.type === 'Moon').length;
             const totalWeathers = moonWeatherList.filter(i => i.type === 'Weather').length;
@@ -1689,46 +1427,47 @@
                 const weatherChecked = (totalWeathers > 0 && weatherSubs === totalWeathers) ? 'checked' : '';
 
                 return `
-                <div class="list-group-item">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div class="overflow-hidden me-2 flex-grow-1">
-                            <div class="d-flex align-items-center gap-2">
-                                <strong class="text-truncate">${w.description}</strong>
+                <div class="border border-gray-200 dark:border-gray-700 rounded p-3 mb-2 bg-white dark:bg-gray-800">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="overflow-hidden mr-2 flex-grow">
+                            <div class="flex items-center gap-2">
+                                <strong class="truncate text-sm">${w.description}</strong>
                             </div>
-                            <small class="text-muted d-block text-truncate" style="font-size: 0.75rem;">${w.url}</small>
+                            <small class="text-gray-500 block truncate text-xs">${w.url}</small>
                         </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="form-check form-switch m-0" title="Enable/Disable Webhook Global">
-                                <input class="form-check-input" type="checkbox" ${w.active ? 'checked' : ''} onchange="toggleWb(${w.originalIndex})">
-                            </div>
-                            <button onclick="showWebhookModal(${w.originalIndex})" class="btn btn-sm btn-outline-secondary" title="Edit Webhook">
+                        <div class="flex items-center gap-2">
+                            <label class="relative inline-flex items-center cursor-pointer" title="Enable/Disable">
+                                <input type="checkbox" class="sr-only peer" ${w.active ? 'checked' : ''} onchange="toggleWb(${w.originalIndex})">
+                                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                            </label>
+                            <button onclick="showWebhookModal(${w.originalIndex})" class="p-1 text-gray-500 hover:text-blue-500" title="Edit Webhook">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button onclick="removeWebhook(${w.originalIndex})" class="btn btn-sm btn-outline-danger" title="Delete Webhook">
+                            <button onclick="removeWebhook(${w.originalIndex})" class="p-1 text-gray-500 hover:text-red-500" title="Delete Webhook">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
                     </div>
                     
-                    <div class="d-flex align-items-center gap-3 pt-2 border-top bg-body-tertiary rounded px-2 py-1">
-                        <small class="text-muted fw-bold" style="font-size: 0.7rem;">Notify For:</small>
+                    <div class="flex items-center gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
+                        <small class="text-gray-500 font-bold text-xs">Notify For:</small>
                         
-                        <div class="form-check form-check-inline m-0 d-flex align-items-center">
-                            <input class="form-check-input me-1" type="checkbox" id="wb-moon-${w.id}" ${moonChecked} onchange="toggleWebhookSubscription(${w.id}, 'Moon')">
-                            <label class="form-check-label small cursor-pointer text-primary" for="wb-moon-${w.id}">
-                                <i class="bi bi-moon-stars"></i> Moons <span class="text-muted" style="font-size:0.75em">(${moonSubs}/${totalMoons})</span>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="wb-moon-${w.id}" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 mr-1" ${moonChecked} onchange="toggleWebhookSubscription(${w.id}, 'Moon')">
+                            <label class="text-xs cursor-pointer text-blue-600 font-medium" for="wb-moon-${w.id}">
+                                <i class="bi bi-moon-stars"></i> Moons <span class="text-gray-500">(${moonSubs}/${totalMoons})</span>
                             </label>
                         </div>
 
-                        <div class="form-check form-check-inline m-0 d-flex align-items-center">
-                            <input class="form-check-input me-1" type="checkbox" id="wb-weather-${w.id}" ${weatherChecked} onchange="toggleWebhookSubscription(${w.id}, 'Weather')">
-                            <label class="form-check-label small cursor-pointer text-warning-emphasis" for="wb-weather-${w.id}">
-                                <i class="bi bi-cloud-haze"></i> Weathers <span class="text-muted" style="font-size:0.75em">(${weatherSubs}/${totalWeathers})</span>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="wb-weather-${w.id}" class="rounded border-gray-300 text-yellow-600 shadow-sm focus:border-yellow-300 focus:ring focus:ring-yellow-200 focus:ring-opacity-50 mr-1" ${weatherChecked} onchange="toggleWebhookSubscription(${w.id}, 'Weather')">
+                            <label class="text-xs cursor-pointer text-yellow-600 font-medium" for="wb-weather-${w.id}">
+                                <i class="bi bi-cloud-haze"></i> Weathers <span class="text-gray-500">(${weatherSubs}/${totalWeathers})</span>
                             </label>
                         </div>
 
-                        <div class="ms-auto">
-                            <button class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.75rem;" onclick="showWebhookEventsModal(${w.originalIndex})" title="Select Specific Events">
+                        <div class="ml-auto">
+                            <button class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700" onclick="showWebhookEventsModal(${w.originalIndex})" title="Select Specific Events">
                                 <i class="bi bi-list-check"></i> Select
                             </button>
                         </div>
@@ -1746,10 +1485,10 @@
 
             let html = '';
             if(activeWebhooks.length > 0) {
-                html += `<h6 class="text-success small fw-bold px-1 mb-1 mt-2">Active Webhooks</h6>` + activeWebhooks.map(renderItem).join('');
+                html += `<h6 class="text-green-600 text-xs font-bold mb-2">Active Webhooks</h6>` + activeWebhooks.map(renderItem).join('');
             }
             if(inactiveWebhooks.length > 0) {
-                html += `<h6 class="text-secondary small fw-bold px-1 mb-1 mt-3">Inactive Webhooks</h6>` + inactiveWebhooks.map(renderItem).join('');
+                html += `<h6 class="text-gray-500 text-xs font-bold mb-2 mt-4">Inactive Webhooks</h6>` + inactiveWebhooks.map(renderItem).join('');
             }
             
             c.innerHTML = html;
@@ -1783,11 +1522,13 @@
             webhookEventsModalTitle.innerHTML = `Select events for <strong>${webhook.description}</strong>:`;
             if(webhookEventsSearchInput) webhookEventsSearchInput.value = "";
             renderWebhookEventsList(webhook.id);
-            webhookEventsModal.style.display = 'flex';
+            webhookEventsModal.classList.remove('hidden');
+            webhookEventsModal.classList.add('flex');
         }
 
         function hideWebhookEventsModal() {
-            webhookEventsModal.style.display = 'none';
+            webhookEventsModal.classList.add('hidden');
+            webhookEventsModal.classList.remove('flex');
             currentEditingWebhookIndex = -1;
         }
 
@@ -1799,7 +1540,7 @@
             });
 
             if (sortedEvents.length === 0) {
-                webhookEventsListContainer.innerHTML = '<div class="alert alert-warning small mb-0">No events found.</div>';
+                webhookEventsListContainer.innerHTML = '<div class="p-3 bg-yellow-100 text-yellow-800 rounded text-xs">No events found.</div>';
                 return;
             }
 
@@ -1810,25 +1551,25 @@
                 if (filterText && !item.name.toLowerCase().includes(filterText.toLowerCase())) return;
                 
                 if (item.type !== lastType) {
-                    const typeColor = item.type === 'Moon' ? 'text-primary' : 'text-warning-emphasis';
-                    html += `<div class="small fw-bold ${typeColor} bg-body-tertiary border-bottom pt-2 pb-1 sticky-top mb-1" style="top:0;">${item.type}s</div>`;
+                    const typeColor = item.type === 'Moon' ? 'text-blue-600' : 'text-cyan-600';
+                    html += `<div class="text-xs font-bold ${typeColor} bg-gray-100 dark:bg-gray-800 border-b dark:border-gray-700 py-1 sticky top-0 mb-1 z-10">${item.type}s</div>`;
                     lastType = item.type;
                 }
 
                 const isChecked = (item.webhookIds || []).includes(webhookId) ? 'checked' : '';
                 
                 html += `
-                <div class="webhook-select-item d-flex align-items-center justify-content-between p-2 border-bottom" onclick="toggleWebhookEventCheckbox('${item.id}')">
-                    <div class="overflow-hidden me-2">
-                        <div class="d-flex align-items-center gap-1 small fw-bold">${item.name}</div>
-                        <div class="small text-muted" style="font-size: 0.75em;">${item.multiplier}x Multiplier</div>
+                <div class="webhook-select-item flex items-center justify-between p-2 border-b dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" onclick="toggleWebhookEventCheckbox('${item.id}')">
+                    <div class="overflow-hidden mr-2">
+                        <div class="flex items-center gap-1 text-sm font-bold">${item.name}</div>
+                        <div class="text-xs text-gray-500">${item.multiplier}x Multiplier</div>
                     </div>
-                    <div class="form-check m-0">
-                        <input class="form-check-input webhook-event-checkbox" type="checkbox" value="${item.id}" id="weCheck-${item.id}" ${isChecked} onclick="event.stopPropagation()">
+                    <div class="m-0">
+                        <input class="webhook-event-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" type="checkbox" value="${item.id}" id="weCheck-${item.id}" ${isChecked} onclick="event.stopPropagation()">
                     </div>
                 </div>`;
             });
-            webhookEventsListContainer.innerHTML = html || '<div class="text-center text-muted small p-3">No matching events found.</div>';
+            webhookEventsListContainer.innerHTML = html || '<div class="text-center text-gray-400 text-xs p-3">No matching events found.</div>';
         }
 
         function filterWebhookEventsSelection() {
@@ -1899,14 +1640,14 @@
             });
         }
 
-        // RENDER HISTORY (With Slide-to-Delete)
+        // RENDER HISTORY
         function renderRecentEvents() {
             const date = document.getElementById('eventDatePicker').value;
             const evs = JSON.parse(localStorage.getItem('dailyEvents')) || {};
             const dayEvents = evs[date] || [];
             const container = document.getElementById('recentEventsList');
             
-            if(!dayEvents.length) { container.innerHTML='<p class="text-center text-muted small mt-2">No events found.</p>'; return; }
+            if(!dayEvents.length) { container.innerHTML='<p class="text-center text-gray-400 text-xs mt-4">No events found.</p>'; return; }
             
             const search = document.getElementById('eventSearchInput').value.toLowerCase();
             const typeFilter = document.querySelector('input[name="typeFilter"]:checked').value;
@@ -1919,23 +1660,20 @@
             
             filtered.sort((a,b) => eventSortOrder === 'desc' ? b.start - a.start : a.start - b.start);
 
-            container.innerHTML = `<div class="list-group list-group-flush" style="max-height: 500px; overflow-y: auto;">` + filtered.map(e => `
-                <div class="slide-reveal-wrapper d-flex" style="height: auto; min-height: 60px; overflow: hidden; position: relative;">
-                    
-                    <div class="slide-reveal-content p-2 border-bottom flex-grow-1">
-                        <div class="d-flex justify-content-between">
-                            <strong>${e.name}</strong>
-                            <small class="text-muted">${new Date(e.start).toLocaleTimeString()}</small>
+            container.innerHTML = `<div class="flex flex-col">` + filtered.map(e => `
+                <div class="slide-reveal-wrapper flex group border-b border-gray-100 dark:border-gray-700 last:border-0 relative h-[60px]">
+                    <div class="bg-white dark:bg-gray-800 p-2 flex-grow relative z-10 transition-transform">
+                        <div class="flex justify-between">
+                            <strong class="text-sm">${e.name}</strong>
+                            <small class="text-gray-500 text-xs">${new Date(e.start).toLocaleTimeString()}</small>
                         </div>
-                        <div class="text-muted small">Duration: ${formatDuration(e.duration)}</div>
+                        <div class="text-gray-500 text-xs">Duration: ${formatDuration(e.duration)}</div>
                     </div>
-
-                    <div class="slide-reveal-action d-flex align-items-center justify-content-center bg-danger text-white" 
-                         style="width: 50px; cursor: pointer;" 
-                         onclick="deleteHistoryItem('${date}', ${e.originalIndex})">
-                        <i class="bi bi-trash"></i>
+                    <div class="slide-reveal-action">
+                        <div class="w-full flex items-center justify-center bg-red-500 hover:bg-red-600 text-white cursor-pointer" onclick="deleteHistoryItem('${date}', ${e.originalIndex})">
+                            <i class="bi bi-trash"></i>
+                        </div>
                     </div>
-
                 </div>
             `).join('') + `</div>`;
         }
@@ -1951,7 +1689,7 @@
             }
         }
         
-        // --- Statistics & Charting Logic (Restored) ---
+        // --- Statistics & Charting Logic ---
         function getTimeRange() {
             const s = document.getElementById('statsDateStart').value.split('-');
             const e = document.getElementById('statsDateEnd').value.split('-');
@@ -2055,6 +1793,7 @@
                         y: { 
                             beginAtZero: true,
                             ticks: {
+                                color: document.documentElement.classList.contains('dark') ? '#cbd5e0' : '#4a5568',
                                 callback: function(value) {
                                     if (metricType === 'avgTime') {
                                         const sec = Math.round(value * 60);
@@ -2065,9 +1804,13 @@
                                     return value;
                                 }
                             }
-                        } 
+                        },
+                        x: {
+                            ticks: { color: document.documentElement.classList.contains('dark') ? '#cbd5e0' : '#4a5568' }
+                        }
                     },
                     plugins: {
+                        legend: { labels: { color: document.documentElement.classList.contains('dark') ? '#cbd5e0' : '#4a5568' } },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
@@ -2095,7 +1838,9 @@
         };
 
         function updateUploadLabel(input) {
+            const display = document.getElementById('fileNameDisplay');
             if(input.files[0]) {
+                display.textContent = input.files[0].name;
                 Papa.parse(input.files[0], { header:true, skipEmptyLines:true, complete: (res) => {
                     let c=0;
                     res.data.forEach(row => {
@@ -2107,6 +1852,8 @@
                     });
                     if(c>0) { saveSettings(); renderList(); showToast(`Imported ${c} items`); }
                 }});
+            } else {
+                display.textContent = "Choose CSV...";
             }
         }
         function exportEvents() {
@@ -2142,7 +1889,6 @@
         }
         
         function addRecentEvent(item, dur, start) {
-            // Use local date for storage key instead of UTC
             const now = new Date();
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -2154,14 +1900,14 @@
             evs[k].push({name:item.name, type:item.type, duration:dur, start});
             localStorage.setItem('dailyEvents', JSON.stringify(evs));
             renderRecentEvents();
-            // Trigger stats update immediately
             updateItemListDropdown();
         }
 
         // --- Modals logic ---
         function showItemModal(i) { 
             const m = document.getElementById('itemModal'); 
-            m.style.display='flex'; 
+            m.classList.remove('hidden');
+            m.classList.add('flex');
             document.getElementById('itemIndex').value=i; 
             
             if(i > -1 && moonWeatherList[i]) {
@@ -2175,13 +1921,16 @@
             } else {
                 document.getElementById('itemForm').reset();
                 document.getElementById('itemIndex').value = -1;
-                document.getElementById('itemType').value = 'Moon'; // Default
+                document.getElementById('itemType').value = 'Moon'; 
                 document.getElementById('itemMultiplier').value = 3;
                 document.getElementById('modalTitle').textContent = 'Add Event';
                 document.getElementById('formSubmitButton').textContent = 'Save';
             }
         }
-        function hideItemModal() { document.getElementById('itemModal').style.display='none'; }
+        function hideItemModal() { 
+            document.getElementById('itemModal').classList.add('hidden'); 
+            document.getElementById('itemModal').classList.remove('flex'); 
+        }
         
         document.getElementById('itemForm').addEventListener('submit', e=>{
             e.preventDefault(); const nm=document.getElementById('itemName').value, tp=document.getElementById('itemType').value, mu=parseFloat(document.getElementById('itemMultiplier').value), ch=document.getElementById('itemChances').value;
@@ -2201,14 +1950,21 @@
             } 
         };
         
-        window.onclick = e => { if(e.target.classList.contains('custom-modal-overlay')) { 
-            hideItemModal(); document.getElementById('webhookModal').style.display='none'; 
-            document.getElementById('configModal').style.display='none'; closeRegionSelection();
-        }};
+        // Modal Click Outside
+        window.onclick = e => { 
+            // We use the id check or class check for the overlay div
+            if(e.target.id === 'itemModal') hideItemModal();
+            if(e.target.id === 'webhookModal') hideWebhookModal();
+            if(e.target.id === 'configModal') hideConfigModal();
+            if(e.target.id === 'itemWebhookModal') hideItemWebhookModal();
+            if(e.target.id === 'webhookEventsModal') hideWebhookEventsModal();
+            if(e.target.id === 'regionSelectionModal') closeRegionSelection();
+        };
         
         function showWebhookModal(i) { 
             const m = document.getElementById('webhookModal');
-            m.style.display='flex'; 
+            m.classList.remove('hidden');
+            m.classList.add('flex');
             document.getElementById('webhookIndex').value=i;
             
             if(i > -1 && webhookList[i]) {
@@ -2222,7 +1978,10 @@
                 document.getElementById('webhookModalTitle').textContent = 'Add Webhook';
             }
         }
-        function hideWebhookModal() { document.getElementById('webhookModal').style.display='none'; }
+        function hideWebhookModal() { 
+            document.getElementById('webhookModal').classList.add('hidden');
+            document.getElementById('webhookModal').classList.remove('flex');
+        }
         document.getElementById('webhookForm').addEventListener('submit', e => {
             e.preventDefault(); const d=document.getElementById('modalWebhookDescription').value, u=document.getElementById('modalWebhookUrl').value;
             const i=parseInt(document.getElementById('webhookIndex').value);
@@ -2245,10 +2004,31 @@
         }
 
         function openTab(e,t) {
-            document.querySelectorAll('.tab-content-wrapper').forEach(x=>x.classList.remove('active'));
-            document.querySelectorAll('.nav-link').forEach(x=>x.classList.remove('active','fw-bold'));
-            document.getElementById(t).classList.add('active'); e.currentTarget.classList.add('active','fw-bold');
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(x => x.classList.add('hidden'));
+            
+            // Reset all nav links
+            document.querySelectorAll('.nav-link').forEach(x => {
+                x.classList.remove('font-bold', 'bg-white', 'text-blue-600', 'border-b-2', 'border-blue-600', 'dark:bg-gray-800');
+                x.classList.add('font-medium', 'text-gray-600', 'hover:bg-gray-200', 'dark:text-gray-400', 'dark:hover:bg-gray-700');
+            });
+
+            // Show selected tab content
+            document.getElementById(t).classList.remove('hidden');
+            
+            // Highlight selected nav link
+            const link = e.currentTarget;
+            link.classList.remove('font-medium', 'text-gray-600', 'hover:bg-gray-200', 'dark:text-gray-400', 'dark:hover:bg-gray-700');
+            link.classList.add('font-bold', 'bg-white', 'text-blue-600', 'border-b-2', 'border-blue-600', 'dark:bg-gray-800');
         };
+        
+        // Stub for hideItemWebhookModal if it wasn't defined
+        function hideItemWebhookModal() {
+             document.getElementById('itemWebhookModal').classList.add('hidden');
+             document.getElementById('itemWebhookModal').classList.remove('flex');
+        }
+        function saveItemWebhooks() { hideItemWebhookModal(); } 
+
     </script>
 </body>
 </html>
