@@ -1447,7 +1447,7 @@
                 
                 // Region 1 Logic
                 if (foundR1) {
-                    if (!lock1) { lock1 = true; addLog(`**[ZOOM]** R1 Locked ${zoom1}x`); }
+                    if (!lock1) { lock1 = true; }//addLog(`**[ZOOM]** R1 Locked ${zoom1}x`); }
                 } else {
                     if (lock1) { lock1 = false; } // Unlock if lost
                     // Cycle
@@ -1457,7 +1457,7 @@
                 // Region 2 Logic
                 if (scanMode === 'dual') {
                     if (foundR2) {
-                        if (!lock2) { lock2 = true; addLog(`**[ZOOM]** R2 Locked ${zoom2}x`); }
+                        if (!lock2) { lock2 = true; } //addLog(`**[ZOOM]** R2 Locked ${zoom2}x`); }
                     } else {
                         if (lock2) { lock2 = false; }
                         zoom2++; if (zoom2 > 5) zoom2 = 1;
