@@ -2121,8 +2121,8 @@
             if(!activeHooks.length) return;
             
             const msg = status === 'start' 
-                ? `**${item.name}** (x${item.multiplier}) has started!` 
-                : `**${item.name}** ended. Duration: ${formatDuration(dur)}`;
+                ? `${item.name} (**x${item.multiplier}!**) **has started!**` 
+                : `${item.name} **ended!** Duration: ${formatDuration(dur)}`;
 
             activeHooks.forEach(h => {
                 fetch(h.url, { 
@@ -2230,7 +2230,7 @@
         function testNewWebhook() {
              const url = document.getElementById('modalWebhookUrl').value;
              if(!url) return;
-             fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({content:"Test Notification from FYP Notifier"})})
+             fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({content:"🔔 **Test Message** from FYP Notifier! If you see this, your webhook is working correctly."})})
                 .then(r=>r.ok?showToast('Sent!'):showToast('Failed','error'));
         }
 
