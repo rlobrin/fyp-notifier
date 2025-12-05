@@ -1919,7 +1919,7 @@
             
             filtered.sort((a,b) => eventSortOrder === 'desc' ? b.start - a.start : a.start - b.start);
 
-            container.innerHTML = `<div class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">` + filtered.map(e => `
+            container.innerHTML = `<div class="list-group list-group-flush" style="max-height: 500px; overflow-y: auto;">` + filtered.map(e => `
                 <div class="slide-reveal-wrapper d-flex" style="height: auto; min-height: 60px; overflow: hidden; position: relative;">
                     
                     <div class="slide-reveal-content p-2 border-bottom flex-grow-1">
