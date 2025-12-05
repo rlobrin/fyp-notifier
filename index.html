@@ -473,12 +473,12 @@
                                 <div id="activeEventsContainer" class="flex-grow-1 p-0">
                                     <!-- Dynamic Content will be injected here -->
                                     <div id="activeMoonsSection" class="d-none">
-                                        <div class="px-2 py-1 small fw-bold text-primary bg-body-tertiary border-bottom border-top">Active Events - Moon</div>
+                                        <div class="px-2 py-1 small fw-bold text-primary bg-body-tertiary border-bottom border-top">Moon</div>
                                         <div id="activeMoonsList" class="list-group list-group-flush small"></div>
                                     </div>
                                     
                                     <div id="activeWeatherSection" class="d-none">
-                                        <div class="px-2 py-1 small fw-bold text-info-emphasis bg-body-tertiary border-bottom border-top">Active Events - Weather</div>
+                                        <div class="px-2 py-1 small fw-bold text-info-emphasis bg-body-tertiary border-bottom border-top">Weather</div>
                                         <div id="activeWeatherList" class="list-group list-group-flush small"></div>
                                     </div>
                                     
@@ -489,7 +489,7 @@
                             </div>
                         </div>
 
-                        <div class="card shadow-sm flex-fill min-h-0">
+                        <div class="card shadow-sm flex-fill min-h-0" style="height: 400px; overflow-y: auto;">
                             <div class="card-header bg-body-tertiary d-flex justify-content-between align-items-center py-1">
                                 <span class="fw-bold small">System Logs</span>
                                 <button id="clearLogsButton" onclick="clearLogs()" class="btn btn-outline-secondary btn-sm py-0" style="font-size: 0.7rem;">Clear</button>
@@ -596,7 +596,7 @@
                                             <i class="bi bi-download"></i> Export
                                         </button>
                                     </div>
-                                    <div class="form-text small mt-1" style="font-size: 0.7rem;">Required: Name, Type, Multiplier, Chances</div>
+                                    <div class="form-text small mt-1" style="font-size: 0.7rem;">Required: Name, Type, Multiplier, Chances (Optional)</div>
                                 </div>
                             </div>
                         </div>
