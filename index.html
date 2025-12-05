@@ -2121,7 +2121,7 @@
             if(!activeHooks.length) return;
             
             const msg = status === 'start' 
-                ? `${item.name} (**x${item.multiplier}!**) **has started!**` 
+                ? `${item.name} (Gives **${item.multiplier}x!**) **has started!**` 
                 : `${item.name} **ended!** Duration: ${formatDuration(dur)}`;
 
             activeHooks.forEach(h => {
