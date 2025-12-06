@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FYP Event Notifier</title>
     
-    <!-- Tab Icon -->
-    <!-- <link rel="icon" href="page icon.jpg" type="image/jpeg"> -->
-    
     <!-- Bootstrap Icons (Retained for icon usage) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     
@@ -128,18 +125,54 @@
                                     </button>
                                 </div>
 
+                                <!-- Configuration Preset Section (SIMPLIFIED) -->
                                 <div>
-                                    <label class="block text-xs font-bold mb-1">Configuration Preset</label>
-                                    <div class="flex gap-1">
-                                        <select id="configSelect" onchange="handleConfigSelect()" class="flex-1 px-2 py-1 text-sm border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                    <div class="flex justify-between items-end mb-1">
+                                        <label class="block text-xs font-bold">Configuration Preset</label>
+                                        <small class="text-[10px] text-gray-500 dark:text-gray-400" id="configNameDisplay">Current: Custom</small>
+                                    </div>
+                                    
+                                    <div class="flex gap-1 relative">
+                                        <!-- Dropdown -->
+                                        <select id="configSelect" onchange="handleConfigSelect()" class="flex-1 w-0 min-w-0 px-2 py-1.5 text-sm border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-sm">
                                             <option value="-1">-- Custom Preset --</option>
                                         </select>
-                                        <button onclick="resetToNewCustomConfig()" class="px-2 py-1 bg-cyan-500 hover:bg-cyan-600 text-white rounded" title="New / Reset"><i class="bi bi-plus-lg"></i></button>
-                                        <button onclick="handleSaveButton()" class="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded" title="Save"><i class="bi bi-save"></i></button>
-                                        <button id="deleteConfigButton" onclick="deleteCurrentConfig()" disabled class="px-2 py-1 bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white rounded" title="Delete"><i class="bi bi-trash"></i></button>
-                                    </div>
-                                    <div class="flex justify-between items-center mt-1">
-                                        <small class="text-xs text-gray-500 dark:text-gray-400" id="configNameDisplay">Current: Custom</small>
+
+                                        <!-- Primary Action: Save (Update or New) -->
+                                        <button onclick="handleSaveButton()" class="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded shadow-sm flex items-center justify-center" title="Save Coordinates">
+                                            <i class="bi bi-save"></i>
+                                        </button>
+
+                                        <!-- Secondary Action: New/Reset -->
+                                        <button onclick="resetToNewCustomConfig()" class="px-2.5 py-1.5 bg-cyan-500 hover:bg-cyan-600 text-white rounded shadow-sm flex items-center justify-center" title="New / Reset">
+                                            <i class="bi bi-plus-lg"></i>
+                                        </button>
+
+                                        <!-- Menu Trigger -->
+                                        <button id="presetMenuBtn" onclick="togglePresetMenu(event)" class="px-2 py-1.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 rounded shadow-sm flex items-center justify-center" title="More Options">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+
+                                        <!-- Dropdown Menu -->
+                                        <div id="presetMenu" class="hidden absolute right-0 top-full mt-1 w-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50 flex flex-col py-1">
+                                            <button onclick="saveAsNewConfig(); hidePresetMenu()" class="text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 w-full text-gray-700 dark:text-gray-200">
+                                                <i class="bi bi-file-plus text-green-600"></i> Save As New...
+                                            </button>
+                                            <button id="menuRenameBtn" onclick="renameCurrentConfig(); hidePresetMenu()" disabled class="text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 w-full text-gray-700 dark:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                                                <i class="bi bi-pencil-square text-indigo-500"></i> Rename
+                                            </button>
+                                            <button id="menuDeleteBtn" onclick="deleteCurrentConfig(); hidePresetMenu()" disabled class="text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 w-full text-red-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                            <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                                            <label class="px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 w-full cursor-pointer text-gray-700 dark:text-gray-200">
+                                                <i class="bi bi-upload"></i> Import JSON
+                                                <input type="file" accept=".json" class="hidden" onchange="importPresets(this); hidePresetMenu()">
+                                            </label>
+                                            <button onclick="exportPresets(); hidePresetMenu()" class="text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 w-full text-gray-700 dark:text-gray-200">
+                                                <i class="bi bi-download"></i> Export JSON
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -676,6 +709,7 @@
         let webhookList = [];
         let ocrConfigs = [];
         let currentConfigIndex = -1; 
+        let isRenamingConfig = false; // Add renaming state
         let configIsDirty = false; 
         let activeItems = {}; 
         let ocrScanInterval = null;
@@ -829,17 +863,47 @@
         function updateConfigDropdown() {
             const select = document.getElementById('configSelect');
             select.innerHTML = '<option value="-1">-- Custom Preset --</option>';
+            
             ocrConfigs.forEach((c, i) => {
                 const opt = document.createElement('option');
-                opt.value = i; opt.textContent = c.name;
+                opt.value = i; 
+                opt.textContent = c.name;
                 select.appendChild(opt);
             });
+            
             select.value = currentConfigIndex;
-            document.getElementById('deleteConfigButton').disabled = (currentConfigIndex === -1);
+            
+            // Enable/Disable buttons based on selection inside the menu
+            const isCustom = (currentConfigIndex === -1);
+            const renameBtn = document.getElementById('menuRenameBtn');
+            const deleteBtn = document.getElementById('menuDeleteBtn');
+            
+            if(renameBtn) renameBtn.disabled = isCustom;
+            if(deleteBtn) deleteBtn.disabled = isCustom;
             
             const display = document.getElementById('configNameDisplay');
-            display.textContent = currentConfigIndex === -1 ? "Current: Custom" : `Current: ${ocrConfigs[currentConfigIndex].name}`;
+            display.textContent = isCustom ? "Current: Custom" : `Current: ${ocrConfigs[currentConfigIndex].name}`;
         }
+
+        // Menu Toggle Logic
+        function togglePresetMenu(e) {
+            if(e) e.stopPropagation();
+            const menu = document.getElementById('presetMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        function hidePresetMenu() {
+            document.getElementById('presetMenu').classList.add('hidden');
+        }
+
+        // Close menu when clicking outside
+        window.addEventListener('click', (e) => {
+            const menu = document.getElementById('presetMenu');
+            const btn = document.getElementById('presetMenuBtn');
+            if (!menu.classList.contains('hidden') && !menu.contains(e.target) && !btn.contains(e.target)) {
+                hidePresetMenu();
+            }
+        });
 
         function handleConfigSelect() {
             const idx = parseInt(document.getElementById('configSelect').value);
@@ -862,15 +926,31 @@
 
         function handleSaveButton() {
             if (currentConfigIndex !== -1) {
+                // Update EXISTING preset with current coordinates
                 const c = ocrConfigs[currentConfigIndex];
-                c.x = parseInt(regionXInput.value); c.y = parseInt(regionYInput.value); c.w = parseInt(regionWInput.value); c.h = parseInt(regionHInput.value);
-                c.r2x = parseInt(region2XInput.value); c.r2y = parseInt(region2YInput.value); c.r2w = parseInt(region2WInput.value); c.r2h = parseInt(region2HInput.value);
+                c.x = parseInt(regionXInput.value); 
+                c.y = parseInt(regionYInput.value); 
+                c.w = parseInt(regionWInput.value); 
+                c.h = parseInt(regionHInput.value);
+                c.r2x = parseInt(region2XInput.value); 
+                c.r2y = parseInt(region2YInput.value); 
+                c.r2w = parseInt(region2WInput.value); 
+                c.r2h = parseInt(region2HInput.value);
                 c.mode = scanMode;
-                saveSettings(); showToast(`Updated "${c.name}"`);
+                
+                saveSettings(); 
+                showToast(`Coordinates updated for "${c.name}"`);
             } else {
-                document.getElementById('configModal').classList.remove('hidden');
-                document.getElementById('configModal').classList.add('flex');
-                document.getElementById('configName').focus();
+                // Open Modal to Create NEW
+                openConfigModal();
+            }
+        }
+
+        function saveAsNewConfig() {
+            openConfigModal();
+            // Optional: Prefill name with copy suffix if a preset is currently selected
+            if (currentConfigIndex !== -1 && ocrConfigs[currentConfigIndex]) {
+                document.getElementById('configName').value = ocrConfigs[currentConfigIndex].name + " (Copy)";
             }
         }
         
@@ -879,21 +959,57 @@
             document.getElementById('configModal').classList.remove('flex');
         }
 
+        function openConfigModal() {
+            isRenamingConfig = false; // Reset to "New" mode
+            document.getElementById('configName').value = "";
+            document.getElementById('configModalTitle').textContent = "Save New Preset";
+            
+            const modal = document.getElementById('configModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.getElementById('configName').focus();
+        }
+
+        function renameCurrentConfig() {
+            if (currentConfigIndex === -1) return;
+            isRenamingConfig = true;
+            
+            const currentName = ocrConfigs[currentConfigIndex].name;
+            document.getElementById('configName').value = currentName;
+            document.getElementById('configModalTitle').textContent = "Rename Preset";
+            
+            const modal = document.getElementById('configModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.getElementById('configName').focus();
+        }
+
         document.getElementById('saveConfigForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const name = document.getElementById('configName').value.trim();
             if(!name) return;
-            const newC = {
-                name, 
-                x: parseInt(regionXInput.value), y: parseInt(regionYInput.value), w: parseInt(regionWInput.value), h: parseInt(regionHInput.value),
-                r2x: parseInt(region2XInput.value), r2y: parseInt(region2YInput.value), r2w: parseInt(region2WInput.value), r2h: parseInt(region2HInput.value),
-                mode: scanMode
-            };
-            ocrConfigs.push(newC);
-            currentConfigIndex = ocrConfigs.length - 1;
-            saveSettings(); updateConfigDropdown();
+
+            if (isRenamingConfig && currentConfigIndex !== -1) {
+                // RENAME EXISTING
+                ocrConfigs[currentConfigIndex].name = name;
+                showToast(`Preset renamed to "${name}".`);
+            } else {
+                // CREATE NEW
+                const newC = {
+                    name, 
+                    x: parseInt(regionXInput.value), y: parseInt(regionYInput.value), w: parseInt(regionWInput.value), h: parseInt(regionHInput.value),
+                    r2x: parseInt(region2XInput.value), r2y: parseInt(region2YInput.value), r2w: parseInt(region2WInput.value), r2h: parseInt(region2HInput.value),
+                    mode: scanMode
+                };
+                ocrConfigs.push(newC);
+                currentConfigIndex = ocrConfigs.length - 1;
+                showToast(`Preset "${name}" saved.`);
+            }
+
+            saveSettings(); 
+            updateConfigDropdown();
             hideConfigModal();
-            showToast(`Preset "${name}" saved.`);
+            isRenamingConfig = false;
         });
 
         function deleteCurrentConfig() {
@@ -914,6 +1030,65 @@
             regionXInput.value = 0; regionYInput.value = 0; regionWInput.value = 300; regionHInput.value = 50;
             updateConfigDropdown(); saveSettings(); updatePreviewAndSize();
             showToast("Reset to defaults.");
+        }
+
+        function exportPresets() {
+            if (ocrConfigs.length === 0) {
+                showToast("No presets to export.", "error");
+                return;
+            }
+            const dataStr = JSON.stringify(ocrConfigs, null, 2);
+            const blob = new Blob([dataStr], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'fyp_presets.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast("Presets exported.");
+        }
+
+        function importPresets(inputElement) {
+            const file = inputElement.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        let count = 0;
+                        imported.forEach(imp => {
+                            // Simple validation
+                            if (imp.name && imp.w > 0) {
+                                // Avoid exact duplicates by name
+                                const exists = ocrConfigs.find(c => c.name === imp.name);
+                                if (!exists) {
+                                    ocrConfigs.push(imp);
+                                    count++;
+                                }
+                            }
+                        });
+                        
+                        if (count > 0) {
+                            saveSettings();
+                            updateConfigDropdown();
+                            showToast(`Imported ${count} new presets.`);
+                        } else {
+                            showToast("No new unique presets found.", "info");
+                        }
+                    } else {
+                        showToast("Invalid file format.", "error");
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showToast("Error parsing JSON file.", "error");
+                }
+                // Reset input so same file can be selected again if needed
+                inputElement.value = '';
+            };
+            reader.readAsText(file);
         }
         
         // --- Screen Capture ---
@@ -1721,8 +1896,8 @@
                 showToast(`Event "${eventName}" deleted from history.`);
             }
         }
-        
-        // --- Statistics & Charting Logic ---
+
+        // --- Statistics & Charting Logic (RESTORED) ---
         function getTimeRange() {
             const s = document.getElementById('statsDateStart').value.split('-');
             const e = document.getElementById('statsDateEnd').value.split('-');
@@ -1935,107 +2110,7 @@
             renderRecentEvents();
             updateItemListDropdown();
         }
-
-        // --- Modals logic ---
-        function showItemModal(i) { 
-            const m = document.getElementById('itemModal'); 
-            m.classList.remove('hidden');
-            m.classList.add('flex');
-            document.getElementById('itemIndex').value=i; 
-            
-            if(i > -1 && moonWeatherList[i]) {
-                const item = moonWeatherList[i];
-                document.getElementById('itemName').value = item.name;
-                document.getElementById('itemType').value = item.type;
-                document.getElementById('itemMultiplier').value = item.multiplier;
-                document.getElementById('itemChances').value = item.chances || '';
-                document.getElementById('modalTitle').textContent = 'Edit Event';
-                document.getElementById('formSubmitButton').textContent = 'Update';
-            } else {
-                document.getElementById('itemForm').reset();
-                document.getElementById('itemIndex').value = -1;
-                document.getElementById('itemType').value = 'Moon'; 
-                document.getElementById('itemMultiplier').value = 3;
-                document.getElementById('modalTitle').textContent = 'Add Event';
-                document.getElementById('formSubmitButton').textContent = 'Save';
-            }
-        }
-        function hideItemModal() { 
-            document.getElementById('itemModal').classList.add('hidden'); 
-            document.getElementById('itemModal').classList.remove('flex'); 
-        }
         
-        document.getElementById('itemForm').addEventListener('submit', e=>{
-            e.preventDefault(); const nm=document.getElementById('itemName').value, tp=document.getElementById('itemType').value, mu=parseFloat(document.getElementById('itemMultiplier').value), ch=document.getElementById('itemChances').value;
-            const idx=parseInt(document.getElementById('itemIndex').value);
-            if(idx>-1){ moonWeatherList[idx].name=nm; moonWeatherList[idx].type=tp; moonWeatherList[idx].multiplier=mu; moonWeatherList[idx].chances=ch; }
-            else moonWeatherList.push({id:Date.now(), name:nm, type:tp, multiplier:mu, chances:ch});
-            saveSettings(); renderList(); hideItemModal();
-            showToast(idx > -1 ? `Event "${nm}" updated.` : `Event "${nm}" added.`);
-        });
-        function removeItem(i) { 
-            const item = moonWeatherList[i];
-            if(confirm(`Delete event "${item.name}"?`)) { 
-                moonWeatherList.splice(i,1); 
-                saveSettings(); 
-                renderList(); 
-                showToast(`Event "${item.name}" deleted.`); 
-            } 
-        };
-        
-        // Modal Click Outside
-        window.onclick = e => { 
-            // We use the id check or class check for the overlay div
-            if(e.target.id === 'itemModal') hideItemModal();
-            if(e.target.id === 'webhookModal') hideWebhookModal();
-            if(e.target.id === 'configModal') hideConfigModal();
-            if(e.target.id === 'itemWebhookModal') hideItemWebhookModal();
-            if(e.target.id === 'webhookEventsModal') hideWebhookEventsModal();
-            if(e.target.id === 'regionSelectionModal') closeRegionSelection();
-        };
-        
-        function showWebhookModal(i) { 
-            const m = document.getElementById('webhookModal');
-            m.classList.remove('hidden');
-            m.classList.add('flex');
-            document.getElementById('webhookIndex').value=i;
-            
-            if(i > -1 && webhookList[i]) {
-                const wb = webhookList[i];
-                document.getElementById('modalWebhookDescription').value = wb.description;
-                document.getElementById('modalWebhookUrl').value = wb.url;
-                document.getElementById('webhookModalTitle').textContent = 'Edit Webhook';
-            } else {
-                document.getElementById('webhookForm').reset();
-                document.getElementById('webhookIndex').value = -1;
-                document.getElementById('webhookModalTitle').textContent = 'Add Webhook';
-            }
-        }
-        function hideWebhookModal() { 
-            document.getElementById('webhookModal').classList.add('hidden');
-            document.getElementById('webhookModal').classList.remove('flex');
-        }
-        document.getElementById('webhookForm').addEventListener('submit', e => {
-            e.preventDefault(); const d=document.getElementById('modalWebhookDescription').value, u=document.getElementById('modalWebhookUrl').value;
-            const i=parseInt(document.getElementById('webhookIndex').value);
-            if(i>-1) { webhookList[i].description=d; webhookList[i].url=u; } else webhookList.push({id:Date.now(), description:d, url:u, active:true});
-            saveSettings(); renderWebhookList(); hideWebhookModal();
-            showToast(i > -1 ? `Webhook "${d}" updated.` : `Webhook "${d}" added.`);
-        });
-        function testNewWebhook() {
-             const url = document.getElementById('modalWebhookUrl').value;
-             if(!url) return;
-             fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({content:"🔔 **Test Message** from FYP Event Notifier! If you see this, your webhook is working correctly."})})
-                .then(r=>r.ok?showToast('Sent!'):showToast('Failed','error'));
-        }
-
-        function toggleEventSortOrder() { eventSortOrder = eventSortOrder==='desc'?'asc':'desc'; renderRecentEvents(); }
-        function clearHistory() { 
-            const d = document.getElementById('eventDatePicker').value;
-            const evs = JSON.parse(localStorage.getItem('dailyEvents')) || {};
-            if(evs[d]) { delete evs[d]; localStorage.setItem('dailyEvents', JSON.stringify(evs)); renderRecentEvents(); showToast('History Cleared'); }
-        }
-
         function openTab(e,t) {
             // Hide all tab contents
             document.querySelectorAll('.tab-content').forEach(x => x.classList.add('hidden'));
