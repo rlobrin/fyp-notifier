@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FYP Notifier (Dual Scan)</title>
+    <title>FYP Event Notifier</title>
     
     <!-- Tab Icon -->
     <!-- <link rel="icon" href="page icon.jpg" type="image/jpeg"> -->
@@ -211,7 +211,7 @@
                 <div class="flex flex-col gap-4 h-full min-h-0">
                     
                     <!-- Active Events -->
-                    <div class="h-[30%] flex flex-col border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
+                    <div class="h-[40%] flex flex-col border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
                         <div class="bg-gray-50 dark:bg-gray-700 px-3 py-2 text-xs font-bold uppercase tracking-wider text-green-600 dark:text-green-400 border-b border-gray-200 dark:border-gray-600">
                             <i class="bi bi-activity mr-2"></i> Active Events
                         </div>
@@ -231,7 +231,7 @@
                     </div>
 
                     <!-- Logs -->
-                    <div class="flex-grow min-h-0 flex flex-col border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
+                    <div class="h-[58%] min-h-0 flex flex-col border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
                         <div class="bg-gray-50 dark:bg-gray-700 px-3 py-1 flex justify-between items-center border-b border-gray-200 dark:border-gray-600">
                             <span class="text-xs font-bold uppercase text-gray-600 dark:text-gray-300">System Logs</span>
                             <button onclick="clearLogs()" class="text-[10px] px-2 py-0.5 border border-gray-300 dark:border-gray-500 rounded hover:bg-gray-200 dark:hover:bg-gray-600">Clear</button>
@@ -684,6 +684,7 @@
         let eventSortOrder = 'desc'; 
         let localStream = null;
         let isOcrBusy = false; 
+        let isWorkerReady = false; // Added worker state
 
         // --- DUAL SMART ZOOM VARIABLES ---
         let scanMode = 'uni'; // 'uni' or 'dual'
@@ -813,11 +814,11 @@
             if (mode === 'dual') {
                 region2Controls.style.display = 'block';
                 document.getElementById('zoom2Status').style.display = 'block';
-                document.title = "FYP Notifier (Dual Scan)";
+                document.title = "FYP Event Notifier (Dual Scan)";
             } else {
                 region2Controls.style.display = 'none';
                 document.getElementById('zoom2Status').style.display = 'none';
-                document.title = "FYP Notifier (Uni-Scan)";
+                document.title = "FYP Event Notifier (Uni-Scan)";
             }
             if(save) {
                 saveSettings();
@@ -1001,7 +1002,30 @@
         // --- OCR Logic ---
         let worker = null;
         
-        function toggleProcess(forceStop = false) {
+        // Enhanced: Initialize Worker Once
+        async function initTesseract() {
+            if (worker && isWorkerReady) return true;
+            
+            try {
+                if (!worker) worker = Tesseract.createWorker({ logger: () => {} });
+                await worker.load();
+                await worker.loadLanguage('eng');
+                await worker.initialize('eng');
+                // Optimization: Whitelist characters to reduce noise and assume single line of text (PSM 7)
+                await worker.setParameters({ 
+                    tessedit_pageseg_mode: 7, 
+                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/.,%- ' 
+                });
+                isWorkerReady = true;
+                return true;
+            } catch (e) {
+                console.error("Tesseract Init Failed", e);
+                showToast("OCR Init Failed", "error");
+                return false;
+            }
+        }
+
+        async function toggleProcess(forceStop = false) {
             if (ocrScanInterval) {
                 // STOP
                 const activeKeys = Object.keys(activeItems);
@@ -1054,6 +1078,19 @@
                      return;
                 }
                 
+                // Show loading state
+                processButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Init...';
+                processButton.disabled = true;
+
+                // Initialize OCR engine
+                const ready = await initTesseract();
+                processButton.disabled = false;
+
+                if (!ready) {
+                    processButton.innerHTML = '<i class="bi bi-play-circle"></i> Start OCR';
+                    return;
+                }
+                
                 lock1 = false; zoom1 = 2;
                 lock2 = false; zoom2 = 2;
                 isOcrBusy = false;
@@ -1074,21 +1111,24 @@
         }
 
         function scanCameraImage() {
-            if (videoElement.readyState < videoElement.HAVE_ENOUGH_DATA || !ocrScanInterval || isOcrBusy) return;
+            if (videoElement.readyState < videoElement.HAVE_ENOUGH_DATA || !ocrScanInterval || isOcrBusy || !isWorkerReady) return;
             isOcrBusy = true;
 
             const r1 = { x: parseInt(regionXInput.value)||0, y: parseInt(regionYInput.value)||0, w: parseInt(regionWInput.value)||300, h: parseInt(regionHInput.value)||50 };
             
             const ctx = canvasElement.getContext('2d');
             let boundaryY = 0; 
+            
+            // Enhanced: Upscale the image for better detection
+            const SCAN_SCALE = 2;
 
             if (scanMode === 'dual') {
                 const r2 = { x: parseInt(region2XInput.value)||0, y: parseInt(region2YInput.value)||0, w: parseInt(region2WInput.value)||300, h: parseInt(region2HInput.value)||50 };
                 
-                const w1 = r1.w * zoom1;
-                const h1 = r1.h * zoom1;
-                const w2 = r2.w * zoom2;
-                const h2 = r2.h * zoom2;
+                const w1 = r1.w * SCAN_SCALE;
+                const h1 = r1.h * SCAN_SCALE;
+                const w2 = r2.w * SCAN_SCALE;
+                const h2 = r2.h * SCAN_SCALE;
                 
                 const finalW = Math.max(w1, w2);
                 const finalH = h1 + h2; 
@@ -1103,21 +1143,15 @@
                 
                 applyImagePreprocessing(ctx, finalW, finalH);
             } else {
-                canvasElement.width = r1.w * zoom1;
-                canvasElement.height = r1.h * zoom1;
-                ctx.drawImage(videoElement, r1.x, r1.y, r1.w, r1.h, 0, 0, r1.w * zoom1, r1.h * zoom1);
-                applyImagePreprocessing(ctx, r1.w * zoom1, r1.h * zoom1);
+                canvasElement.width = r1.w * SCAN_SCALE;
+                canvasElement.height = r1.h * SCAN_SCALE;
+                ctx.drawImage(videoElement, r1.x, r1.y, r1.w, r1.h, 0, 0, r1.w * SCAN_SCALE, r1.h * SCAN_SCALE);
+                applyImagePreprocessing(ctx, r1.w * SCAN_SCALE, r1.h * SCAN_SCALE);
                 boundaryY = canvasElement.height; 
             }
             
-            if (!worker) worker = Tesseract.createWorker({ logger: () => {} });
-
-            new Promise(resolve => {
-                worker.load().then(() => worker.loadLanguage('eng')).then(() => worker.initialize('eng')).then(() => {
-                    worker.setParameters({ tessedit_pageseg_mode: 7 }); 
-                    worker.recognize(canvasElement).then(resolve);
-                });
-            }).then(({ data }) => {
+            // Enhanced: Use pre-initialized worker directly
+            worker.recognize(canvasElement).then(({ data }) => {
                 if (!ocrScanInterval) { isOcrBusy = false; return; }
                 
                 let foundR1 = false;
@@ -1206,7 +1240,6 @@
                 document.getElementById('zoom2Status').innerHTML = `R2: ${zoom2}x ${lock2 ? '<i class="bi bi-lock-fill"></i>' : ''}`;
 
                 isOcrBusy = false;
-                Tesseract.release(worker).then(() => { worker = null; });
             }).catch(e => { console.error(e); isOcrBusy = false; });
         }
 
@@ -1992,7 +2025,7 @@
         function testNewWebhook() {
              const url = document.getElementById('modalWebhookUrl').value;
              if(!url) return;
-             fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({content:"🔔 **Test Message** from FYP Notifier! If you see this, your webhook is working correctly."})})
+             fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({content:"🔔 **Test Message** from FYP Event Notifier! If you see this, your webhook is working correctly."})})
                 .then(r=>r.ok?showToast('Sent!'):showToast('Failed','error'));
         }
 
