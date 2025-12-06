@@ -2137,6 +2137,163 @@
         }
         function saveItemWebhooks() { hideItemWebhookModal(); } 
 
+        // --- MISSING FUNCTIONS FIX ---
+
+        // Item Modal Functions
+        function showItemModal(index) {
+            const modal = document.getElementById('itemModal');
+            const title = document.getElementById('modalTitle');
+            const idxInput = document.getElementById('itemIndex');
+            
+            // Inputs
+            const nameIn = document.getElementById('itemName');
+            const typeIn = document.getElementById('itemType');
+            const multIn = document.getElementById('itemMultiplier');
+            const chanceIn = document.getElementById('itemChances');
+
+            idxInput.value = index;
+
+            if (index === -1) {
+                title.textContent = "Add Event";
+                nameIn.value = "";
+                typeIn.value = "Moon";
+                multIn.value = "3";
+                chanceIn.value = "";
+            } else {
+                const item = moonWeatherList[index];
+                if (!item) return; 
+                title.textContent = "Edit Event";
+                nameIn.value = item.name;
+                typeIn.value = item.type;
+                multIn.value = item.multiplier;
+                chanceIn.value = item.chances || "";
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            nameIn.focus();
+        }
+
+        function hideItemModal() {
+            const modal = document.getElementById('itemModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function removeItem(index) {
+            const item = moonWeatherList[index];
+            if(confirm(`Are you sure you want to delete "${item.name}"?`)) {
+                moonWeatherList.splice(index, 1);
+                saveSettings();
+                renderList();
+                showToast(`Deleted "${item.name}"`);
+            }
+        }
+
+        // Item Form Submit
+        document.getElementById('itemForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const idx = parseInt(document.getElementById('itemIndex').value);
+            const name = document.getElementById('itemName').value.trim();
+            const type = document.getElementById('itemType').value;
+            const mult = parseFloat(document.getElementById('itemMultiplier').value);
+            const chances = document.getElementById('itemChances').value.trim();
+
+            if (!name) { showToast("Name is required", "error"); return; }
+            if (isNaN(mult)) { showToast("Valid multiplier required", "error"); return; }
+
+            if (idx === -1) {
+                // Add
+                moonWeatherList.push({
+                    id: Date.now(),
+                    name, type, multiplier: mult, chances
+                });
+                showToast(`Added "${name}"`);
+            } else {
+                // Edit
+                moonWeatherList[idx].name = name;
+                moonWeatherList[idx].type = type;
+                moonWeatherList[idx].multiplier = mult;
+                moonWeatherList[idx].chances = chances;
+                showToast(`Updated "${name}"`);
+            }
+
+            saveSettings();
+            renderList();
+            hideItemModal();
+        });
+
+        // Webhook Modal Functions
+        function showWebhookModal(index) {
+            const modal = document.getElementById('webhookModal');
+            const title = document.getElementById('webhookModalTitle');
+            const idxInput = document.getElementById('webhookIndex');
+            const descIn = document.getElementById('modalWebhookDescription');
+            const urlIn = document.getElementById('modalWebhookUrl');
+
+            idxInput.value = index;
+
+            if (index === -1) {
+                title.textContent = "Add Webhook";
+                descIn.value = "";
+                urlIn.value = "";
+            } else {
+                const wb = webhookList[index];
+                if (!wb) return;
+                title.textContent = "Edit Webhook";
+                descIn.value = wb.description;
+                urlIn.value = wb.url;
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            descIn.focus();
+        }
+
+        function hideWebhookModal() {
+            const modal = document.getElementById('webhookModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function testNewWebhook() {
+            const url = document.getElementById('modalWebhookUrl').value.trim();
+            if (!url) { showToast("Enter a URL first", "error"); return; }
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ content: "🔔 Test notification from FYP Event Notifier!" })
+            }).then(res => {
+                if (res.ok) showToast("Test sent! Check Discord.");
+                else showToast("Failed to send test.", "error");
+            }).catch(err => {
+                showToast("Error: " + err.message, "error");
+            });
+        }
+
+        // Webhook Form Submit
+        document.getElementById('webhookForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const idx = parseInt(document.getElementById('webhookIndex').value);
+            const description = document.getElementById('modalWebhookDescription').value.trim();
+            const url = document.getElementById('modalWebhookUrl').value.trim();
+
+            if (!description || !url) { showToast("All fields required", "error"); return; }
+
+            if (idx === -1) {
+                webhookList.push({ id: Date.now(), description, url, active: true });
+                showToast("Webhook added");
+            } else {
+                webhookList[idx].description = description;
+                webhookList[idx].url = url;
+                showToast("Webhook updated");
+            }
+
+            saveSettings();
+            renderWebhookList();
+            hideWebhookModal();
+        });
     </script>
 </body>
 </html>
