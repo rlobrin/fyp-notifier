@@ -812,7 +812,8 @@
                 renderRecentEvents();
                 try { updateItemListDropdown(); } catch(e) {}
                 
-                if (!activeStatusInterval) activeStatusInterval = setInterval(renderActiveStatus, 500);
+                // Increase update frequency for smoother countdowns
+                if (!activeStatusInterval) activeStatusInterval = setInterval(renderActiveStatus, 100);
                 
                 addLog("System initialized.");
             } catch (e) { console.error(e); }
@@ -1211,7 +1212,6 @@
                 activeKeys.forEach(key => {
                     const state = activeItems[key];
                     if (state) {
-                        if (state.timeout) clearTimeout(state.timeout);
                         const duration = Date.now() - state.start;
                         addLog(`**[STOPPED]** ${state.item.name} ended (OCR Stopped).`);
                         addRecentEvent(state.item, duration, state.start);
@@ -1335,7 +1335,6 @@
                 const words = data.words || [];
                 
                 // --- NORMALIZATION HELPER ---
-                // Removes all spaces and converts to lowercase for loose matching
                 const normalize = (text) => text.toLowerCase().replace(/\s+/g, '');
                 
                 const fullText = data.text;
@@ -1349,11 +1348,7 @@
                     
                     moonWeatherList.forEach(item => {
                         const normItemName = normalize(item.name);
-                        
-                        // Check if the normalized item name exists in the full text
                         if (normalizedFullText.includes(normItemName)) {
-                            // Region Detection Logic:
-                            // Check if this specific word is part of the matched item
                             if (normItemName.includes(txt) || txt.includes(normItemName)) {
                                 currentMatches.set(item.name, { item: item, region: region });
                             }
@@ -1361,7 +1356,6 @@
                     });
                 });
 
-                // Fallback: If individual words didn't trigger (e.g. text merging issues), check full text
                 if (currentMatches.size === 0) {
                     moonWeatherList.forEach(item => {
                         if (normalizedFullText.includes(normalize(item.name))) {
@@ -1372,38 +1366,31 @@
 
                 currentMatches.forEach((matchData, name) => {
                     const { item, region } = matchData;
-                    
                     if (region === 1) foundR1 = true;
                     if (region === 2) foundR2 = true;
 
                     if (activeItems[name]) {
-                        if(activeItems[name].timeout) clearTimeout(activeItems[name].timeout);
-                        activeItems[name].timeout = null;
+                        // Found it again - Reset grace timer (set to null)
+                        activeItems[name].graceEndTime = null; 
                     } else {
                         addLog(`**[START]** ${name} (R${region})`);
-                        activeItems[name] = { item, start: Date.now(), timeout: null };
+                        // Init new item with null graceEndTime (meaning it's actively seen)
+                        activeItems[name] = { item, start: Date.now(), graceEndTime: null };
                         sendDiscordNotification(item, "start");
                         renderActiveStatus();
                     }
                 });
 
+                // Check for items that were active but are NOT in currentMatches
                 Object.keys(activeItems).forEach(name => {
                     if (!currentMatches.has(name)) {
                         const state = activeItems[name];
-                        if (!state.timeout) {
-                            state.endRef = Date.now();
-                            const GRACE = (parseInt(gracePeriodSecondsInput.value)||5) * 1000;
-                            state.timeout = setTimeout(() => {
-                                if (activeItems[name] && activeItems[name].timeout) {
-                                    const dur = state.endRef - state.start;
-                                    addLog(`**[END]** ${name}`);
-                                    addRecentEvent(state.item, dur, state.start);
-                                    sendDiscordNotification(state.item, "end", duration);
-                                    delete activeItems[name]; renderActiveStatus();
-                                }
-                            }, GRACE);
-                            renderActiveStatus();
+                        // If grace hasn't started yet, start it now
+                        if (state.graceEndTime === null) {
+                            const graceSec = parseInt(gracePeriodSecondsInput.value) || 5;
+                            state.graceEndTime = Date.now() + (graceSec * 1000);
                         }
+                        // We do NOT expire items here anymore. Expiry happens in renderActiveStatus polling loop.
                     }
                 });
 
@@ -1513,6 +1500,35 @@
 
         // --- Helpers ---
         function renderActiveStatus() {
+            // First: Check for expired events
+            const now = Date.now();
+            const keysToRemove = [];
+
+            Object.keys(activeItems).forEach(key => {
+                const state = activeItems[key];
+                if (state.graceEndTime !== null) {
+                    const remaining = state.graceEndTime - now;
+                    if (remaining <= 0) {
+                        // Event officially ended
+                        keysToRemove.push(key);
+                        
+                        // Calculate actual active duration (excluding grace period for cleaner stats)
+                        // Or include grace period? Usually players care about "when it stopped".
+                        // Let's use logic: Start of Grace = End of Activity
+                        const graceDuration = (parseInt(gracePeriodSecondsInput.value)||5) * 1000;
+                        const activeEndTime = state.graceEndTime - graceDuration;
+                        const duration = activeEndTime - state.start;
+                        
+                        addLog(`**[END]** ${state.item.name}`);
+                        addRecentEvent(state.item, duration, state.start);
+                        sendDiscordNotification(state.item, "end", duration);
+                    }
+                }
+            });
+
+            // Cleanup expired
+            keysToRemove.forEach(k => delete activeItems[k]);
+
             const list = Object.values(activeItems);
             
             if(list.length === 0) { 
@@ -1530,8 +1546,17 @@
             
             const generateHTML = (items) => items.map(s => {
                 const el = Date.now() - s.start;
-                const txt = s.timeout ? `<span class="text-red-500">Grace...</span>` : `Active ${formatDuration(el)}`;
-                return `<div class="px-3 py-2 flex justify-between items-center bg-white dark:bg-gray-800"><div><strong>${s.item.name}</strong></div><small>${txt}</small></div>`;
+                let statusHtml = "";
+                
+                if (s.graceEndTime !== null) {
+                    const remainingMs = Math.max(0, s.graceEndTime - Date.now());
+                    const remainingSec = (remainingMs / 1000).toFixed(1);
+                    statusHtml = `<span class="text-red-500 font-bold animate-pulse text-xs">Ending in ${remainingSec}s</span>`;
+                } else {
+                    statusHtml = `<span class="text-green-600 font-bold text-xs">Active ${formatDuration(el)}</span>`;
+                }
+                
+                return `<div class="px-3 py-2 flex justify-between items-center bg-white dark:bg-gray-800 border-b dark:border-gray-700 last:border-0"><div><strong>${s.item.name}</strong></div><small>${statusHtml}</small></div>`;
             }).join('');
 
             if(moons.length > 0) {
@@ -2108,7 +2133,7 @@
             
             const msg = status === 'start' 
                 ? `${item.name} (Gives **${item.multiplier}x!**) **has started!**` 
-                : `${item.name} **ended!** Duration: ${formatDuration(dur)}`;
+                : `${item.name} **ended!** (Duration: ${formatDuration(dur))}`;
 
             activeHooks.forEach(h => {
                 fetch(h.url, { 
@@ -2291,7 +2316,7 @@
             fetch(url, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ content: "🔔 Test notification from FYP Event Notifier!" })
+                body: JSON.stringify({ content: "🔔 **Test Message** from FYP Event Notifier! If you see this, your webhook is working correctly." })
             }).then(res => {
                 if (res.ok) showToast("Test sent! Check Discord.");
                 else showToast("Failed to send test.", "error");
