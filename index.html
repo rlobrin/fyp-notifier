@@ -1333,26 +1333,38 @@
                 let foundR2 = false;
 
                 const words = data.words || [];
-                const fullText = data.text.trim();
+                
+                // --- NORMALIZATION HELPER ---
+                // Removes all spaces and converts to lowercase for loose matching
+                const normalize = (text) => text.toLowerCase().replace(/\s+/g, '');
+                
+                const fullText = data.text;
+                const normalizedFullText = normalize(fullText);
                 const currentMatches = new Map(); 
 
                 words.forEach(w => {
-                    const txt = w.text.toLowerCase();
+                    const txt = normalize(w.text);
                     const y = w.bbox.y0;
                     const region = (scanMode === 'dual' && y >= boundaryY) ? 2 : 1;
                     
                     moonWeatherList.forEach(item => {
-                        if (fullText.toLowerCase().includes(item.name.toLowerCase())) {
-                            if (txt.includes(item.name.toLowerCase().split(' ')[0])) {
+                        const normItemName = normalize(item.name);
+                        
+                        // Check if the normalized item name exists in the full text
+                        if (normalizedFullText.includes(normItemName)) {
+                            // Region Detection Logic:
+                            // Check if this specific word is part of the matched item
+                            if (normItemName.includes(txt) || txt.includes(normItemName)) {
                                 currentMatches.set(item.name, { item: item, region: region });
                             }
                         }
                     });
                 });
 
+                // Fallback: If individual words didn't trigger (e.g. text merging issues), check full text
                 if (currentMatches.size === 0) {
                     moonWeatherList.forEach(item => {
-                        if (fullText.toLowerCase().includes(item.name.toLowerCase())) {
+                        if (normalizedFullText.includes(normalize(item.name))) {
                              currentMatches.set(item.name, { item: item, region: 1 }); 
                         }
                     });
@@ -1386,7 +1398,7 @@
                                     const dur = state.endRef - state.start;
                                     addLog(`**[END]** ${name}`);
                                     addRecentEvent(state.item, dur, state.start);
-                                    sendDiscordNotification(state.item, "end", dur);
+                                    sendDiscordNotification(state.item, "end", duration);
                                     delete activeItems[name]; renderActiveStatus();
                                 }
                             }, GRACE);
@@ -1888,12 +1900,28 @@
         
         function deleteHistoryItem(date, index) {
             const evs = JSON.parse(localStorage.getItem('dailyEvents')) || {};
-            if(evs[date]) {
+            if(evs[date] && evs[date][index]) {
                 const eventName = evs[date][index].name;
                 evs[date].splice(index, 1);
+                
+                // Cleanup empty dates
+                if (evs[date].length === 0) delete evs[date];
+                
                 localStorage.setItem('dailyEvents', JSON.stringify(evs));
                 renderRecentEvents();
+                try { updateItemListDropdown(); } catch(e){}
+                updateEventStatistics();
                 showToast(`Event "${eventName}" deleted from history.`);
+            }
+        }
+
+        function clearHistory() {
+            if(confirm("Are you sure you want to clear the entire event history? This cannot be undone.")) {
+                localStorage.removeItem('dailyEvents');
+                renderRecentEvents();
+                try { updateItemListDropdown(); } catch(e){}
+                updateEventStatistics();
+                showToast("History cleared.");
             }
         }
 
