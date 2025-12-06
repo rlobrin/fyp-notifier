@@ -2154,7 +2154,7 @@
             
             const msg = status === 'start' 
                 ? `${item.name} (Gives **${item.multiplier}x!**) **has started!**` 
-                : `${item.name} **ended!** Duration: ${formatDuration(dur)}`;
+                : `${item.name} **ended!** (Duration: ${formatDuration(dur)})`;
 
             activeHooks.forEach(h => {
                 fetch(h.url, { 
