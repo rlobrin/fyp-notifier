@@ -476,17 +476,38 @@
                             <i class="bi bi-info-circle mr-2"></i> About This Tool
                         </div>
                         <div class="p-4">
-                            <p class="mb-4">
-                                This automated tool is created for the Roblox game: <strong>Feed Your Pet</strong>. 
-                                It is designed to automate the sending of notifications to Discord when specific Events (Moons/Weathers) are detected on screen.
+                            <p class="mb-4 text-sm text-gray-600 dark:text-gray-300">
+                                This is an advanced automation utility for the Roblox game: <strong>Feed Your Pet</strong>. 
+                                It utilizes real-time Optical Character Recognition (OCR) to visually monitor your screen for specific Moon or Weather text and instantly relays those events to Discord.
                             </p>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded border border-gray-200 dark:border-gray-700">
+                                    <h6 class="font-bold text-xs uppercase text-blue-600 mb-1"><i class="bi bi-layers-half mr-1"></i> Dual-Region Scan</h6>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Monitor two distinct areas of your screen simultaneously (e.g., Top and Bottom event bars) to never miss an event.</p>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded border border-gray-200 dark:border-gray-700">
+                                    <h6 class="font-bold text-xs uppercase text-green-600 mb-1"><i class="bi bi-graph-up mr-1"></i> Live Analytics</h6>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Tracks event history, calculates average duration, and visualizes occurrence rates via interactive charts.</p>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded border border-gray-200 dark:border-gray-700">
+                                    <h6 class="font-bold text-xs uppercase text-indigo-600 mb-1"><i class="bi bi-sliders mr-1"></i> Smart Configs</h6>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Save, Rename, and Load multiple coordinate presets for different screen resolutions or game layouts.</p>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded border border-gray-200 dark:border-gray-700">
+                                    <h6 class="font-bold text-xs uppercase text-purple-600 mb-1"><i class="bi bi-broadcast mr-1"></i> Webhook Routing</h6>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Route specific events to specific Discord channels. Subscribe webhooks to Moons, Weathers, or individual items.</p>
+                                </div>
+                            </div>
+
                             <hr class="my-4 border-gray-200 dark:border-gray-700">
-                            <h6 class="font-bold mb-2">How it Works</h6>
-                            <ul class="space-y-2 text-sm">
-                                <li class="flex items-start"><i class="bi bi-camera-video text-blue-500 mr-2 mt-0.5"></i> <span><strong>Screen Capture:</strong> The tool captures a specific region of your screen where event text appears.</span></li>
-                                <li class="flex items-start"><i class="bi bi-eye text-green-500 mr-2 mt-0.5"></i> <span><strong>OCR Detection:</strong> It uses optical character recognition to read text from the video stream in real-time.</span></li>
-                                <li class="flex items-start"><i class="bi bi-robot text-yellow-500 mr-2 mt-0.5"></i> <span><strong>Event Matching:</strong> It compares detected text against your custom list of events.</span></li>
-                                <li class="flex items-start"><i class="bi bi-discord text-indigo-500 mr-2 mt-0.5"></i> <span><strong>Discord Alert:</strong> When a match occurs, it instantly sends a notification to your configured Discord Webhooks.</span></li>
+                            
+                            <h6 class="font-bold mb-2 text-sm">How it Works</h6>
+                            <ul class="space-y-2 text-xs text-gray-600 dark:text-gray-400">
+                                <li class="flex items-start"><i class="bi bi-camera-video text-blue-500 mr-2 mt-0.5"></i> <span><strong>Capture:</strong> You define a specific region (or regions) of your screen using the "Drag & Select" tool.</span></li>
+                                <li class="flex items-start"><i class="bi bi-eye text-green-500 mr-2 mt-0.5"></i> <span><strong>Detect:</strong> The tool uses Tesseract.js (OCR) to read text from the video stream with image preprocessing to ignore background noise.</span></li>
+                                <li class="flex items-start"><i class="bi bi-stopwatch text-yellow-500 mr-2 mt-0.5"></i> <span><strong>Validate:</strong> It compares detected text against your custom CSV database and applies a "Grace Period" to prevent flickering text from ending events early.</span></li>
+                                <li class="flex items-start"><i class="bi bi-discord text-indigo-500 mr-2 mt-0.5"></i> <span><strong>Notify:</strong> When a match starts or ends, payloads are sent to your configured Discord Webhooks.</span></li>
                             </ul>
                         </div>
                     </div>
@@ -2133,7 +2154,7 @@
             
             const msg = status === 'start' 
                 ? `${item.name} (Gives **${item.multiplier}x!**) **has started!**` 
-                : `${item.name} **ended!** (Duration: ${formatDuration(dur))}`;
+                : `${item.name} **ended!** Duration: ${formatDuration(dur)}`;
 
             activeHooks.forEach(h => {
                 fetch(h.url, { 
@@ -2316,7 +2337,7 @@
             fetch(url, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ content: "🔔 **Test Message** from FYP Event Notifier! If you see this, your webhook is working correctly." })
+                body: JSON.stringify({ content: "🔔 **Test notification** from FYP Event Notifier! If you see this, your webhook is working correctly." })
             }).then(res => {
                 if (res.ok) showToast("Test sent! Check Discord.");
                 else showToast("Failed to send test.", "error");
