@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FYP Event Notifier</title>
     
-    <!-- Bootstrap Icons (Retained for icon usage) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -30,12 +28,12 @@
         }
     </script>
     
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.4/dist/tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
 
     <style>
-        /* Custom Scrollbar for Webkit */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px; }
@@ -43,7 +41,6 @@
         ::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
         .dark ::-webkit-scrollbar-thumb:hover { background: #718096; }
 
-        /* Slide Reveal Animation Helpers */
         .slide-reveal-wrapper { position: relative; overflow: hidden; transition: background-color 0.2s; }
         .slide-reveal-action {
             position: absolute; top: 0; right: -100px; bottom: 0; width: 100px;
@@ -51,15 +48,12 @@
         }
         .slide-reveal-wrapper:hover .slide-reveal-action { right: 0; }
         
-        /* Modal Animation */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fadeIn { animation: fadeIn 0.2s ease-out; }
 
-        /* Toast Animation */
         @keyframes slideInToast { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .animate-slideInToast { animation: slideInToast 0.3s ease-out forwards; }
         
-        /* Checkbox Switch Logic handled by Tailwind, but custom styles for indeterminate might be needed */
         input[type="checkbox"]:indeterminate {
             background-color: #3b82f6;
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10h8'/%3e%3c/svg%3e");
@@ -68,163 +62,77 @@
 </head>
 <body class="h-screen w-screen overflow-hidden bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 transition-colors duration-300">
 
-    <!-- Main Grid Layout -->
     <div class="flex flex-col h-full lg:grid lg:grid-cols-dashboard lg:grid-rows-[auto_1fr] gap-4 p-4 lg:p-2 max-w-[1920px] mx-auto">
         
-        <!-- Header / Tabs Area -->
         <div class="col-span-full flex justify-between items-center border-b border-gray-300 dark:border-gray-700 pb-2">
             <ul class="flex space-x-1">
-                <li>
-                    <button onclick="openTab(event, 'mainTab')" class="nav-link px-4 py-2 rounded-t-lg text-sm font-bold bg-white dark:bg-gray-800 text-blue-600 border-b-2 border-blue-600 transition-colors">
-                        <i class="bi bi-camera-video mr-1"></i> Main Scanner
-                    </button>
-                </li>
-                <li>
-                    <button onclick="openTab(event, 'moonWeatherTab')" class="nav-link px-4 py-2 rounded-t-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors">
-                        <i class="bi bi-list-ul mr-1"></i> Moons/Weathers
-                    </button>
-                </li>
-                <li>
-                    <button onclick="openTab(event, 'settingsTab')" class="nav-link px-4 py-2 rounded-t-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors">
-                        <i class="bi bi-gear mr-1"></i> Settings
-                    </button>
-                </li>
-                <li>
-                    <button onclick="openTab(event, 'aboutTab')" class="nav-link px-4 py-2 rounded-t-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors">
-                        <i class="bi bi-info-circle mr-1"></i> About
-                    </button>
-                </li>
+                <li><button onclick="openTab(event, 'mainTab')" class="nav-link px-4 py-2 rounded-t-lg text-sm font-bold bg-white dark:bg-gray-800 text-blue-600 border-b-2 border-blue-600 transition-colors"><i class="bi bi-camera-video mr-1"></i> Main Scanner</button></li>
+                <li><button onclick="openTab(event, 'moonWeatherTab')" class="nav-link px-4 py-2 rounded-t-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"><i class="bi bi-list-ul mr-1"></i> Moons/Weathers</button></li>
+                <li><button onclick="openTab(event, 'settingsTab')" class="nav-link px-4 py-2 rounded-t-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"><i class="bi bi-gear mr-1"></i> Settings</button></li>
+                <li><button onclick="openTab(event, 'aboutTab')" class="nav-link px-4 py-2 rounded-t-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"><i class="bi bi-info-circle mr-1"></i> About</button></li>
             </ul>
-            <button onclick="toggleTheme()" class="p-2 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="Toggle Theme">
-                <i class="bi bi-sun-fill" id="themeIcon"></i>
-            </button>
+            <button onclick="toggleTheme()" class="p-2 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"><i class="bi bi-sun-fill" id="themeIcon"></i></button>
         </div>
 
-        <!-- Content Area -->
         <div class="col-span-full min-h-0 h-full overflow-hidden bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm relative">
             
-            <!-- MAIN TAB -->
             <div id="mainTab" class="tab-content w-full h-full p-4 overflow-y-auto lg:overflow-hidden grid grid-cols-1 lg:grid-cols-dashboard gap-4">
-                
-                <!-- Column 1: Video & Controls -->
                 <div class="flex flex-col gap-4 h-full min-h-0">
                     <div class="flex flex-col gap-2 h-full border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
-                        <div class="bg-gray-50 dark:bg-gray-700 px-3 py-2 text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600 flex items-center">
-                            <i class="bi bi-cast mr-2"></i> Screen Source
-                        </div>
-                        
+                        <div class="bg-gray-50 dark:bg-gray-700 px-3 py-2 text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600 flex items-center"><i class="bi bi-cast mr-2"></i> Screen Source</div>
                         <div class="flex flex-col gap-3 p-3 h-full overflow-hidden">
-                            <!-- Controls Scroll Area -->
                             <div class="overflow-y-auto max-h-[60%] pr-1 space-y-3">
                                 <div class="flex gap-2">
-                                    <button id="connectScreenButton" onclick="connectScreen()" class="flex-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors">
-                                        <i class="bi bi-display mr-1"></i> Connect
-                                    </button>
-                                    <button id="processButton" onclick="toggleProcess()" disabled class="flex-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors">
-                                        <i class="bi bi-play-circle mr-1"></i> Start OCR
-                                    </button>
+                                    <button id="connectScreenButton" onclick="connectScreen()" class="flex-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors"><i class="bi bi-display mr-1"></i> Connect</button>
+                                    <button id="processButton" onclick="toggleProcess()" disabled class="flex-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded text-sm font-medium transition-colors"><i class="bi bi-play-circle mr-1"></i> Start OCR</button>
                                 </div>
-
-                                <!-- Configuration Preset Section (SIMPLIFIED) -->
                                 <div>
-                                    <div class="flex justify-between items-end mb-1">
-                                        <label class="block text-xs font-bold">Configuration Preset</label>
-                                        <small class="text-[10px] text-gray-500 dark:text-gray-400" id="configNameDisplay">Current: Custom</small>
-                                    </div>
-                                    
+                                    <div class="flex justify-between items-end mb-1"><label class="block text-xs font-bold">Configuration Preset</label><small class="text-[10px] text-gray-500 dark:text-gray-400" id="configNameDisplay">Current: Custom</small></div>
                                     <div class="flex gap-1 relative">
-                                        <!-- Dropdown -->
-                                        <select id="configSelect" onchange="handleConfigSelect()" class="flex-1 w-0 min-w-0 px-2 py-1.5 text-sm border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-sm">
-                                            <option value="-1">-- Custom Preset --</option>
-                                        </select>
-
-                                        <!-- Primary Action: Save (Update or New) -->
-                                        <button onclick="handleSaveButton()" class="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded shadow-sm flex items-center justify-center" title="Save Coordinates">
-                                            <i class="bi bi-save"></i>
-                                        </button>
-
-                                        <!-- Secondary Action: New/Reset -->
-                                        <button onclick="resetToNewCustomConfig()" class="px-2.5 py-1.5 bg-cyan-500 hover:bg-cyan-600 text-white rounded shadow-sm flex items-center justify-center" title="New / Reset">
-                                            <i class="bi bi-plus-lg"></i>
-                                        </button>
-
-                                        <!-- Menu Trigger -->
-                                        <button id="presetMenuBtn" onclick="togglePresetMenu(event)" class="px-2 py-1.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 rounded shadow-sm flex items-center justify-center" title="More Options">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
-
-                                        <!-- Dropdown Menu -->
+                                        <select id="configSelect" onchange="handleConfigSelect()" class="flex-1 w-0 min-w-0 px-2 py-1.5 text-sm border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-sm"><option value="-1">-- Custom Preset --</option></select>
+                                        <button onclick="handleSaveButton()" class="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded shadow-sm"><i class="bi bi-save"></i></button>
+                                        <button onclick="resetToNewCustomConfig()" class="px-2.5 py-1.5 bg-cyan-500 hover:bg-cyan-600 text-white rounded shadow-sm"><i class="bi bi-plus-lg"></i></button>
+                                        <button id="presetMenuBtn" onclick="togglePresetMenu(event)" class="px-2 py-1.5 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 rounded shadow-sm"><i class="bi bi-three-dots-vertical"></i></button>
                                         <div id="presetMenu" class="hidden absolute right-0 top-full mt-1 w-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50 flex flex-col py-1">
-                                            <button onclick="saveAsNewConfig(); hidePresetMenu()" class="text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 w-full text-gray-700 dark:text-gray-200">
-                                                <i class="bi bi-file-plus text-green-600"></i> Save As New...
-                                            </button>
-                                            <button id="menuRenameBtn" onclick="renameCurrentConfig(); hidePresetMenu()" disabled class="text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 w-full text-gray-700 dark:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed">
-                                                <i class="bi bi-pencil-square text-indigo-500"></i> Rename
-                                            </button>
-                                            <button id="menuDeleteBtn" onclick="deleteCurrentConfig(); hidePresetMenu()" disabled class="text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 w-full text-red-600 disabled:opacity-50 disabled:cursor-not-allowed">
-                                                <i class="bi bi-trash"></i> Delete
-                                            </button>
+                                            <button onclick="saveAsNewConfig(); hidePresetMenu()" class="text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 w-full text-gray-700 dark:text-gray-200"><i class="bi bi-file-plus text-green-600"></i> Save As New...</button>
+                                            <button id="menuRenameBtn" onclick="renameCurrentConfig(); hidePresetMenu()" disabled class="text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 w-full text-gray-700 dark:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"><i class="bi bi-pencil-square text-indigo-500"></i> Rename</button>
+                                            <button id="menuDeleteBtn" onclick="deleteCurrentConfig(); hidePresetMenu()" disabled class="text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 w-full text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"><i class="bi bi-trash"></i> Delete</button>
                                             <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
-                                            <label class="px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 w-full cursor-pointer text-gray-700 dark:text-gray-200">
-                                                <i class="bi bi-upload"></i> Import JSON
-                                                <input type="file" accept=".json" class="hidden" onchange="importPresets(this); hidePresetMenu()">
-                                            </label>
-                                            <button onclick="exportPresets(); hidePresetMenu()" class="text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 w-full text-gray-700 dark:text-gray-200">
-                                                <i class="bi bi-download"></i> Export JSON
-                                            </button>
+                                            <label class="px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 w-full cursor-pointer text-gray-700 dark:text-gray-200"><i class="bi bi-upload"></i> Import JSON<input type="file" accept=".json" class="hidden" onchange="importPresets(this); hidePresetMenu()"></label>
+                                            <button onclick="exportPresets(); hidePresetMenu()" class="text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 w-full text-gray-700 dark:text-gray-200"><i class="bi bi-download"></i> Export JSON</button>
                                         </div>
                                     </div>
                                 </div>
-
-                                <!-- Scan Mode -->
                                 <div class="flex rounded shadow-sm" role="group">
-                                    <label class="flex-1 cursor-pointer">
-                                        <input type="radio" name="scanMode" id="modeSingle" value="uni" checked onchange="toggleScanMode()" class="peer sr-only">
-                                        <div class="px-3 py-1.5 text-xs font-medium text-center border border-gray-300 dark:border-gray-600 rounded-l peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">Uni-Scan</div>
-                                    </label>
-                                    <label class="flex-1 cursor-pointer">
-                                        <input type="radio" name="scanMode" id="modeDual" value="dual" onchange="toggleScanMode()" class="peer sr-only">
-                                        <div class="px-3 py-1.5 text-xs font-medium text-center border border-l-0 border-gray-300 dark:border-gray-600 rounded-r peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">Dual Scan</div>
-                                    </label>
+                                    <label class="flex-1 cursor-pointer"><input type="radio" name="scanMode" id="modeSingle" value="uni" checked onchange="toggleScanMode()" class="peer sr-only"><div class="px-3 py-1.5 text-xs font-medium text-center border border-gray-300 dark:border-gray-600 rounded-l peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">Uni-Scan</div></label>
+                                    <label class="flex-1 cursor-pointer"><input type="radio" name="scanMode" id="modeDual" value="dual" onchange="toggleScanMode()" class="peer sr-only"><div class="px-3 py-1.5 text-xs font-medium text-center border border-l-0 border-gray-300 dark:border-gray-600 rounded-r peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">Dual Scan</div></label>
                                 </div>
-
-                                <button id="btnSelectRegion" class="w-full px-3 py-1.5 border border-blue-500 text-blue-500 hover:bg-blue-50 dark:hover:bg-gray-700 rounded text-sm font-medium transition-colors" onclick="startRegionSelection()">
-                                    <i class="bi bi-bounding-box-circles mr-1"></i> Drag & Select Region
-                                </button>
-
-                                <!-- Manual Coordinates -->
+                                <button id="btnSelectRegion" class="w-full px-3 py-1.5 border border-blue-500 text-blue-500 hover:bg-blue-50 dark:hover:bg-gray-700 rounded text-sm font-medium transition-colors" onclick="startRegionSelection()"><i class="bi bi-bounding-box-circles mr-1"></i> Drag & Select Region</button>
                                 <div class="space-y-2">
                                     <div>
                                         <div class="text-xs bg-gray-100 dark:bg-gray-700 p-1 border dark:border-gray-600 rounded mb-1 text-center font-medium">Region 1 (Top)</div>
                                         <div class="grid grid-cols-4 gap-1">
-                                            <input type="number" id="regionX" value="0" min="0" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600" placeholder="X">
-                                            <input type="number" id="regionY" value="0" min="0" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600" placeholder="Y">
-                                            <input type="number" id="regionW" value="300" min="10" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600" placeholder="W">
-                                            <input type="number" id="regionH" value="50" min="10" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600" placeholder="H">
+                                            <input type="number" id="regionX" value="0" min="0" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600">
+                                            <input type="number" id="regionY" value="0" min="0" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600">
+                                            <input type="number" id="regionW" value="300" min="10" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600">
+                                            <input type="number" id="regionH" value="50" min="10" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600">
                                         </div>
                                     </div>
                                     <div id="region2Controls" style="display:none;">
                                         <div class="text-xs bg-gray-100 dark:bg-gray-700 p-1 border dark:border-gray-600 rounded mb-1 text-center font-medium">Region 2 (Bottom)</div>
                                         <div class="grid grid-cols-4 gap-1">
-                                            <input type="number" id="region2X" value="0" min="0" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600" placeholder="X">
-                                            <input type="number" id="region2Y" value="0" min="0" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600" placeholder="Y">
-                                            <input type="number" id="region2W" value="300" min="10" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600" placeholder="W">
-                                            <input type="number" id="region2H" value="50" min="10" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600" placeholder="H">
+                                            <input type="number" id="region2X" value="0" min="0" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600">
+                                            <input type="number" id="region2Y" value="0" min="0" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600">
+                                            <input type="number" id="region2W" value="300" min="10" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600">
+                                            <input type="number" id="region2H" value="50" min="10" class="w-full px-1 py-1 text-xs border rounded dark:bg-gray-700 dark:border-gray-600">
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
                             <hr class="border-gray-300 dark:border-gray-600">
-                            
-                            <!-- Preview Area -->
-                            <div class="flex justify-between items-center">
-                                <label class="text-xs font-bold">Live Preview</label>
-                            </div>
-                            
+                            <div class="flex justify-between items-center"><label class="text-xs font-bold">Live Preview</label></div>
                             <div id="viewPanel" class="flex-grow border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 rounded flex flex-col items-center justify-center relative overflow-hidden p-2">
                                 <span id="viewPlaceholder" class="text-gray-400 text-xs">No source connected</span>
-                                
                                 <div id="rawCaptureContainer" style="display:none;" class="flex flex-col items-center w-full relative">
                                     <canvas id="captureView" class="border shadow-sm max-w-full" style="width: 60%; height: auto; display: block; image-rendering: pixelated;"></canvas>
                                     <div id="zoomStatusOverlay" class="absolute top-1 right-1 bg-black/60 text-white rounded px-2 py-1 text-[10px] pointer-events-none flex flex-col items-end gap-0.5">
@@ -235,19 +143,13 @@
                                 <canvas id="canvasElement" style="display:none;"></canvas> 
                                 <video id="videoElement" autoplay muted playsinline style="display:none;"></video>
                             </div>
-
                         </div>
                     </div>
                 </div>
 
-                <!-- Column 2: Active Events & Logs -->
                 <div class="flex flex-col gap-4 h-full min-h-0">
-                    
-                    <!-- Active Events -->
                     <div class="h-[40%] flex flex-col border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
-                        <div class="bg-gray-50 dark:bg-gray-700 px-3 py-2 text-xs font-bold uppercase tracking-wider text-green-600 dark:text-green-400 border-b border-gray-200 dark:border-gray-600">
-                            <i class="bi bi-activity mr-2"></i> Active Events
-                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700 px-3 py-2 text-xs font-bold uppercase tracking-wider text-green-600 dark:text-green-400 border-b border-gray-200 dark:border-gray-600"><i class="bi bi-activity mr-2"></i> Active Events</div>
                         <div class="flex-grow overflow-auto p-0 flex flex-col" id="activeEventsContainer">
                             <div id="activeMoonsSection" class="hidden">
                                 <div class="px-3 py-1 text-xs font-bold text-blue-600 bg-gray-100 dark:bg-gray-900 border-y dark:border-gray-700">Moon</div>
@@ -257,13 +159,9 @@
                                 <div class="px-3 py-1 text-xs font-bold text-cyan-600 bg-gray-100 dark:bg-gray-900 border-y dark:border-gray-700">Weather</div>
                                 <div id="activeWeatherList" class="divide-y divide-gray-100 dark:divide-gray-700"></div>
                             </div>
-                            <div id="cooldownsPlaceholder" class="p-4 text-center text-gray-400 text-xs">
-                                No events currently active.
-                            </div>
+                            <div id="cooldownsPlaceholder" class="p-4 text-center text-gray-400 text-xs">No events currently active.</div>
                         </div>
                     </div>
-
-                    <!-- Logs -->
                     <div class="h-[58%] min-h-0 flex flex-col border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
                         <div class="bg-gray-50 dark:bg-gray-700 px-3 py-1 flex justify-between items-center border-b border-gray-200 dark:border-gray-600">
                             <span class="text-xs font-bold uppercase text-gray-600 dark:text-gray-300">System Logs</span>
@@ -271,24 +169,20 @@
                         </div>
                         <div class="flex flex-col h-full overflow-hidden">
                             <div id="cooldownTimerLog" class="bg-yellow-400 text-black px-2 py-1 text-[10px] font-bold">App Status: Idle</div>
-                            <div id="logContent" class="flex-grow p-2 overflow-y-auto bg-gray-900 text-green-400 font-mono text-xs resize-none">
-                                Application initialized.
-                            </div>
+                            <div id="logContent" class="flex-grow p-2 overflow-y-auto bg-gray-900 text-green-400 font-mono text-xs resize-none"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Column 3: History & Search -->
                 <div class="flex flex-col h-full min-h-0">
                     <div class="h-full flex flex-col border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
                         <div class="bg-gray-50 dark:bg-gray-700 px-3 py-2 text-xs font-bold uppercase tracking-wider flex justify-between items-center text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600">
                             <span><i class="bi bi-clock-history mr-2"></i> History</span>
                             <div class="flex gap-1">
-                                <button onclick="clearHistory()" class="px-2 py-0.5 text-red-500 hover:text-red-700 border border-red-200 dark:border-red-900 rounded text-xs" title="Clear History"><i class="bi bi-trash"></i></button>
-                                <button onclick="toggleEventSortOrder()" class="px-2 py-0.5 text-blue-500 hover:text-blue-700 text-xs" title="Toggle Sort"><i class="bi bi-sort-down"></i></button>
+                                <button onclick="clearHistory()" class="px-2 py-0.5 text-red-500 hover:text-red-700 border border-red-200 dark:border-red-900 rounded text-xs"><i class="bi bi-trash"></i></button>
+                                <button onclick="toggleEventSortOrder()" class="px-2 py-0.5 text-blue-500 hover:text-blue-700 text-xs"><i class="bi bi-sort-down"></i></button>
                             </div>
                         </div>
-                        
                         <div class="p-2 flex flex-col gap-2 h-full overflow-hidden">
                             <div class="flex gap-2">
                                 <input type="date" id="eventDatePicker" class="w-1/3 px-2 py-1 text-xs border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none" onchange="updateSearchDatalist(); renderRecentEvents()">
@@ -298,60 +192,31 @@
                                     <datalist id="eventNamesList"></datalist>
                                 </div>
                             </div>
-
                             <div class="flex rounded shadow-sm" role="group">
-                                <label class="flex-1 cursor-pointer">
-                                    <input type="radio" name="typeFilter" id="typeAll" value="All" checked onchange="updateSearchDatalist(); renderRecentEvents()" class="peer sr-only">
-                                    <div class="px-2 py-1 text-xs text-center border border-gray-300 dark:border-gray-600 rounded-l peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">All</div>
-                                </label>
-                                <label class="flex-1 cursor-pointer">
-                                    <input type="radio" name="typeFilter" id="typeMoon" value="Moon" onchange="updateSearchDatalist(); renderRecentEvents()" class="peer sr-only">
-                                    <div class="px-2 py-1 text-xs text-center border-t border-b border-gray-300 dark:border-gray-600 peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">Moons</div>
-                                </label>
-                                <label class="flex-1 cursor-pointer">
-                                    <input type="radio" name="typeFilter" id="typeWeather" value="Weather" onchange="updateSearchDatalist(); renderRecentEvents()" class="peer sr-only">
-                                    <div class="px-2 py-1 text-xs text-center border border-gray-300 dark:border-gray-600 rounded-r peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">Weather</div>
-                                </label>
+                                <label class="flex-1 cursor-pointer"><input type="radio" name="typeFilter" id="typeAll" value="All" checked onchange="updateSearchDatalist(); renderRecentEvents()" class="peer sr-only"><div class="px-2 py-1 text-xs text-center border border-gray-300 dark:border-gray-600 rounded-l peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">All</div></label>
+                                <label class="flex-1 cursor-pointer"><input type="radio" name="typeFilter" id="typeMoon" value="Moon" onchange="updateSearchDatalist(); renderRecentEvents()" class="peer sr-only"><div class="px-2 py-1 text-xs text-center border-t border-b border-gray-300 dark:border-gray-600 peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">Moons</div></label>
+                                <label class="flex-1 cursor-pointer"><input type="radio" name="typeFilter" id="typeWeather" value="Weather" onchange="updateSearchDatalist(); renderRecentEvents()" class="peer sr-only"><div class="px-2 py-1 text-xs text-center border border-gray-300 dark:border-gray-600 rounded-r peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">Weather</div></label>
                             </div>
-
-                            <div id="recentEventsList" class="flex-grow overflow-y-auto border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-900">
-                                <p class="text-center text-gray-400 text-xs mt-4">Select a date.</p>
-                            </div>
+                            <div id="recentEventsList" class="flex-grow overflow-y-auto border border-gray-200 dark:border-gray-700 rounded bg-gray-50 dark:bg-gray-900"><p class="text-center text-gray-400 text-xs mt-4">Select a date.</p></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- MOON / WEATHER TAB -->
             <div id="moonWeatherTab" class="hidden tab-content w-full h-full p-4 overflow-y-auto lg:overflow-hidden grid grid-cols-1 lg:grid-cols-2 gap-4">
-                
-                <!-- Management Card -->
                 <div class="flex flex-col h-full border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
-                    <div class="bg-gray-50 dark:bg-gray-700 px-3 py-2 flex justify-between items-center border-b border-gray-200 dark:border-gray-600">
-                        <span class="text-sm font-bold"><i class="bi bi-card-list mr-1"></i> Event Management</span>
-                        <button onclick="showItemModal(-1)" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium"><i class="bi bi-plus-circle mr-1"></i> Add</button>
-                    </div>
-                    
+                    <div class="bg-gray-50 dark:bg-gray-700 px-3 py-2 flex justify-between items-center border-b border-gray-200 dark:border-gray-600"><span class="text-sm font-bold"><i class="bi bi-card-list mr-1"></i> Event Management</span><button onclick="showItemModal(-1)" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium"><i class="bi bi-plus-circle mr-1"></i> Add</button></div>
                     <div class="flex flex-col h-full overflow-hidden p-2 gap-2">
-                        <!-- Split Lists -->
                         <div class="flex-grow min-h-0 flex flex-col lg:flex-row gap-2">
-                            <!-- Moons -->
                             <div class="flex-1 flex flex-col border border-gray-200 dark:border-gray-700 rounded overflow-hidden">
                                 <div class="bg-gray-50 dark:bg-gray-700 px-2 py-1 text-xs font-bold border-b border-gray-200 dark:border-gray-600 text-blue-600 sticky top-0"><i class="bi bi-moon-stars mr-1"></i> Moons</div>
-                                <div id="moonListContainer" class="flex-grow overflow-y-auto bg-white dark:bg-gray-800">
-                                    <p class="text-gray-400 text-xs text-center p-4">No moons added.</p>
-                                </div>
+                                <div id="moonListContainer" class="flex-grow overflow-y-auto bg-white dark:bg-gray-800"><p class="text-gray-400 text-xs text-center p-4">No moons added.</p></div>
                             </div>
-                            <!-- Weather -->
                             <div class="flex-1 flex flex-col border border-gray-200 dark:border-gray-700 rounded overflow-hidden">
                                 <div class="bg-gray-50 dark:bg-gray-700 px-2 py-1 text-xs font-bold border-b border-gray-200 dark:border-gray-600 text-cyan-600 sticky top-0"><i class="bi bi-cloud-haze mr-1"></i> Weathers</div>
-                                <div id="weatherListContainer" class="flex-grow overflow-y-auto bg-white dark:bg-gray-800">
-                                    <p class="text-gray-400 text-xs text-center p-4">No weather added.</p>
-                                </div>
+                                <div id="weatherListContainer" class="flex-grow overflow-y-auto bg-white dark:bg-gray-800"><p class="text-gray-400 text-xs text-center p-4">No weather added.</p></div>
                             </div>
                         </div>
-
-                        <!-- Data Actions -->
                         <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded border border-gray-200 dark:border-gray-600 flex-shrink-0">
                             <label class="text-[10px] font-bold uppercase mb-1 block">Data Management</label>
                             <div class="flex gap-2">
@@ -366,109 +231,50 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Stats Card -->
                 <div class="flex flex-col h-full border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
-                    <div class="bg-gray-50 dark:bg-gray-700 px-3 py-2 font-bold text-sm border-b border-gray-200 dark:border-gray-600">
-                        <i class="bi bi-bar-chart-line mr-2"></i> Statistics
-                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 px-3 py-2 font-bold text-sm border-b border-gray-200 dark:border-gray-600"><i class="bi bi-bar-chart-line mr-2"></i> Statistics</div>
                     <div class="flex flex-col h-full p-2 overflow-hidden gap-2">
                         <div class="grid grid-cols-12 gap-2">
                             <div class="col-span-12">
                                 <label class="block text-[10px] font-bold mb-0.5">Date Range</label>
                                 <div class="flex">
                                     <span class="bg-gray-200 dark:bg-gray-600 px-2 py-1 text-xs flex items-center rounded-l border border-r-0 border-gray-300 dark:border-gray-500">From</span>
-                                    <input type="date" id="statsDateStart" class="flex-1 min-w-0 px-2 py-1 text-xs border bg-white dark:bg-gray-700 dark:border-gray-500 focus:outline-none" onchange="if(this.value > document.getElementById('statsDateEnd').value) { showToast('Start date cannot be after End date.', 'error'); this.value = document.getElementById('statsDateEnd').value; } updateItemListDropdown();">
+                                    <input type="date" id="statsDateStart" class="flex-1 min-w-0 px-2 py-1 text-xs border bg-white dark:bg-gray-700 dark:border-gray-500 focus:outline-none" onchange="updateItemListDropdown()">
                                     <span class="bg-gray-200 dark:bg-gray-600 px-2 py-1 text-xs flex items-center border-y border-gray-300 dark:border-gray-500">To</span>
-                                    <input type="date" id="statsDateEnd" class="flex-1 min-w-0 px-2 py-1 text-xs border rounded-r bg-white dark:bg-gray-700 dark:border-gray-500 focus:outline-none" onchange="if(this.value < document.getElementById('statsDateStart').value) { showToast('End date cannot be before Start date.', 'error'); this.value = document.getElementById('statsDateStart').value; } updateItemListDropdown();">
+                                    <input type="date" id="statsDateEnd" class="flex-1 min-w-0 px-2 py-1 text-xs border rounded-r bg-white dark:bg-gray-700 dark:border-gray-500 focus:outline-none" onchange="updateItemListDropdown()">
                                 </div>
                             </div>
-                            <div class="col-span-6">
-                                <label class="block text-[10px] font-bold mb-0.5">Metric</label>
-                                <select id="statsMetricFilter" onchange="updateEventStatistics()" class="w-full px-2 py-1 text-xs border rounded bg-white dark:bg-gray-700 dark:border-gray-500 focus:outline-none">
-                                    <option value="count">Occurrences</option>
-                                    <option value="avgTime">Avg Time</option>
-                                </select>
-                            </div>
-                            <div class="col-span-6">
-                                <label class="block text-[10px] font-bold mb-0.5">Event</label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none text-gray-500"><i class="bi bi-search text-xs"></i></div>
-                                    <input type="text" id="statsItemFilter" list="statsItemDataList" oninput="updateEventStatistics()" class="w-full pl-6 pr-2 py-1 text-xs border rounded bg-white dark:bg-gray-700 dark:border-gray-500 focus:outline-none" placeholder="Search...">
-                                    <datalist id="statsItemDataList"></datalist>
-                                </div>
-                            </div>
+                            <div class="col-span-6"><label class="block text-[10px] font-bold mb-0.5">Metric</label><select id="statsMetricFilter" onchange="updateEventStatistics()" class="w-full px-2 py-1 text-xs border rounded bg-white dark:bg-gray-700 dark:border-gray-500 focus:outline-none"><option value="count">Occurrences</option><option value="avgTime">Avg Time</option></select></div>
+                            <div class="col-span-6"><label class="block text-[10px] font-bold mb-0.5">Event</label><div class="relative"><div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none text-gray-500"><i class="bi bi-search text-xs"></i></div><input type="text" id="statsItemFilter" list="statsItemDataList" oninput="updateEventStatistics()" class="w-full pl-6 pr-2 py-1 text-xs border rounded bg-white dark:bg-gray-700 dark:border-gray-500 focus:outline-none" placeholder="Search..."><datalist id="statsItemDataList"></datalist></div></div>
                             <div class="col-span-12">
                                 <div class="flex rounded shadow-sm" role="group">
-                                    <label class="flex-1 cursor-pointer">
-                                        <input type="radio" name="statsTypeFilter" id="statsTypeAll" value="All" checked onchange="updateItemListDropdown()" class="peer sr-only">
-                                        <div class="px-1 py-1 text-[10px] text-center border border-gray-300 dark:border-gray-500 rounded-l peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">All</div>
-                                    </label>
-                                    <label class="flex-1 cursor-pointer">
-                                        <input type="radio" name="statsTypeFilter" id="statsTypeMoon" value="Moon" onchange="updateItemListDropdown()" class="peer sr-only">
-                                        <div class="px-1 py-1 text-[10px] text-center border-t border-b border-gray-300 dark:border-gray-500 peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">Moons</div>
-                                    </label>
-                                    <label class="flex-1 cursor-pointer">
-                                        <input type="radio" name="statsTypeFilter" id="statsTypeWeather" value="Weather" onchange="updateItemListDropdown()" class="peer sr-only">
-                                        <div class="px-1 py-1 text-[10px] text-center border border-gray-300 dark:border-gray-500 rounded-r peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">Weather</div>
-                                    </label>
+                                    <label class="flex-1 cursor-pointer"><input type="radio" name="statsTypeFilter" id="statsTypeAll" value="All" checked onchange="updateItemListDropdown()" class="peer sr-only"><div class="px-1 py-1 text-[10px] text-center border border-gray-300 dark:border-gray-500 rounded-l peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">All</div></label>
+                                    <label class="flex-1 cursor-pointer"><input type="radio" name="statsTypeFilter" id="statsTypeMoon" value="Moon" onchange="updateItemListDropdown()" class="peer sr-only"><div class="px-1 py-1 text-[10px] text-center border-t border-b border-gray-300 dark:border-gray-500 peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">Moons</div></label>
+                                    <label class="flex-1 cursor-pointer"><input type="radio" name="statsTypeFilter" id="statsTypeWeather" value="Weather" onchange="updateItemListDropdown()" class="peer sr-only"><div class="px-1 py-1 text-[10px] text-center border border-gray-300 dark:border-gray-500 rounded-r peer-checked:bg-gray-600 peer-checked:text-white bg-white dark:bg-gray-800 dark:peer-checked:bg-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">Weather</div></label>
                                 </div>
                             </div>
                         </div>
-
-                        <div class="flex-grow relative border border-gray-200 dark:border-gray-700 rounded p-1 min-h-0">
-                            <canvas id="eventStatsChart"></canvas>
-                            <div id="chartPlaceholder" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                                No Data
-                            </div>
-                        </div>
+                        <div class="flex-grow relative border border-gray-200 dark:border-gray-700 rounded p-1 min-h-0"><canvas id="eventStatsChart"></canvas><div id="chartPlaceholder" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-400 text-xs">No Data</div></div>
                     </div>
                 </div>
-
             </div>
 
-            <!-- SETTINGS TAB -->
             <div id="settingsTab" class="hidden tab-content w-full h-full p-6 overflow-y-auto">
                 <div class="max-w-3xl mx-auto space-y-6">
-                    
                     <div class="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
-                        <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 font-bold text-blue-600 border-b border-gray-200 dark:border-gray-600 flex items-center">
-                            <i class="bi bi-discord mr-2"></i> Discord Webhooks
-                        </div>
-                        <div class="p-4">
-                            <div id="webhookListContainer" class="flex flex-col gap-2 mb-4">
-                                <p class="text-gray-400 text-sm text-center">No webhooks configured.</p>
-                            </div>
-                            <button onclick="showWebhookModal(-1)" class="px-4 py-2 border border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700 rounded text-sm font-medium transition-colors">
-                                <i class="bi bi-plus-lg mr-1"></i> Add Webhook
-                            </button>
-                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 font-bold text-blue-600 border-b border-gray-200 dark:border-gray-600 flex items-center"><i class="bi bi-discord mr-2"></i> Discord Webhooks</div>
+                        <div class="p-4"><div id="webhookListContainer" class="flex flex-col gap-2 mb-4"></div><button onclick="showWebhookModal(-1)" class="px-4 py-2 border border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700 rounded text-sm font-medium transition-colors"><i class="bi bi-plus-lg mr-1"></i> Add Webhook</button></div>
                     </div>
-
                     <div class="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
-                        <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 font-bold border-b border-gray-200 dark:border-gray-600 flex items-center">
-                            <i class="bi bi-stopwatch mr-2"></i> Timing
-                        </div>
-                        <div class="p-4">
-                            <label for="gracePeriodSeconds" class="block font-bold text-sm mb-2">Event Disappear Grace Period (Seconds)</label>
-                            <input type="number" id="gracePeriodSeconds" value="5" min="1" max="60" step="1" class="w-1/2 px-3 py-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                            <p class="text-xs text-gray-500 mt-1">Time to wait after text disappears before ending the event.</p>
-                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 font-bold border-b border-gray-200 dark:border-gray-600 flex items-center"><i class="bi bi-stopwatch mr-2"></i> Timing</div>
+                        <div class="p-4"><label for="gracePeriodSeconds" class="block font-bold text-sm mb-2">Event Disappear Grace Period (Seconds)</label><input type="number" id="gracePeriodSeconds" value="5" min="1" max="60" step="1" class="w-1/2 px-3 py-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"><p class="text-xs text-gray-500 mt-1">Time to wait after text disappears before ending the event.</p></div>
                     </div>
-
                     <div class="border border-red-200 dark:border-red-900 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
-                        <div class="p-4">
-                            <h5 class="text-red-600 font-bold mb-2 flex items-center"><i class="bi bi-exclamation-octagon mr-2"></i> Application Reset</h5>
-                            <p class="text-sm text-gray-500 mb-3">This action will wipe all local storage data and reset the app.</p>
-                            <button onclick="removeSettings()" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm font-medium transition-colors">
-                                <i class="bi bi-trash mr-1"></i> Clear All Saved Settings
-                            </button>
-                        </div>
+                        <div class="p-4"><h5 class="text-red-600 font-bold mb-2 flex items-center"><i class="bi bi-exclamation-octagon mr-2"></i> Application Reset</h5><p class="text-sm text-gray-500 mb-3">Wipe all data.</p><button onclick="removeSettings()" class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm font-medium transition-colors"><i class="bi bi-trash mr-1"></i> Clear All</button></div>
                     </div>
                 </div>
             </div>
 
-            <!-- ABOUT TAB -->
             <div id="aboutTab" class="hidden tab-content w-full h-full p-6 overflow-y-auto">
                 <div class="max-w-3xl mx-auto space-y-6">
                     <div class="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm bg-white dark:bg-gray-800 overflow-hidden">
@@ -480,222 +286,95 @@
                                 This is an advanced automation utility for the Roblox game: <strong>Feed Your Pet</strong>. 
                                 It utilizes real-time Optical Character Recognition (OCR) to visually monitor your screen for specific Moon or Weather text and instantly relays those events to Discord.
                             </p>
-
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                 <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded border border-gray-200 dark:border-gray-700">
                                     <h6 class="font-bold text-xs uppercase text-blue-600 mb-1"><i class="bi bi-layers-half mr-1"></i> Dual-Region Scan</h6>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Monitor two distinct areas of your screen simultaneously (e.g., Top and Bottom event bars) to never miss an event.</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Monitor two distinct areas of your screen simultaneously.</p>
                                 </div>
                                 <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded border border-gray-200 dark:border-gray-700">
                                     <h6 class="font-bold text-xs uppercase text-green-600 mb-1"><i class="bi bi-graph-up mr-1"></i> Live Analytics</h6>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Tracks event history, calculates average duration, and visualizes occurrence rates via interactive charts.</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Tracks event history, calculates average duration, and visualizes occurrence rates.</p>
                                 </div>
                                 <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded border border-gray-200 dark:border-gray-700">
                                     <h6 class="font-bold text-xs uppercase text-indigo-600 mb-1"><i class="bi bi-sliders mr-1"></i> Smart Configs</h6>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Save, Rename, and Load multiple coordinate presets for different screen resolutions or game layouts.</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Save, Rename, and Load multiple coordinate presets.</p>
                                 </div>
                                 <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded border border-gray-200 dark:border-gray-700">
                                     <h6 class="font-bold text-xs uppercase text-purple-600 mb-1"><i class="bi bi-broadcast mr-1"></i> Webhook Routing</h6>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Route specific events to specific Discord channels. Subscribe webhooks to Moons, Weathers, or individual items.</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Route specific events to specific Discord channels.</p>
                                 </div>
                             </div>
-
                             <hr class="my-4 border-gray-200 dark:border-gray-700">
-                            
                             <h6 class="font-bold mb-2 text-sm">How it Works</h6>
                             <ul class="space-y-2 text-xs text-gray-600 dark:text-gray-400">
-                                <li class="flex items-start"><i class="bi bi-camera-video text-blue-500 mr-2 mt-0.5"></i> <span><strong>Capture:</strong> You define a specific region (or regions) of your screen using the "Drag & Select" tool.</span></li>
-                                <li class="flex items-start"><i class="bi bi-eye text-green-500 mr-2 mt-0.5"></i> <span><strong>Detect:</strong> The tool uses Tesseract.js (OCR) to read text from the video stream with image preprocessing to ignore background noise.</span></li>
-                                <li class="flex items-start"><i class="bi bi-stopwatch text-yellow-500 mr-2 mt-0.5"></i> <span><strong>Validate:</strong> It compares detected text against your custom CSV database and applies a "Grace Period" to prevent flickering text from ending events early.</span></li>
-                                <li class="flex items-start"><i class="bi bi-discord text-indigo-500 mr-2 mt-0.5"></i> <span><strong>Notify:</strong> When a match starts or ends, payloads are sent to your configured Discord Webhooks.</span></li>
+                                <li class="flex items-start"><i class="bi bi-camera-video text-blue-500 mr-2 mt-0.5"></i> <span><strong>Capture:</strong> Define regions using "Drag & Select".</span></li>
+                                <li class="flex items-start"><i class="bi bi-eye text-green-500 mr-2 mt-0.5"></i> <span><strong>Detect:</strong> Tesseract.js (v5) reads text from the stream.</span></li>
+                                <li class="flex items-start"><i class="bi bi-stopwatch text-yellow-500 mr-2 mt-0.5"></i> <span><strong>Validate:</strong> Matches text against your CSV list.</span></li>
+                                <li class="flex items-start"><i class="bi bi-discord text-indigo-500 mr-2 mt-0.5"></i> <span><strong>Notify:</strong> Sends payloads to configured Webhooks.</span></li>
                             </ul>
                         </div>
                     </div>
-
                     <div class="text-center text-gray-500">
-                        <div class="mb-4">
-                            <small class="uppercase font-bold tracking-wider text-xs">Created By</small>
-                            <div class="mt-1">
-                                <span class="bg-gray-800 text-white px-3 py-1 rounded text-sm"><i class="bi bi-discord mr-1"></i> BlackBox (@rlobrin)</span>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <small class="uppercase font-bold tracking-wider text-xs">Supported By</small>
-                            <div class="mt-1">
-                                <span class="bg-gray-500 text-white px-3 py-1 rounded text-sm"><i class="bi bi-discord mr-1"></i> Gunnster247 (@gunnster247)</span>
-                            </div>
-                        </div>
-
-                        <div>
-                            <small class="uppercase font-bold tracking-wider text-xs">Special Thanks</small>
-                            <div class="mt-1 flex justify-center flex-wrap gap-2">
-                                <span class="bg-gray-100 dark:bg-gray-700 border dark:border-gray-600 px-3 py-1 rounded text-sm">Queen Branana (@queen_branana)</span>
-                            </div>
-                            <div class="mt-2 text-xs">
-                                And all members of <br>
-                                <a href="https://discord.gg/aE7e6SnB" target="_blank" class="font-bold hover:underline">FYP-TBND</a> & 
-                                <a href="https://discord.gg/YFy8s5E5" target="_blank" class="font-bold hover:underline">RMTG</a>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-6 border-t border-gray-300 dark:border-gray-700 pt-3 text-xs">
-                            &copy; <span id="currentYear"></span> All Rights Reserved.
-                        </div>
-                        <script>document.getElementById('currentYear').textContent = new Date().getFullYear();</script>
+                        <div class="mb-4"><small class="uppercase font-bold tracking-wider text-xs">Created By</small><div class="mt-1"><span class="bg-gray-800 text-white px-3 py-1 rounded text-sm"><i class="bi bi-discord mr-1"></i> BlackBox (@rlobrin)</span></div></div>
+                        <div class="mb-4"><small class="uppercase font-bold tracking-wider text-xs">Supported By</small><div class="mt-1"><span class="bg-gray-500 text-white px-3 py-1 rounded text-sm"><i class="bi bi-discord mr-1"></i> Gunnster247 (@gunnster247)</span></div></div>
+                        <div class="mt-6 border-t border-gray-300 dark:border-gray-700 pt-3 text-xs">&copy; <span id="currentYear"></span> All Rights Reserved.</div>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
-    <!-- Modals -->
-    <!-- Generic Modal Overlay -->
     <div id="itemWebhookModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm items-center justify-center animate-fadeIn">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-[90%] max-w-md flex flex-col max-h-[90vh]">
-            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700 rounded-t-lg">
-                <h5 class="font-bold">Manage Notifications</h5>
-                <button type="button" class="text-gray-500 hover:text-gray-800 dark:hover:text-white" onclick="hideItemWebhookModal()"><i class="bi bi-x-lg"></i></button>
-            </div>
-            <div class="p-4 flex flex-col h-full min-h-0">
-                <p class="text-sm text-gray-500 mb-2" id="webhookModalItemName">Select webhooks:</p>
-                <div id="itemWebhookListContainer" class="flex-grow overflow-y-auto border rounded bg-gray-50 dark:bg-gray-900 p-2 dark:border-gray-700"></div>
-            </div>
-            <div class="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 rounded-b-lg">
-                <button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition-colors" onclick="saveItemWebhooks()">Save Changes</button>
-            </div>
+            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700 rounded-t-lg"><h5 class="font-bold">Manage Notifications</h5><button type="button" class="text-gray-500 hover:text-gray-800 dark:hover:text-white" onclick="hideItemWebhookModal()"><i class="bi bi-x-lg"></i></button></div>
+            <div class="p-4 flex flex-col h-full min-h-0"><p class="text-sm text-gray-500 mb-2" id="webhookModalItemName">Select webhooks:</p><div id="itemWebhookListContainer" class="flex-grow overflow-y-auto border rounded bg-gray-50 dark:bg-gray-900 p-2 dark:border-gray-700"></div></div>
+            <div class="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 rounded-b-lg"><button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition-colors" onclick="saveItemWebhooks()">Save Changes</button></div>
         </div>
     </div>
 
     <div id="webhookEventsModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm items-center justify-center animate-fadeIn">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-[90%] max-w-md flex flex-col max-h-[90vh]">
-            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700 rounded-t-lg">
-                <h5 class="font-bold">Select Events</h5>
-                <button type="button" class="text-gray-500 hover:text-gray-800 dark:hover:text-white" onclick="hideWebhookEventsModal()"><i class="bi bi-x-lg"></i></button>
-            </div>
+            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700 rounded-t-lg"><h5 class="font-bold">Select Events</h5><button type="button" class="text-gray-500 hover:text-gray-800 dark:hover:text-white" onclick="hideWebhookEventsModal()"><i class="bi bi-x-lg"></i></button></div>
             <div class="p-4 flex flex-col h-full min-h-0">
                 <p class="text-sm text-gray-500 mb-2" id="webhookEventsModalTitle">Select events:</p>
-                <div class="flex gap-2 mb-3">
-                    <div class="flex-grow relative">
-                        <span class="absolute inset-y-0 left-0 pl-2 flex items-center text-gray-500"><i class="bi bi-search"></i></span>
-                        <input type="text" class="w-full pl-8 pr-2 py-1 text-sm border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none" id="webhookEventsSearchInput" placeholder="Filter events..." oninput="filterWebhookEventsSelection()">
-                    </div>
-                    <button class="px-2 py-1 text-sm border border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700 rounded" onclick="toggleSelectAllEventsForWebhook(true)">All</button>
-                    <button class="px-2 py-1 text-sm border border-gray-300 text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-gray-400 rounded" onclick="toggleSelectAllEventsForWebhook(false)">None</button>
-                </div>
+                <div class="flex gap-2 mb-3"><div class="flex-grow relative"><span class="absolute inset-y-0 left-0 pl-2 flex items-center text-gray-500"><i class="bi bi-search"></i></span><input type="text" class="w-full pl-8 pr-2 py-1 text-sm border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none" id="webhookEventsSearchInput" placeholder="Filter..." oninput="filterWebhookEventsSelection()"></div><button class="px-2 py-1 text-sm border border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700 rounded" onclick="toggleSelectAllEventsForWebhook(true)">All</button><button class="px-2 py-1 text-sm border border-gray-300 text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-gray-400 rounded" onclick="toggleSelectAllEventsForWebhook(false)">None</button></div>
                 <div id="webhookEventsListContainer" class="flex-grow overflow-y-auto border rounded bg-gray-50 dark:bg-gray-900 p-2 dark:border-gray-700"></div>
             </div>
-            <div class="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 rounded-b-lg">
-                <button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition-colors" onclick="saveWebhookEvents()">Save Changes</button>
-            </div>
+            <div class="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 rounded-b-lg"><button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition-colors" onclick="saveWebhookEvents()">Save Changes</button></div>
         </div>
     </div>
 
     <div id="webhookModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm items-center justify-center animate-fadeIn">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-[90%] max-w-2xl flex flex-col">
-            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700 rounded-t-lg">
-                <h5 class="font-bold" id="webhookModalTitle">Add Webhook</h5>
-                <button type="button" class="text-gray-500 hover:text-gray-800 dark:hover:text-white" onclick="hideWebhookModal()"><i class="bi bi-x-lg"></i></button>
-            </div>
-            <div class="p-6">
-                <form id="webhookForm" class="space-y-4">
-                    <input type="hidden" id="webhookIndex" value="-1">
-                    <div>
-                        <label class="block font-bold text-sm mb-1">Description</label>
-                        <input type="text" id="modalWebhookDescription" class="w-full px-3 py-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" required placeholder="e.g. Main Channel">
-                    </div>
-                    <div>
-                        <label class="block font-bold text-sm mb-1">Webhook URL</label>
-                        <div class="flex">
-                            <input type="text" id="modalWebhookUrl" class="flex-1 px-3 py-2 border rounded-l bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" required placeholder="e.g. https://discord.com/api/webhooks/...">
-                            <button class="px-3 py-2 border border-l-0 border-cyan-500 text-cyan-600 hover:bg-cyan-50 dark:hover:bg-gray-600 rounded-r transition-colors" type="button" onclick="testNewWebhook()">Test</button>
-                        </div>
-                    </div>
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition-colors">Save Webhook</button>
-                </form>
-            </div>
+            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700 rounded-t-lg"><h5 class="font-bold" id="webhookModalTitle">Add Webhook</h5><button type="button" class="text-gray-500 hover:text-gray-800 dark:hover:text-white" onclick="hideWebhookModal()"><i class="bi bi-x-lg"></i></button></div>
+            <div class="p-6"><form id="webhookForm" class="space-y-4"><input type="hidden" id="webhookIndex" value="-1"><div><label class="block font-bold text-sm mb-1">Description</label><input type="text" id="modalWebhookDescription" class="w-full px-3 py-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" required></div><div><label class="block font-bold text-sm mb-1">Webhook URL</label><div class="flex"><input type="text" id="modalWebhookUrl" class="flex-1 px-3 py-2 border rounded-l bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" required><button class="px-3 py-2 border border-l-0 border-cyan-500 text-cyan-600 hover:bg-cyan-50 dark:hover:bg-gray-600 rounded-r transition-colors" type="button" onclick="testNewWebhook()">Test</button></div></div><button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition-colors">Save Webhook</button></form></div>
         </div>
     </div>
 
     <div id="itemModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm items-center justify-center animate-fadeIn">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-[90%] max-w-3xl flex flex-col h-[90vh] lg:h-auto">
-            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700 rounded-t-lg">
-                <h5 class="font-bold" id="modalTitle">Add Event</h5>
-                <button type="button" class="text-gray-500 hover:text-gray-800 dark:hover:text-white" onclick="hideItemModal()"><i class="bi bi-x-lg"></i></button>
-            </div>
-            <div class="p-6 overflow-y-auto">
-                <div class="flex flex-col md:flex-row gap-6 h-full">
-                    <div class="md:w-1/2 md:border-r md:border-gray-200 dark:md:border-gray-700 pr-0 md:pr-6">
-                        <form id="itemForm" class="space-y-4">
-                            <input type="hidden" id="itemIndex" value="-1">
-                            <div><label class="block font-bold text-sm mb-1">Name</label><input type="text" id="itemName" class="w-full px-3 py-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" required placeholder="e.g. Blue Moon"></div>
-                            <div>
-                                <label class="block font-bold text-sm mb-1">Type</label>
-                                <select id="itemType" class="w-full px-3 py-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                    <option value="Moon">Moon</option>
-                                    <option value="Weather">Weather</option>
-                                </select>
-                            </div>
-                            <div><label class="block font-bold text-sm mb-1">Multiplier</label><input type="number" step="0.01" id="itemMultiplier" value="3" class="w-full px-3 py-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" required placeholder="e.g. 3.5"></div>
-                            <div><label class="block font-bold text-sm mb-1">Chances</label><input type="text" id="itemChances" class="w-full px-3 py-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="e.g. 1/1000"></div>
-                            <button type="submit" id="formSubmitButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition-colors">Save</button>
-                        </form>
-                    </div>
-                    <div class="md:w-1/2 flex flex-col h-full min-h-[300px]">
-                        <h6 class="font-bold text-sm mb-2">Existing Events</h6>
-                        <div class="flex flex-col gap-2 flex-grow overflow-hidden">
-                            <div class="border border-gray-200 dark:border-gray-700 rounded flex flex-col flex-1 min-h-0">
-                                <div class="bg-gray-50 dark:bg-gray-700 px-2 py-1 text-xs font-bold border-b border-gray-200 dark:border-gray-600 text-blue-600">Moons</div>
-                                <div id="modalMoonPreview" class="overflow-y-auto flex-grow bg-white dark:bg-gray-800 p-1"></div>
-                            </div>
-                            <div class="border border-gray-200 dark:border-gray-700 rounded flex flex-col flex-1 min-h-0">
-                                <div class="bg-gray-50 dark:bg-gray-700 px-2 py-1 text-xs font-bold border-b border-gray-200 dark:border-gray-600 text-cyan-600">Weathers</div>
-                                <div id="modalWeatherPreview" class="overflow-y-auto flex-grow bg-white dark:bg-gray-800 p-1"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700 rounded-t-lg"><h5 class="font-bold" id="modalTitle">Add Event</h5><button type="button" class="text-gray-500 hover:text-gray-800 dark:hover:text-white" onclick="hideItemModal()"><i class="bi bi-x-lg"></i></button></div>
+            <div class="p-6 overflow-y-auto"><div class="flex flex-col md:flex-row gap-6 h-full"><div class="md:w-1/2 md:border-r md:border-gray-200 dark:md:border-gray-700 pr-0 md:pr-6"><form id="itemForm" class="space-y-4"><input type="hidden" id="itemIndex" value="-1"><div><label class="block font-bold text-sm mb-1">Name</label><input type="text" id="itemName" class="w-full px-3 py-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" required></div><div><label class="block font-bold text-sm mb-1">Type</label><select id="itemType" class="w-full px-3 py-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"><option value="Moon">Moon</option><option value="Weather">Weather</option></select></div><div><label class="block font-bold text-sm mb-1">Multiplier</label><input type="number" step="0.01" id="itemMultiplier" value="3" class="w-full px-3 py-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" required></div><div><label class="block font-bold text-sm mb-1">Chances</label><input type="text" id="itemChances" class="w-full px-3 py-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"></div><button type="submit" id="formSubmitButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition-colors">Save</button></form></div><div class="md:w-1/2 flex flex-col h-full min-h-[300px]"><h6 class="font-bold text-sm mb-2">Existing Events</h6><div class="flex flex-col gap-2 flex-grow overflow-hidden"><div class="border border-gray-200 dark:border-gray-700 rounded flex flex-col flex-1 min-h-0"><div class="bg-gray-50 dark:bg-gray-700 px-2 py-1 text-xs font-bold border-b border-gray-200 dark:border-gray-600 text-blue-600">Moons</div><div id="modalMoonPreview" class="overflow-y-auto flex-grow bg-white dark:bg-gray-800 p-1"></div></div><div class="border border-gray-200 dark:border-gray-700 rounded flex flex-col flex-1 min-h-0"><div class="bg-gray-50 dark:bg-gray-700 px-2 py-1 text-xs font-bold border-b border-gray-200 dark:border-gray-600 text-cyan-600">Weathers</div><div id="modalWeatherPreview" class="overflow-y-auto flex-grow bg-white dark:bg-gray-800 p-1"></div></div></div></div></div></div>
         </div>
     </div>
 
     <div id="configModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm items-center justify-center animate-fadeIn">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-[90%] max-w-sm flex flex-col">
-            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700 rounded-t-lg">
-                <h5 class="font-bold" id="configModalTitle">Save Config</h5>
-                <button type="button" class="text-gray-500 hover:text-gray-800 dark:hover:text-white" onclick="hideConfigModal()"><i class="bi bi-x-lg"></i></button>
-            </div>
-            <div class="p-6">
-                <form id="saveConfigForm" class="space-y-4">
-                    <div><label class="block font-bold text-sm mb-1">Preset Name</label><input type="text" id="configName" class="w-full px-3 py-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" required></div>
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition-colors">Save Preset</button>
-                </form>
-            </div>
+            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700 rounded-t-lg"><h5 class="font-bold" id="configModalTitle">Save Config</h5><button type="button" class="text-gray-500 hover:text-gray-800 dark:hover:text-white" onclick="hideConfigModal()"><i class="bi bi-x-lg"></i></button></div>
+            <div class="p-6"><form id="saveConfigForm" class="space-y-4"><div><label class="block font-bold text-sm mb-1">Preset Name</label><input type="text" id="configName" class="w-full px-3 py-2 border rounded bg-white dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500" required></div><button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition-colors">Save Preset</button></form></div>
         </div>
     </div>
 
-    <!-- Region Selection Modal -->
     <div id="regionSelectionModal" class="fixed inset-0 z-[60] hidden flex-col items-center justify-center bg-black/50 backdrop-blur-sm p-4">
         <div class="bg-gray-900 rounded p-2 flex flex-col gap-2 shadow-2xl max-w-[95vw] max-h-[90vh]">
-            <div class="flex justify-between items-center text-white px-2">
-                <span id="regionSelectionTitle"><i class="bi bi-mouse"></i> Drag to select area</span>
-                <div class="flex gap-2">
-                    <button class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-sm" onclick="confirmRegionSelection()"><i class="bi bi-check-lg"></i> Confirm</button>
-                    <button class="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded text-sm" onclick="closeRegionSelection()"><i class="bi bi-x-lg"></i> Cancel</button>
-                </div>
-            </div>
-            <div id="selectionCanvasContainer" class="relative overflow-hidden bg-black border border-gray-700">
-                <canvas id="selectionCanvas" class="cursor-crosshair block max-w-full max-h-[80vh] object-contain"></canvas>
-            </div>
+            <div class="flex justify-between items-center text-white px-2"><span id="regionSelectionTitle"><i class="bi bi-mouse"></i> Drag to select area</span><div class="flex gap-2"><button class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-sm" onclick="confirmRegionSelection()"><i class="bi bi-check-lg"></i> Confirm</button><button class="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded text-sm" onclick="closeRegionSelection()"><i class="bi bi-x-lg"></i> Cancel</button></div></div>
+            <div id="selectionCanvasContainer" class="relative overflow-hidden bg-black border border-gray-700"><canvas id="selectionCanvas" class="cursor-crosshair block max-w-full max-h-[80vh] object-contain"></canvas></div>
         </div>
     </div>
 
-    <!-- Toast Container -->
     <div class="fixed bottom-5 right-5 z-[70] flex flex-col gap-2 pointer-events-none toast-container"></div>
 
     <script>
-        // --- Global Variables ---
         const logContentDiv = document.getElementById('logContent');
         const cooldownsPlaceholder = document.getElementById('cooldownsPlaceholder');
         const activeMoonsList = document.getElementById('activeMoonsList');
@@ -706,18 +385,15 @@
         const rawCaptureContainer = document.getElementById('rawCaptureContainer');
         const viewPlaceholder = document.getElementById('viewPlaceholder');
         
-        // --- Input Elements ---
         const regionXInput = document.getElementById('regionX');
         const regionYInput = document.getElementById('regionY');
         const regionWInput = document.getElementById('regionW');
         const regionHInput = document.getElementById('regionH');
-        // Region 2 Inputs
         const region2XInput = document.getElementById('region2X');
         const region2YInput = document.getElementById('region2Y');
         const region2WInput = document.getElementById('region2W');
         const region2HInput = document.getElementById('region2H');
         const region2Controls = document.getElementById('region2Controls');
-
         const captureViewCanvas = document.getElementById('captureView');
         const videoElement = document.getElementById('videoElement');
         const processButton = document.getElementById('processButton');
@@ -725,13 +401,11 @@
         const canvasElement = document.getElementById('canvasElement');
         const gracePeriodSecondsInput = document.getElementById('gracePeriodSeconds');
         
-        // --- State Variables ---
         let moonWeatherList = [];
         let webhookList = [];
         let ocrConfigs = [];
         let currentConfigIndex = -1; 
-        let isRenamingConfig = false; // Add renaming state
-        let configIsDirty = false; 
+        let isRenamingConfig = false; 
         let activeItems = {}; 
         let ocrScanInterval = null;
         let previewInterval = null;
@@ -739,60 +413,38 @@
         let eventSortOrder = 'desc'; 
         let localStream = null;
         let isOcrBusy = false; 
-        let isWorkerReady = false; // Added worker state
+        let isWorkerReady = false;
+        let worker = null;
 
-        // --- DUAL SMART ZOOM VARIABLES ---
-        let scanMode = 'uni'; // 'uni' or 'dual'
-        let zoom1 = 2; 
-        let lock1 = false;
-        let zoom2 = 2;
-        let lock2 = false;
+        let scanMode = 'uni'; 
+        let zoom1 = 2; let lock1 = false;
+        let zoom2 = 2; let lock2 = false;
         let dragSelectionStep = 0; 
         
-        // --- Webhook & Modal State ---
         let currentEditingWebhookIndex = -1;
         const webhookEventsModal = document.getElementById('webhookEventsModal');
         const webhookEventsListContainer = document.getElementById('webhookEventsListContainer');
         const webhookEventsSearchInput = document.getElementById('webhookEventsSearchInput');
         const webhookEventsModalTitle = document.getElementById('webhookEventsModalTitle');
-
-        // --- Chart Variables ---
         let eventStatsChartInstance = null;
 
-        // --- Initial Load ---
         document.addEventListener('DOMContentLoaded', () => {
             loadTheme();
             loadSettings();
-            // Show main tab by default
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
             document.getElementById('mainTab').classList.remove('hidden');
         });
         
-        // --- Theme Management ---
         function setTheme(theme) {
             const html = document.documentElement;
             const btnIcon = document.getElementById('themeIcon');
             localStorage.setItem('theme', theme);
-            
-            if(theme === 'dark') {
-                html.classList.add('dark');
-                html.classList.remove('light');
-                btnIcon.classList.remove('bi-sun-fill');
-                btnIcon.classList.add('bi-moon-stars-fill');
-            } else {
-                html.classList.remove('dark');
-                html.classList.add('light');
-                btnIcon.classList.remove('bi-moon-stars-fill');
-                btnIcon.classList.add('bi-sun-fill');
-            }
+            if(theme === 'dark') { html.classList.add('dark'); html.classList.remove('light'); btnIcon.classList.replace('bi-sun-fill', 'bi-moon-stars-fill'); } 
+            else { html.classList.remove('dark'); html.classList.add('light'); btnIcon.classList.replace('bi-moon-stars-fill', 'bi-sun-fill'); }
         }
-        function toggleTheme() {
-            const html = document.documentElement;
-            const isDark = html.classList.contains('dark');
-            setTheme(isDark ? 'light' : 'dark');
-        }
+        function toggleTheme() { setTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark'); }
         function loadTheme() { setTheme(localStorage.getItem('theme') || 'light'); }
 
-        // --- Settings & Config ---
         function loadSettings() {
             try {
                 webhookList = JSON.parse(localStorage.getItem('webhookList')) || [];
@@ -821,21 +473,13 @@
                 
                 const now = new Date();
                 const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-                
                 if(document.getElementById('eventDatePicker')) document.getElementById('eventDatePicker').value = today;
                 if(document.getElementById('statsDateStart')) document.getElementById('statsDateStart').value = today;
                 if(document.getElementById('statsDateEnd')) document.getElementById('statsDateEnd').value = today;
 
-                renderList();
-                renderWebhookList();
-                updateConfigDropdown();
-                updateSearchDatalist();
-                renderRecentEvents();
+                renderList(); renderWebhookList(); updateConfigDropdown(); updateSearchDatalist(); renderRecentEvents();
                 try { updateItemListDropdown(); } catch(e) {}
-                
-                // Increase update frequency for smoother countdowns
                 if (!activeStatusInterval) activeStatusInterval = setInterval(renderActiveStatus, 100);
-                
                 addLog("System initialized.");
             } catch (e) { console.error(e); }
         }
@@ -845,86 +489,41 @@
             localStorage.setItem('webhookList', JSON.stringify(webhookList));
             localStorage.setItem('ocrConfigs', JSON.stringify(ocrConfigs));
             localStorage.setItem('currentConfigIndex', currentConfigIndex);
-            
-            localStorage.setItem('regionX', regionXInput.value);
-            localStorage.setItem('regionY', regionYInput.value);
-            localStorage.setItem('regionW', regionWInput.value);
-            localStorage.setItem('regionH', regionHInput.value);
-            
-            localStorage.setItem('region2X', region2XInput.value);
-            localStorage.setItem('region2Y', region2YInput.value);
-            localStorage.setItem('region2W', region2WInput.value);
-            localStorage.setItem('region2H', region2HInput.value);
-            
-            localStorage.setItem('scanMode', scanMode);
-            localStorage.setItem('gracePeriodSeconds', gracePeriodSecondsInput.value);
+            localStorage.setItem('regionX', regionXInput.value); localStorage.setItem('regionY', regionYInput.value);
+            localStorage.setItem('regionW', regionWInput.value); localStorage.setItem('regionH', regionHInput.value);
+            localStorage.setItem('region2X', region2XInput.value); localStorage.setItem('region2Y', region2YInput.value);
+            localStorage.setItem('region2W', region2WInput.value); localStorage.setItem('region2H', region2HInput.value);
+            localStorage.setItem('scanMode', scanMode); localStorage.setItem('gracePeriodSeconds', gracePeriodSecondsInput.value);
         }
 
-        function removeSettings() {
-            if (confirm("Reset ALL settings?")) { localStorage.clear(); location.reload(); }
-        }
+        function removeSettings() { if (confirm("Reset ALL settings?")) { localStorage.clear(); location.reload(); } }
 
         function toggleScanMode(save = true) {
-            const mode = document.querySelector('input[name="scanMode"]:checked').value;
-            scanMode = mode;
-            if (mode === 'dual') {
-                region2Controls.style.display = 'block';
-                document.getElementById('zoom2Status').style.display = 'block';
-                document.title = "FYP Event Notifier (Dual Scan)";
+            scanMode = document.querySelector('input[name="scanMode"]:checked').value;
+            if (scanMode === 'dual') {
+                region2Controls.style.display = 'block'; document.getElementById('zoom2Status').style.display = 'block';
             } else {
-                region2Controls.style.display = 'none';
-                document.getElementById('zoom2Status').style.display = 'none';
-                document.title = "FYP Event Notifier (Uni-Scan)";
+                region2Controls.style.display = 'none'; document.getElementById('zoom2Status').style.display = 'none';
             }
-            if(save) {
-                saveSettings();
-                updatePreviewAndSize();
-            }
+            if(save) { saveSettings(); updatePreviewAndSize(); }
         }
 
         function updateConfigDropdown() {
             const select = document.getElementById('configSelect');
             select.innerHTML = '<option value="-1">-- Custom Preset --</option>';
-            
-            ocrConfigs.forEach((c, i) => {
-                const opt = document.createElement('option');
-                opt.value = i; 
-                opt.textContent = c.name;
-                select.appendChild(opt);
-            });
-            
+            ocrConfigs.forEach((c, i) => { const opt = document.createElement('option'); opt.value = i; opt.textContent = c.name; select.appendChild(opt); });
             select.value = currentConfigIndex;
-            
-            // Enable/Disable buttons based on selection inside the menu
             const isCustom = (currentConfigIndex === -1);
-            const renameBtn = document.getElementById('menuRenameBtn');
-            const deleteBtn = document.getElementById('menuDeleteBtn');
-            
-            if(renameBtn) renameBtn.disabled = isCustom;
-            if(deleteBtn) deleteBtn.disabled = isCustom;
-            
-            const display = document.getElementById('configNameDisplay');
-            display.textContent = isCustom ? "Current: Custom" : `Current: ${ocrConfigs[currentConfigIndex].name}`;
+            if(document.getElementById('menuRenameBtn')) document.getElementById('menuRenameBtn').disabled = isCustom;
+            if(document.getElementById('menuDeleteBtn')) document.getElementById('menuDeleteBtn').disabled = isCustom;
+            document.getElementById('configNameDisplay').textContent = isCustom ? "Current: Custom" : `Current: ${ocrConfigs[currentConfigIndex].name}`;
         }
 
-        // Menu Toggle Logic
-        function togglePresetMenu(e) {
-            if(e) e.stopPropagation();
-            const menu = document.getElementById('presetMenu');
-            menu.classList.toggle('hidden');
-        }
-
-        function hidePresetMenu() {
-            document.getElementById('presetMenu').classList.add('hidden');
-        }
-
-        // Close menu when clicking outside
+        function togglePresetMenu(e) { if(e) e.stopPropagation(); document.getElementById('presetMenu').classList.toggle('hidden'); }
+        function hidePresetMenu() { document.getElementById('presetMenu').classList.add('hidden'); }
         window.addEventListener('click', (e) => {
             const menu = document.getElementById('presetMenu');
-            const btn = document.getElementById('presetMenuBtn');
-            if (!menu.classList.contains('hidden') && !menu.contains(e.target) && !btn.contains(e.target)) {
-                hidePresetMenu();
-            }
+            if (!menu.classList.contains('hidden') && !menu.contains(e.target) && !document.getElementById('presetMenuBtn').contains(e.target)) hidePresetMenu();
         });
 
         function handleConfigSelect() {
@@ -935,284 +534,136 @@
                 regionXInput.value = c.x; regionYInput.value = c.y; regionWInput.value = c.w; regionHInput.value = c.h;
                 region2XInput.value = c.r2x || 0; region2YInput.value = c.r2y || 0; region2WInput.value = c.r2w || 300; region2HInput.value = c.r2h || 50;
                 scanMode = c.mode || 'uni';
-                
-                document.getElementById('modeSingle').checked = (scanMode === 'uni');
-                document.getElementById('modeDual').checked = (scanMode === 'dual');
-                toggleScanMode(false);
-                
-                showToast(`Loaded "${c.name}"`);
-                saveSettings(); updatePreviewAndSize();
+                document.getElementById('modeSingle').checked = (scanMode === 'uni'); document.getElementById('modeDual').checked = (scanMode === 'dual');
+                toggleScanMode(false); showToast(`Loaded "${c.name}"`); saveSettings(); updatePreviewAndSize();
             }
             updateConfigDropdown();
         }
 
         function handleSaveButton() {
             if (currentConfigIndex !== -1) {
-                // Update EXISTING preset with current coordinates
                 const c = ocrConfigs[currentConfigIndex];
-                c.x = parseInt(regionXInput.value); 
-                c.y = parseInt(regionYInput.value); 
-                c.w = parseInt(regionWInput.value); 
-                c.h = parseInt(regionHInput.value);
-                c.r2x = parseInt(region2XInput.value); 
-                c.r2y = parseInt(region2YInput.value); 
-                c.r2w = parseInt(region2WInput.value); 
-                c.r2h = parseInt(region2HInput.value);
-                c.mode = scanMode;
-                
-                saveSettings(); 
-                showToast(`Coordinates updated for "${c.name}"`);
-            } else {
-                // Open Modal to Create NEW
-                openConfigModal();
-            }
+                c.x = parseInt(regionXInput.value); c.y = parseInt(regionYInput.value); c.w = parseInt(regionWInput.value); c.h = parseInt(regionHInput.value);
+                c.r2x = parseInt(region2XInput.value); c.r2y = parseInt(region2YInput.value); c.r2w = parseInt(region2WInput.value); c.r2h = parseInt(region2HInput.value);
+                c.mode = scanMode; saveSettings(); showToast(`Coordinates updated for "${c.name}"`);
+            } else { openConfigModal(); }
         }
 
-        function saveAsNewConfig() {
-            openConfigModal();
-            // Optional: Prefill name with copy suffix if a preset is currently selected
-            if (currentConfigIndex !== -1 && ocrConfigs[currentConfigIndex]) {
-                document.getElementById('configName').value = ocrConfigs[currentConfigIndex].name + " (Copy)";
-            }
-        }
-        
-        function hideConfigModal() {
-            document.getElementById('configModal').classList.add('hidden');
-            document.getElementById('configModal').classList.remove('flex');
-        }
-
+        function saveAsNewConfig() { openConfigModal(); if (currentConfigIndex !== -1) document.getElementById('configName').value = ocrConfigs[currentConfigIndex].name + " (Copy)"; }
+        function hideConfigModal() { document.getElementById('configModal').classList.add('hidden'); document.getElementById('configModal').classList.remove('flex'); }
         function openConfigModal() {
-            isRenamingConfig = false; // Reset to "New" mode
-            document.getElementById('configName').value = "";
-            document.getElementById('configModalTitle').textContent = "Save New Preset";
-            
-            const modal = document.getElementById('configModal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.getElementById('configName').focus();
+            isRenamingConfig = false; document.getElementById('configName').value = ""; document.getElementById('configModalTitle').textContent = "Save New Preset";
+            const modal = document.getElementById('configModal'); modal.classList.remove('hidden'); modal.classList.add('flex'); document.getElementById('configName').focus();
         }
-
         function renameCurrentConfig() {
             if (currentConfigIndex === -1) return;
-            isRenamingConfig = true;
-            
-            const currentName = ocrConfigs[currentConfigIndex].name;
-            document.getElementById('configName').value = currentName;
-            document.getElementById('configModalTitle').textContent = "Rename Preset";
-            
-            const modal = document.getElementById('configModal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.getElementById('configName').focus();
+            isRenamingConfig = true; document.getElementById('configName').value = ocrConfigs[currentConfigIndex].name; document.getElementById('configModalTitle').textContent = "Rename Preset";
+            const modal = document.getElementById('configModal'); modal.classList.remove('hidden'); modal.classList.add('flex'); document.getElementById('configName').focus();
         }
 
         document.getElementById('saveConfigForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const name = document.getElementById('configName').value.trim();
-            if(!name) return;
-
-            if (isRenamingConfig && currentConfigIndex !== -1) {
-                // RENAME EXISTING
-                ocrConfigs[currentConfigIndex].name = name;
-                showToast(`Preset renamed to "${name}".`);
-            } else {
-                // CREATE NEW
-                const newC = {
-                    name, 
-                    x: parseInt(regionXInput.value), y: parseInt(regionYInput.value), w: parseInt(regionWInput.value), h: parseInt(regionHInput.value),
-                    r2x: parseInt(region2XInput.value), r2y: parseInt(region2YInput.value), r2w: parseInt(region2WInput.value), r2h: parseInt(region2HInput.value),
-                    mode: scanMode
-                };
-                ocrConfigs.push(newC);
-                currentConfigIndex = ocrConfigs.length - 1;
-                showToast(`Preset "${name}" saved.`);
+            e.preventDefault(); const name = document.getElementById('configName').value.trim(); if(!name) return;
+            if (isRenamingConfig && currentConfigIndex !== -1) { ocrConfigs[currentConfigIndex].name = name; showToast(`Preset renamed.`); } 
+            else {
+                ocrConfigs.push({
+                    name, x: parseInt(regionXInput.value), y: parseInt(regionYInput.value), w: parseInt(regionWInput.value), h: parseInt(regionHInput.value),
+                    r2x: parseInt(region2XInput.value), r2y: parseInt(region2YInput.value), r2w: parseInt(region2WInput.value), r2h: parseInt(region2HInput.value), mode: scanMode
+                });
+                currentConfigIndex = ocrConfigs.length - 1; showToast(`Preset saved.`);
             }
-
-            saveSettings(); 
-            updateConfigDropdown();
-            hideConfigModal();
-            isRenamingConfig = false;
+            saveSettings(); updateConfigDropdown(); hideConfigModal(); isRenamingConfig = false;
         });
 
         function deleteCurrentConfig() {
             if(currentConfigIndex !== -1 && confirm("Delete preset?")) {
-                const name = ocrConfigs[currentConfigIndex].name;
-                ocrConfigs.splice(currentConfigIndex, 1);
-                currentConfigIndex = -1;
-                saveSettings(); updateConfigDropdown();
-                showToast(`Preset "${name}" deleted.`);
+                ocrConfigs.splice(currentConfigIndex, 1); currentConfigIndex = -1; saveSettings(); updateConfigDropdown(); showToast(`Preset deleted.`);
             }
         }
-
         function resetToNewCustomConfig() {
-            currentConfigIndex = -1;
-            scanMode = 'uni';
-            document.getElementById('modeSingle').checked = true;
-            toggleScanMode();
+            currentConfigIndex = -1; scanMode = 'uni'; document.getElementById('modeSingle').checked = true; toggleScanMode();
             regionXInput.value = 0; regionYInput.value = 0; regionWInput.value = 300; regionHInput.value = 50;
-            updateConfigDropdown(); saveSettings(); updatePreviewAndSize();
-            showToast("Reset to defaults.");
+            updateConfigDropdown(); saveSettings(); updatePreviewAndSize(); showToast("Reset to defaults.");
         }
-
         function exportPresets() {
-            if (ocrConfigs.length === 0) {
-                showToast("No presets to export.", "error");
-                return;
-            }
-            const dataStr = JSON.stringify(ocrConfigs, null, 2);
-            const blob = new Blob([dataStr], {type: "application/json"});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'fyp_presets.json';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            showToast("Presets exported.");
+            if (!ocrConfigs.length) { showToast("No presets.", "error"); return; }
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(ocrConfigs, null, 2)], {type: "application/json"}));
+            a.download = 'fyp_presets.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); showToast("Presets exported.");
         }
-
         function importPresets(inputElement) {
-            const file = inputElement.files[0];
-            if (!file) return;
-
+            if (!inputElement.files[0]) return;
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     const imported = JSON.parse(e.target.result);
                     if (Array.isArray(imported)) {
-                        let count = 0;
-                        imported.forEach(imp => {
-                            // Simple validation
-                            if (imp.name && imp.w > 0) {
-                                // Avoid exact duplicates by name
-                                const exists = ocrConfigs.find(c => c.name === imp.name);
-                                if (!exists) {
-                                    ocrConfigs.push(imp);
-                                    count++;
-                                }
-                            }
-                        });
-                        
-                        if (count > 0) {
-                            saveSettings();
-                            updateConfigDropdown();
-                            showToast(`Imported ${count} new presets.`);
-                        } else {
-                            showToast("No new unique presets found.", "info");
-                        }
-                    } else {
-                        showToast("Invalid file format.", "error");
+                        imported.forEach(imp => { if (imp.name && imp.w > 0 && !ocrConfigs.some(c=>c.name===imp.name)) ocrConfigs.push(imp); });
+                        saveSettings(); updateConfigDropdown(); showToast(`Presets imported.`);
                     }
-                } catch (err) {
-                    console.error(err);
-                    showToast("Error parsing JSON file.", "error");
-                }
-                // Reset input so same file can be selected again if needed
+                } catch (err) { showToast("Error parsing JSON.", "error"); }
                 inputElement.value = '';
             };
-            reader.readAsText(file);
+            reader.readAsText(inputElement.files[0]);
         }
         
-        // --- Screen Capture ---
         async function connectScreen() {
             if (localStream && localStream.active) { stopStream(); return; }
-            if (!navigator.mediaDevices) return;
-            
-            connectScreenButton.disabled = true;
             try {
                 const stream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: "always" }, audio: false });
-                localStream = stream;
-                videoElement.srcObject = stream;
+                localStream = stream; videoElement.srcObject = stream;
                 videoElement.onloadedmetadata = () => {
                     videoElement.play();
                     connectScreenButton.innerHTML = '<i class="bi bi-display"></i> Connected (Stop)';
-                    connectScreenButton.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'text-white');
-                    connectScreenButton.classList.add('border', 'border-blue-500', 'text-blue-500', 'hover:bg-blue-50', 'dark:hover:bg-gray-700');
-                    connectScreenButton.disabled = false;
+                    // FIX: Remove old classes first, then add new ones
+                    connectScreenButton.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-700');
+                    connectScreenButton.classList.add('border', 'border-blue-500', 'text-blue-500', 'hover:bg-blue-50');
                     processButton.disabled = false;
-                    
-                    if(previewInterval) clearInterval(previewInterval);
-                    previewInterval = setInterval(drawLivePreview, 100);
-                    
-                    rawCaptureContainer.style.display = 'flex';
-                    viewPlaceholder.style.display = 'none';
-                    addLog("Screen connected.");
-                    showToast("Screen Source Connected.");
+                    if(previewInterval) clearInterval(previewInterval); previewInterval = setInterval(drawLivePreview, 100);
+                    rawCaptureContainer.style.display = 'flex'; viewPlaceholder.style.display = 'none';
+                    addLog("Screen connected."); showToast("Screen Source Connected.");
                 };
                 stream.getVideoTracks()[0].onended = stopStream;
-            } catch (err) {
-                console.error(err);
-                connectScreenButton.disabled = false;
-            }
+            } catch (err) { console.error(err); }
         }
 
         function stopStream() {
             if(localStream) localStream.getTracks().forEach(t => t.stop());
-            localStream = null;
-            videoElement.srcObject = null;
+            localStream = null; videoElement.srcObject = null;
             if(ocrScanInterval) toggleProcess(true);
             connectScreenButton.innerHTML = '<i class="bi bi-display"></i> Connect';
-            connectScreenButton.classList.add('bg-blue-600', 'hover:bg-blue-700', 'text-white');
-            connectScreenButton.classList.remove('border', 'border-blue-500', 'text-blue-500', 'hover:bg-blue-50', 'dark:hover:bg-gray-700');
-            connectScreenButton.disabled = false;
-            processButton.disabled = true;
-            rawCaptureContainer.style.display = 'none';
-            viewPlaceholder.style.display = 'block';
+            // FIX: Remove new classes, add back old ones
+            connectScreenButton.classList.remove('border', 'border-blue-500', 'text-blue-500', 'hover:bg-blue-50');
+            connectScreenButton.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700');
+            processButton.disabled = true; rawCaptureContainer.style.display = 'none'; viewPlaceholder.style.display = 'block';
             if(previewInterval) clearInterval(previewInterval);
-            addLog("Screen Disconnected.");
-            showToast("Screen Source Disconnected.");
+            addLog("Screen Disconnected."); showToast("Screen Source Disconnected.");
         }
 
-        // --- Live Preview & Canvas Logic ---
         function drawLivePreview() {
             if (videoElement.readyState < videoElement.HAVE_ENOUGH_DATA) return;
-            
             const r1 = { x: parseInt(regionXInput.value)||0, y: parseInt(regionYInput.value)||0, w: parseInt(regionWInput.value)||300, h: parseInt(regionHInput.value)||50 };
-            
+            const ctx = captureViewCanvas.getContext('2d');
             if (scanMode === 'dual') {
                 const r2 = { x: parseInt(region2XInput.value)||0, y: parseInt(region2YInput.value)||0, w: parseInt(region2WInput.value)||300, h: parseInt(region2HInput.value)||50 };
-                
-                const maxWidth = Math.max(r1.w, r2.w);
-                const totalHeight = r1.h + r2.h + 2; 
-                
-                captureViewCanvas.width = maxWidth;
-                captureViewCanvas.height = totalHeight;
-                
-                const ctx = captureViewCanvas.getContext('2d');
-                ctx.fillStyle = '#222';
-                ctx.fillRect(0, 0, maxWidth, totalHeight);
-                
+                const mw = Math.max(r1.w, r2.w); const th = r1.h + r2.h + 2; 
+                if(captureViewCanvas.width !== mw || captureViewCanvas.height !== th) { captureViewCanvas.width = mw; captureViewCanvas.height = th; }
+                ctx.fillStyle = '#222'; ctx.fillRect(0, 0, mw, th);
                 ctx.drawImage(videoElement, r1.x, r1.y, r1.w, r1.h, 0, 0, r1.w, r1.h);
-                ctx.fillStyle = '#06b6d4'; // Cyan line
-                ctx.fillRect(0, r1.h, maxWidth, 2);
+                ctx.fillStyle = '#06b6d4'; ctx.fillRect(0, r1.h, mw, 2);
                 ctx.drawImage(videoElement, r2.x, r2.y, r2.w, r2.h, 0, r1.h + 2, r2.w, r2.h);
-                
             } else {
-                captureViewCanvas.width = r1.w;
-                captureViewCanvas.height = r1.h;
-                captureViewCanvas.getContext('2d').drawImage(videoElement, r1.x, r1.y, r1.w, r1.h, 0, 0, r1.w, r1.h);
+                if(captureViewCanvas.width !== r1.w || captureViewCanvas.height !== r1.h) { captureViewCanvas.width = r1.w; captureViewCanvas.height = r1.h; }
+                ctx.drawImage(videoElement, r1.x, r1.y, r1.w, r1.h, 0, 0, r1.w, r1.h);
             }
         }
-        
         function updatePreviewAndSize() { drawLivePreview(); }
 
-        // --- OCR Logic ---
-        let worker = null;
-        
-        // Enhanced: Initialize Worker Once
+        // --- FIX: Correct Tesseract v5 Init ---
         async function initTesseract() {
             if (worker && isWorkerReady) return true;
-            
             try {
-                if (!worker) worker = Tesseract.createWorker({ logger: () => {} });
-                await worker.load();
-                await worker.loadLanguage('eng');
-                await worker.initialize('eng');
-                // Optimization: Whitelist characters to reduce noise and assume single line of text (PSM 7)
-                await worker.setParameters({ 
-                    tessedit_pageseg_mode: 7, 
-                    tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789/.,%- ' 
-                });
+                if (!worker) {
+                    worker = await Tesseract.createWorker('eng'); // v5 syntax
+                }
                 isWorkerReady = true;
                 return true;
             } catch (e) {
@@ -1224,152 +675,109 @@
 
         async function toggleProcess(forceStop = false) {
             if (ocrScanInterval) {
-                // STOP
                 const activeKeys = Object.keys(activeItems);
-                if (!forceStop && activeKeys.length > 0) {
-                    if (!confirm(`⚠️ ${activeKeys.length} event(s) are currently active.\n\nStopping will mark them as ENDED and send final notifications.\n\nContinue?`)) return;
-                }
+                if (!forceStop && activeKeys.length > 0 && !confirm(`Stop? ${activeKeys.length} events active.`)) return;
                 
                 activeKeys.forEach(key => {
-                    const state = activeItems[key];
-                    if (state) {
-                        const duration = Date.now() - state.start;
-                        addLog(`**[STOPPED]** ${state.item.name} ended (OCR Stopped).`);
-                        addRecentEvent(state.item, duration, state.start);
-                        sendDiscordNotification(state.item, "end", duration);
-                    }
+                    const s = activeItems[key];
+                    const dur = Date.now() - s.start;
+                    addLog(`**[STOP]** ${s.item.name} ended.`);
+                    addRecentEvent(s.item, dur, s.start);
+                    sendDiscordNotification(s.item, "end", dur);
                 });
 
-                clearInterval(ocrScanInterval); 
-                ocrScanInterval = null;
-                activeItems = {}; 
-                renderActiveStatus();
-                
+                clearInterval(ocrScanInterval); ocrScanInterval = null; activeItems = {}; renderActiveStatus();
                 processButton.innerHTML = '<i class="bi bi-play-circle"></i> Start OCR';
                 processButton.classList.replace('bg-red-600', 'bg-green-600');
-                processButton.classList.replace('hover:bg-red-700', 'hover:bg-green-700');
-                addLog("OCR stopped.");
-                showToast("OCR Stopped.");
-                
-                document.getElementById('zoom1Status').textContent = "R1: Idle";
-                document.getElementById('zoom2Status').textContent = "R2: Idle";
+                addLog("OCR stopped."); showToast("OCR Stopped.");
+                document.getElementById('zoom1Status').textContent = "R1: Idle"; document.getElementById('zoom2Status').textContent = "R2: Idle";
             } else {
-                // START
                 const activeWebhooks = webhookList.filter(w => w.active);
+                if (activeWebhooks.length === 0) { showToast("No active webhooks!", "error"); return; }
                 
-                if (activeWebhooks.length === 0) { 
-                    showToast("No active webhooks selected!", "error"); 
-                    return; 
-                }
-
-                const hasLinkedEvents = moonWeatherList.some(item => 
-                    item.webhookIds && item.webhookIds.some(id => activeWebhooks.find(aw => aw.id === id))
-                );
-
-                if (moonWeatherList.length === 0) {
-                     alert("⚠️ No events configured.\n\nYou must add at least one event to proceed.");
-                     return;
-                } else if (!hasLinkedEvents) {
-                     alert("⚠️ Active webhooks found, but no events are subscribed to them.\n\nYou must subscribe at least one event to a webhook to proceed.");
-                     return;
-                }
-                
-                // Show loading state
-                processButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Init...';
-                processButton.disabled = true;
-
-                // Initialize OCR engine
+                processButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Init...'; processButton.disabled = true;
                 const ready = await initTesseract();
                 processButton.disabled = false;
-
-                if (!ready) {
-                    processButton.innerHTML = '<i class="bi bi-play-circle"></i> Start OCR';
-                    return;
-                }
+                if (!ready) { processButton.innerHTML = '<i class="bi bi-play-circle"></i> Start OCR'; return; }
                 
-                lock1 = false; zoom1 = 2;
-                lock2 = false; zoom2 = 2;
-                isOcrBusy = false;
-                
+                lock1 = false; zoom1 = 2; lock2 = false; zoom2 = 2; isOcrBusy = false;
                 processButton.innerHTML = '<i class="bi bi-stop-circle"></i> Stop OCR';
                 processButton.classList.replace('bg-green-600', 'bg-red-600');
-                processButton.classList.replace('hover:bg-green-700', 'hover:bg-red-700');
-                addLog("OCR started.");
-                showToast("OCR Started.");
+                addLog("OCR started."); showToast("OCR Started.");
                 
                 ocrScanInterval = setInterval(scanCameraImage, 250); 
-                activeMoonsList.innerHTML = ''; 
-                activeWeatherList.innerHTML = '';
-                cooldownsPlaceholder.style.display = 'block';
-                activeMoonsSection.classList.add('hidden');
-                activeWeatherSection.classList.add('hidden');
+                activeMoonsList.innerHTML = ''; activeWeatherList.innerHTML = '';
+                cooldownsPlaceholder.style.display = 'block'; activeMoonsSection.classList.add('hidden'); activeWeatherSection.classList.add('hidden');
             }
         }
 
-        function scanCameraImage() {
+        // --- FIX: Safely Handle Canvas Size ---
+        async function scanCameraImage() {
             if (videoElement.readyState < videoElement.HAVE_ENOUGH_DATA || !ocrScanInterval || isOcrBusy || !isWorkerReady) return;
             isOcrBusy = true;
 
-            const r1 = { x: parseInt(regionXInput.value)||0, y: parseInt(regionYInput.value)||0, w: parseInt(regionWInput.value)||300, h: parseInt(regionHInput.value)||50 };
-            
-            const ctx = canvasElement.getContext('2d');
-            let boundaryY = 0; 
-            
-            // Enhanced: Upscale the image for better detection
-            const SCAN_SCALE = 2;
+            const watchdog = setTimeout(() => {
+                if (isOcrBusy) { 
+                    console.warn("OCR timed out."); 
+                    addLog("Warning: OCR timed out (Watchdog reset)"); 
+                    isOcrBusy = false; 
+                }
+            }, 10000);
 
-            if (scanMode === 'dual') {
-                const r2 = { x: parseInt(region2XInput.value)||0, y: parseInt(region2YInput.value)||0, w: parseInt(region2WInput.value)||300, h: parseInt(region2HInput.value)||50 };
-                
-                const w1 = r1.w * SCAN_SCALE;
-                const h1 = r1.h * SCAN_SCALE;
-                const w2 = r2.w * SCAN_SCALE;
-                const h2 = r2.h * SCAN_SCALE;
-                
-                const finalW = Math.max(w1, w2);
-                const finalH = h1 + h2; 
-                
-                canvasElement.width = finalW;
-                canvasElement.height = finalH;
-                
-                ctx.drawImage(videoElement, r1.x, r1.y, r1.w, r1.h, 0, 0, w1, h1);
-                ctx.drawImage(videoElement, r2.x, r2.y, r2.w, r2.h, 0, h1, w2, h2);
-                
-                boundaryY = h1; 
-                
+            try {
+                const r1 = { x: parseInt(regionXInput.value)||0, y: parseInt(regionYInput.value)||0, w: parseInt(regionWInput.value)||300, h: parseInt(regionHInput.value)||50 };
+                const ctx = canvasElement.getContext('2d');
+                let boundaryY = 0; 
+                const SCAN_SCALE = 2;
+                let finalW, finalH, w1, h1, w2, h2;
+
+                if (scanMode === 'dual') {
+                    const r2 = { x: parseInt(region2XInput.value)||0, y: parseInt(region2YInput.value)||0, w: parseInt(region2WInput.value)||300, h: parseInt(region2HInput.value)||50 };
+                    w1 = r1.w * SCAN_SCALE; h1 = r1.h * SCAN_SCALE;
+                    w2 = r2.w * SCAN_SCALE; h2 = r2.h * SCAN_SCALE;
+                    finalW = Math.max(w1, w2);
+                    finalH = h1 + h2; 
+                    boundaryY = h1; 
+                } else {
+                    finalW = r1.w * SCAN_SCALE;
+                    finalH = r1.h * SCAN_SCALE;
+                    boundaryY = finalH; 
+                }
+
+                // Only resize if different (Memory Fix)
+                if (canvasElement.width !== finalW || canvasElement.height !== finalH) {
+                    canvasElement.width = finalW;
+                    canvasElement.height = finalH;
+                }
+
+                if (scanMode === 'dual') {
+                    const r2 = { x: parseInt(region2XInput.value)||0, y: parseInt(region2YInput.value)||0, w: parseInt(region2WInput.value)||300, h: parseInt(region2HInput.value)||50 };
+                    // Note: w1/h1 are scaled, r1.w/r1.h are source.
+                    ctx.drawImage(videoElement, r1.x, r1.y, r1.w, r1.h, 0, 0, w1, h1);
+                    ctx.drawImage(videoElement, r2.x, r2.y, r2.w, r2.h, 0, h1, w2, h2);
+                } else {
+                    ctx.drawImage(videoElement, r1.x, r1.y, r1.w, r1.h, 0, 0, finalW, finalH);
+                }
+
                 applyImagePreprocessing(ctx, finalW, finalH);
-            } else {
-                canvasElement.width = r1.w * SCAN_SCALE;
-                canvasElement.height = r1.h * SCAN_SCALE;
-                ctx.drawImage(videoElement, r1.x, r1.y, r1.w, r1.h, 0, 0, r1.w * SCAN_SCALE, r1.h * SCAN_SCALE);
-                applyImagePreprocessing(ctx, r1.w * SCAN_SCALE, r1.h * SCAN_SCALE);
-                boundaryY = canvasElement.height; 
-            }
-            
-            // Enhanced: Use pre-initialized worker directly
-            worker.recognize(canvasElement).then(({ data }) => {
+                
+                const { data } = await worker.recognize(canvasElement);
+                clearTimeout(watchdog);
                 if (!ocrScanInterval) { isOcrBusy = false; return; }
                 
-                let foundR1 = false;
-                let foundR2 = false;
-
+                let foundR1 = false; let foundR2 = false;
                 const words = data.words || [];
-                
-                // --- NORMALIZATION HELPER ---
                 const normalize = (text) => text.toLowerCase().replace(/\s+/g, '');
-                
-                const fullText = data.text;
-                const normalizedFullText = normalize(fullText);
+                const fullText = normalize(data.text);
                 const currentMatches = new Map(); 
 
                 words.forEach(w => {
                     const txt = normalize(w.text);
                     const y = w.bbox.y0;
                     const region = (scanMode === 'dual' && y >= boundaryY) ? 2 : 1;
-                    
                     moonWeatherList.forEach(item => {
                         const normItemName = normalize(item.name);
-                        if (normalizedFullText.includes(normItemName)) {
+                        if (fullText.includes(normItemName)) {
                             if (normItemName.includes(txt) || txt.includes(normItemName)) {
                                 currentMatches.set(item.name, { item: item, region: region });
                             }
@@ -1379,9 +787,7 @@
 
                 if (currentMatches.size === 0) {
                     moonWeatherList.forEach(item => {
-                        if (normalizedFullText.includes(normalize(item.name))) {
-                             currentMatches.set(item.name, { item: item, region: 1 }); 
-                        }
+                        if (fullText.includes(normalize(item.name))) currentMatches.set(item.name, { item: item, region: 1 });
                     });
                 }
 
@@ -1389,68 +795,54 @@
                     const { item, region } = matchData;
                     if (region === 1) foundR1 = true;
                     if (region === 2) foundR2 = true;
-
-                    if (activeItems[name]) {
-                        // Found it again - Reset grace timer (set to null)
-                        activeItems[name].graceEndTime = null; 
-                    } else {
+                    if (activeItems[name]) { activeItems[name].graceEndTime = null; } 
+                    else {
                         addLog(`**[START]** ${name} (R${region})`);
-                        // Init new item with null graceEndTime (meaning it's actively seen)
                         activeItems[name] = { item, start: Date.now(), graceEndTime: null };
                         sendDiscordNotification(item, "start");
                         renderActiveStatus();
                     }
                 });
 
-                // Check for items that were active but are NOT in currentMatches
                 Object.keys(activeItems).forEach(name => {
                     if (!currentMatches.has(name)) {
                         const state = activeItems[name];
-                        // If grace hasn't started yet, start it now
                         if (state.graceEndTime === null) {
                             const graceSec = parseInt(gracePeriodSecondsInput.value) || 5;
                             state.graceEndTime = Date.now() + (graceSec * 1000);
                         }
-                        // We do NOT expire items here anymore. Expiry happens in renderActiveStatus polling loop.
                     }
                 });
 
-                if (foundR1) {
-                    if (!lock1) { lock1 = true; }
-                } else {
-                    if (lock1) { lock1 = false; } 
-                    zoom1++; if (zoom1 > 5) zoom1 = 1;
-                }
-
+                if (foundR1) { if (!lock1) lock1 = true; } else { if (lock1) lock1 = false; zoom1++; if (zoom1 > 5) zoom1 = 1; }
                 if (scanMode === 'dual') {
-                    if (foundR2) {
-                        if (!lock2) { lock2 = true; }
-                    } else {
-                        if (lock2) { lock2 = false; }
-                        zoom2++; if (zoom2 > 5) zoom2 = 1;
-                    }
+                    if (foundR2) { if (!lock2) lock2 = true; } else { if (lock2) lock2 = false; zoom2++; if (zoom2 > 5) zoom2 = 1; }
                 }
 
                 document.getElementById('zoom1Status').innerHTML = `R1: ${zoom1}x ${lock1 ? '<i class="bi bi-lock-fill"></i>' : ''}`;
                 document.getElementById('zoom2Status').innerHTML = `R2: ${zoom2}x ${lock2 ? '<i class="bi bi-lock-fill"></i>' : ''}`;
 
                 isOcrBusy = false;
-            }).catch(e => { console.error(e); isOcrBusy = false; });
+
+            } catch (err) {
+                console.error("Scan Error:", err);
+                addLog("Scan Error: " + err.message); 
+                clearTimeout(watchdog);
+                isOcrBusy = false;
+            }
         }
 
         function applyImagePreprocessing(ctx, w, h) {
             const imgData = ctx.getImageData(0, 0, w, h);
             const d = imgData.data;
-            const threshold = 180;
             for (let i = 0; i < d.length; i += 4) {
                 const avg = 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2];
-                const v = avg > threshold ? 0 : 255;
+                const v = avg > 180 ? 0 : 255;
                 d[i] = d[i+1] = d[i+2] = v;
             }
             ctx.putImageData(imgData, 0, 0);
         }
 
-        // --- Drag & Select (Dual Aware) ---
         const regionSelectionModal = document.getElementById('regionSelectionModal');
         const selectionCanvas = document.getElementById('selectionCanvas');
         let selectionCtx = null, isDragging = false, startX=0, startY=0, endX=0, endY=0, animId=null;
@@ -1458,23 +850,18 @@
         function startRegionSelection() {
             if (!localStream) { showToast("Connect screen first!", "error"); return; }
             dragSelectionStep = 1;
-            
             const title = document.getElementById('regionSelectionTitle');
             if (scanMode === 'dual') title.innerHTML = `<i class="bi bi-1-square"></i> Select Region 1 (Top)`;
             else title.innerHTML = `<i class="bi bi-mouse"></i> Drag to select area`;
-            
-            selectionCanvas.width = videoElement.videoWidth;
-            selectionCanvas.height = videoElement.videoHeight;
+            selectionCanvas.width = videoElement.videoWidth; selectionCanvas.height = videoElement.videoHeight;
             selectionCtx = selectionCanvas.getContext('2d');
-            regionSelectionModal.classList.remove('hidden');
-            regionSelectionModal.classList.add('flex');
+            regionSelectionModal.classList.remove('hidden'); regionSelectionModal.classList.add('flex');
             animId = requestAnimationFrame(renderSelectionLoop);
         }
 
         function renderSelectionLoop() {
             if (regionSelectionModal.classList.contains('hidden')) return;
             selectionCtx.drawImage(videoElement, 0, 0, selectionCanvas.width, selectionCanvas.height);
-            
             const w = endX - startX; const h = endY - startY;
             if (w !== 0 && h !== 0) {
                 selectionCtx.strokeStyle = 'red'; selectionCtx.lineWidth = 3; selectionCtx.strokeRect(startX, startY, w, h);
@@ -1483,35 +870,19 @@
             animId = requestAnimationFrame(renderSelectionLoop);
         }
 
-        function closeRegionSelection() {
-            cancelAnimationFrame(animId);
-            regionSelectionModal.classList.add('hidden');
-            regionSelectionModal.classList.remove('flex');
-            dragSelectionStep = 0;
-        }
-
+        function closeRegionSelection() { cancelAnimationFrame(animId); regionSelectionModal.classList.add('hidden'); regionSelectionModal.classList.remove('flex'); dragSelectionStep = 0; }
         function confirmRegionSelection() {
             let x = Math.min(startX, endX), y = Math.min(startY, endY), w = Math.abs(endX - startX), h = Math.abs(endY - startY);
             if (w < 10 || h < 10) { showToast("Too small!", "error"); return; }
-
-            const title = document.getElementById('regionSelectionTitle');
-            
             if (dragSelectionStep === 1) {
                 regionXInput.value = Math.round(x); regionYInput.value = Math.round(y); regionWInput.value = Math.round(w); regionHInput.value = Math.round(h);
-                
                 if (scanMode === 'dual') {
-                    dragSelectionStep = 2;
-                    title.innerHTML = `<i class="bi bi-2-square"></i> Select Region 2 (Bottom)`;
-                    startX=0; startY=0; endX=0; endY=0;
-                    showToast("Region 1 set. Now select Region 2.");
-                } else {
-                    updatePreviewAndSize(); saveSettings(); closeRegionSelection();
-                    showToast("Region set!");
-                }
+                    dragSelectionStep = 2; document.getElementById('regionSelectionTitle').innerHTML = `<i class="bi bi-2-square"></i> Select Region 2 (Bottom)`;
+                    startX=0; startY=0; endX=0; endY=0; showToast("Select Region 2.");
+                } else { updatePreviewAndSize(); saveSettings(); closeRegionSelection(); showToast("Region set!"); }
             } else if (dragSelectionStep === 2) {
                 region2XInput.value = Math.round(x); region2YInput.value = Math.round(y); region2WInput.value = Math.round(w); region2HInput.value = Math.round(h);
-                updatePreviewAndSize(); saveSettings(); closeRegionSelection();
-                showToast("Dual Regions set!");
+                updatePreviewAndSize(); saveSettings(); closeRegionSelection(); showToast("Dual Regions set!");
             }
         }
 
@@ -1519,84 +890,56 @@
         selectionCanvas.addEventListener('mousemove', e => { if(!isDragging)return; const r=selectionCanvas.getBoundingClientRect(); const sx=selectionCanvas.width/r.width; const sy=selectionCanvas.height/r.height; endX=(e.clientX-r.left)*sx; endY=(e.clientY-r.top)*sy; });
         selectionCanvas.addEventListener('mouseup', () => isDragging=false);
 
-        // --- Helpers ---
         function renderActiveStatus() {
-            // First: Check for expired events
             const now = Date.now();
             const keysToRemove = [];
-
             Object.keys(activeItems).forEach(key => {
                 const state = activeItems[key];
                 if (state.graceEndTime !== null) {
                     const remaining = state.graceEndTime - now;
                     if (remaining <= 0) {
-                        // Event officially ended
                         keysToRemove.push(key);
-                        
-                        // Calculate actual active duration (excluding grace period for cleaner stats)
-                        // Or include grace period? Usually players care about "when it stopped".
-                        // Let's use logic: Start of Grace = End of Activity
                         const graceDuration = (parseInt(gracePeriodSecondsInput.value)||5) * 1000;
-                        const activeEndTime = state.graceEndTime - graceDuration;
-                        const duration = activeEndTime - state.start;
-                        
+                        const duration = (state.graceEndTime - graceDuration) - state.start;
                         addLog(`**[END]** ${state.item.name}`);
                         addRecentEvent(state.item, duration, state.start);
                         sendDiscordNotification(state.item, "end", duration);
                     }
                 }
             });
-
-            // Cleanup expired
             keysToRemove.forEach(k => delete activeItems[k]);
 
             const list = Object.values(activeItems);
-            
             if(list.length === 0) { 
-                cooldownsPlaceholder.style.display='block'; 
-                activeMoonsSection.classList.add('hidden');
-                activeWeatherSection.classList.add('hidden');
-                cooldownTimerLog.textContent = ocrScanInterval ? "Scanning..." : "Idle"; 
-                return; 
+                cooldownsPlaceholder.style.display='block'; activeMoonsSection.classList.add('hidden'); activeWeatherSection.classList.add('hidden');
+                cooldownTimerLog.textContent = ocrScanInterval ? "Scanning..." : "Idle"; return; 
             }
-            
             cooldownsPlaceholder.style.display='none';
-            
             const moons = list.filter(s => s.item.type === 'Moon');
             const weathers = list.filter(s => s.item.type === 'Weather');
             
             const generateHTML = (items) => items.map(s => {
                 const el = Date.now() - s.start;
                 let statusHtml = "";
-                
                 if (s.graceEndTime !== null) {
                     const remainingMs = Math.max(0, s.graceEndTime - Date.now());
-                    const remainingSec = (remainingMs / 1000).toFixed(1);
-                    statusHtml = `<span class="text-red-500 font-bold animate-pulse text-xs">Ending in ${remainingSec}s</span>`;
+                    statusHtml = `<span class="text-red-500 font-bold animate-pulse text-xs">Ending in ${(remainingMs/1000).toFixed(1)}s</span>`;
                 } else {
                     statusHtml = `<span class="text-green-600 font-bold text-xs">Active ${formatDuration(el)}</span>`;
                 }
-                
                 return `<div class="px-3 py-2 flex justify-between items-center bg-white dark:bg-gray-800 border-b dark:border-gray-700 last:border-0"><div><strong>${s.item.name}</strong></div><small>${statusHtml}</small></div>`;
             }).join('');
 
-            if(moons.length > 0) {
-                activeMoonsSection.classList.remove('hidden');
-                activeMoonsList.innerHTML = generateHTML(moons);
-            } else {
-                activeMoonsSection.classList.add('hidden');
-            }
-
-            if(weathers.length > 0) {
-                activeWeatherSection.classList.remove('hidden');
-                activeWeatherList.innerHTML = generateHTML(weathers);
-            } else {
-                activeWeatherSection.classList.add('hidden');
-            }
-
+            if(moons.length > 0) { activeMoonsSection.classList.remove('hidden'); activeMoonsList.innerHTML = generateHTML(moons); } else activeMoonsSection.classList.add('hidden');
+            if(weathers.length > 0) { activeWeatherSection.classList.remove('hidden'); activeWeatherList.innerHTML = generateHTML(weathers); } else activeWeatherSection.classList.add('hidden');
             cooldownTimerLog.textContent = `Active: ${list.length}`;
         }
-        function addLog(msg) { logContentDiv.innerHTML = `<span class="text-gray-400">[${new Date().toLocaleTimeString()}]</span> ${msg}<br>` + logContentDiv.innerHTML; }
+        
+        function addLog(msg) { 
+            const time = new Date().toLocaleTimeString();
+            logContentDiv.insertAdjacentHTML('afterbegin', `<div class="mb-1"><span class="text-gray-400">[${time}]</span> ${msg}</div>`);
+            while (logContentDiv.children.length > 100) { logContentDiv.lastElementChild.remove(); }
+        }
         function clearLogs() { logContentDiv.innerHTML = ""; addLog("Logs cleared."); };
         
         function showToast(msg, type='success') {
@@ -1604,14 +947,8 @@
             const borderClass = type === 'success' ? 'border-green-500' : (type === 'error' ? 'border-red-500' : 'border-blue-500');
             t.className = `bg-gray-800 text-white px-5 py-3 rounded shadow-lg flex items-center gap-3 animate-slideInToast min-w-[280px] border-l-4 ${borderClass}`;
             t.innerHTML = `<span>${msg}</span>`;
-            
-            const c = document.querySelector('.toast-container');
-            c.appendChild(t); 
-            setTimeout(() => {
-                t.style.opacity = '0';
-                t.style.transform = 'translateY(10px)';
-                setTimeout(() => t.remove(), 300);
-            }, 3000);
+            document.querySelector('.toast-container').appendChild(t); 
+            setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(10px)'; setTimeout(() => t.remove(), 300); }, 3000);
         }
         
         function formatChanceToPercent(input) {
@@ -1619,166 +956,59 @@
             let clean = input.toString().toLowerCase().replace(/,/g, '');
             if(clean.includes('/')) {
                 let [numStr, denStr] = clean.split('/');
-                let num = parseFloat(numStr);
-                let den = parseFloat(denStr);
+                let num = parseFloat(numStr); let den = parseFloat(denStr);
                 if(denStr.includes('k')) den = parseFloat(denStr.replace('k', '')) * 1000;
-                if (!isNaN(num) && !isNaN(den) && den !== 0) {
-                    return parseFloat(((num / den) * 100).toFixed(5)) + '%';
-                }
+                if (!isNaN(num) && !isNaN(den) && den !== 0) return parseFloat(((num / den) * 100).toFixed(5)) + '%';
             }
             return input;
         }
 
-        function formatDuration(ms) {
-            const sec = Math.floor(ms / 1000);
-            const m = Math.floor(sec / 60);
-            const s = sec % 60;
-            if (m > 0) return `${m}m ${s}s`;
-            return `${s}s`;
-        }
-        
-        // --- Webhook & Event Lists Logic ---
+        function formatDuration(ms) { const sec = Math.floor(ms / 1000); const m = Math.floor(sec / 60); const s = sec % 60; return m > 0 ? `${m}m ${s}s` : `${s}s`; }
         
         function renderList() {
             moonWeatherList.sort((a,b)=>b.multiplier-a.multiplier);
             const moons=moonWeatherList.filter(i=>i.type==='Moon'), weathers=moonWeatherList.filter(i=>i.type==='Weather');
-            
             const gen = (l) => l.length ? l.map((i,idx)=> {
                 const originalIndex = moonWeatherList.indexOf(i);
                 const pct = formatChanceToPercent(i.chances);
-                return `
-                <div class="slide-reveal-wrapper group border-b border-gray-100 dark:border-gray-700 last:border-0">
-                    <div class="bg-white dark:bg-gray-800 p-3 flex justify-between items-center relative z-10 transition-transform">
-                        <div>
-                            <strong>${i.name}</strong> 
-                            <span class="bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded text-xs ml-1">${i.multiplier}x</span>
-                            ${pct ? `<span class="bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-100 px-1.5 py-0.5 rounded text-xs ml-1">${pct}</span>` : ''}
-                        </div>
-                        <i class="bi bi-chevron-left text-gray-300"></i>
-                    </div>
-                    <div class="slide-reveal-action">
-                        <div class="w-1/2 flex items-center justify-center bg-gray-500 hover:bg-gray-600 text-white cursor-pointer" onclick="showItemModal(${originalIndex})">
-                            <i class="bi bi-pencil"></i>
-                        </div>
-                        <div class="w-1/2 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white cursor-pointer" onclick="removeItem(${originalIndex})">
-                            <i class="bi bi-trash"></i>
-                        </div>
-                    </div>
-                </div>`;
+                return `<div class="slide-reveal-wrapper group border-b border-gray-100 dark:border-gray-700 last:border-0"><div class="bg-white dark:bg-gray-800 p-3 flex justify-between items-center relative z-10 transition-transform"><div><strong>${i.name}</strong> <span class="bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded text-xs ml-1">${i.multiplier}x</span>${pct ? `<span class="bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-100 px-1.5 py-0.5 rounded text-xs ml-1">${pct}</span>` : ''}</div><i class="bi bi-chevron-left text-gray-300"></i></div><div class="slide-reveal-action"><div class="w-1/2 flex items-center justify-center bg-gray-500 hover:bg-gray-600 text-white cursor-pointer" onclick="showItemModal(${originalIndex})"><i class="bi bi-pencil"></i></div><div class="w-1/2 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white cursor-pointer" onclick="removeItem(${originalIndex})"><i class="bi bi-trash"></i></div></div></div>`;
             }).join('') : '<p class="text-gray-400 text-xs text-center p-4">None.</p>';
-
-            document.getElementById('moonListContainer').innerHTML=gen(moons);
-            document.getElementById('weatherListContainer').innerHTML=gen(weathers);
-            
+            document.getElementById('moonListContainer').innerHTML=gen(moons); document.getElementById('weatherListContainer').innerHTML=gen(weathers);
             document.getElementById('modalMoonPreview').innerHTML = moons.map(i=>`<div class="px-2 py-1 border-b dark:border-gray-700 text-xs">${i.name}</div>`).join('') || '<p class="text-xs text-gray-500">None</p>';
             document.getElementById('modalWeatherPreview').innerHTML = weathers.map(i=>`<div class="px-2 py-1 border-b dark:border-gray-700 text-xs">${i.name}</div>`).join('') || '<p class="text-xs text-gray-500">None</p>';
-            
             updateItemListDropdown();
         }
 
         function renderWebhookList() {
             const c = document.getElementById('webhookListContainer');
             if(!webhookList.length) { c.innerHTML='<p class="text-gray-400 text-sm text-center">No webhooks configured.</p>'; return; }
-            
             const totalMoons = moonWeatherList.filter(i => i.type === 'Moon').length;
             const totalWeathers = moonWeatherList.filter(i => i.type === 'Weather').length;
-            
             const activeWebhooks = webhookList.map((w, i) => ({...w, originalIndex: i})).filter(w => w.active);
             const inactiveWebhooks = webhookList.map((w, i) => ({...w, originalIndex: i})).filter(w => !w.active);
-
             const renderItem = (w) => {
                 const moonSubs = moonWeatherList.filter(i => i.type === 'Moon' && (i.webhookIds || []).includes(w.id)).length;
                 const weatherSubs = moonWeatherList.filter(i => i.type === 'Weather' && (i.webhookIds || []).includes(w.id)).length;
                 const moonChecked = (totalMoons > 0 && moonSubs === totalMoons) ? 'checked' : '';
                 const weatherChecked = (totalWeathers > 0 && weatherSubs === totalWeathers) ? 'checked' : '';
-
-                return `
-                <div class="border border-gray-200 dark:border-gray-700 rounded p-3 mb-2 bg-white dark:bg-gray-800">
-                    <div class="flex justify-between items-center mb-2">
-                        <div class="overflow-hidden mr-2 flex-grow">
-                            <div class="flex items-center gap-2">
-                                <strong class="truncate text-sm">${w.description}</strong>
-                            </div>
-                            <small class="text-gray-500 block truncate text-xs">${w.url}</small>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <label class="relative inline-flex items-center cursor-pointer" title="Enable/Disable">
-                                <input type="checkbox" class="sr-only peer" ${w.active ? 'checked' : ''} onchange="toggleWb(${w.originalIndex})">
-                                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                            </label>
-                            <button onclick="showWebhookModal(${w.originalIndex})" class="p-1 text-gray-500 hover:text-blue-500" title="Edit Webhook">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button onclick="removeWebhook(${w.originalIndex})" class="p-1 text-gray-500 hover:text-red-500" title="Delete Webhook">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
-                        <small class="text-gray-500 font-bold text-xs">Notify For:</small>
-                        
-                        <div class="flex items-center">
-                            <input type="checkbox" id="wb-moon-${w.id}" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 mr-1" ${moonChecked} onchange="toggleWebhookSubscription(${w.id}, 'Moon')">
-                            <label class="text-xs cursor-pointer text-blue-600 font-medium" for="wb-moon-${w.id}">
-                                <i class="bi bi-moon-stars"></i> Moons <span class="text-gray-500">(${moonSubs}/${totalMoons})</span>
-                            </label>
-                        </div>
-
-                        <div class="flex items-center">
-                            <input type="checkbox" id="wb-weather-${w.id}" class="rounded border-gray-300 text-yellow-600 shadow-sm focus:border-yellow-300 focus:ring focus:ring-yellow-200 focus:ring-opacity-50 mr-1" ${weatherChecked} onchange="toggleWebhookSubscription(${w.id}, 'Weather')">
-                            <label class="text-xs cursor-pointer text-yellow-600 font-medium" for="wb-weather-${w.id}">
-                                <i class="bi bi-cloud-haze"></i> Weathers <span class="text-gray-500">(${weatherSubs}/${totalWeathers})</span>
-                            </label>
-                        </div>
-
-                        <div class="ml-auto">
-                            <button class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700" onclick="showWebhookEventsModal(${w.originalIndex})" title="Select Specific Events">
-                                <i class="bi bi-list-check"></i> Select
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <script>
-                    (function(){
-                        const m = document.getElementById('wb-moon-${w.id}');
-                        if(m) m.indeterminate = ${moonSubs > 0 && moonSubs < totalMoons};
-                        const w = document.getElementById('wb-weather-${w.id}');
-                        if(w) w.indeterminate = ${weatherSubs > 0 && weatherSubs < totalWeathers};
-                    })();
-                <\/script>`;
+                return `<div class="border border-gray-200 dark:border-gray-700 rounded p-3 mb-2 bg-white dark:bg-gray-800"><div class="flex justify-between items-center mb-2"><div class="overflow-hidden mr-2 flex-grow"><div class="flex items-center gap-2"><strong class="truncate text-sm">${w.description}</strong></div><small class="text-gray-500 block truncate text-xs">${w.url}</small></div><div class="flex items-center gap-2"><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" class="sr-only peer" ${w.active ? 'checked' : ''} onchange="toggleWb(${w.originalIndex})"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div></label><button onclick="showWebhookModal(${w.originalIndex})" class="p-1 text-gray-500 hover:text-blue-500"><i class="bi bi-pencil"></i></button><button onclick="removeWebhook(${w.originalIndex})" class="p-1 text-gray-500 hover:text-red-500"><i class="bi bi-trash"></i></button></div></div><div class="flex items-center gap-3 pt-2 border-t border-gray-100 dark:border-gray-700"><small class="text-gray-500 font-bold text-xs">Notify For:</small><div class="flex items-center"><input type="checkbox" id="wb-moon-${w.id}" class="rounded border-gray-300 text-blue-600 mr-1" ${moonChecked} onchange="toggleWebhookSubscription(${w.id}, 'Moon')"><label class="text-xs cursor-pointer text-blue-600 font-medium" for="wb-moon-${w.id}"><i class="bi bi-moon-stars"></i> Moons</label></div><div class="flex items-center"><input type="checkbox" id="wb-weather-${w.id}" class="rounded border-gray-300 text-yellow-600 mr-1" ${weatherChecked} onchange="toggleWebhookSubscription(${w.id}, 'Weather')"><label class="text-xs cursor-pointer text-yellow-600 font-medium" for="wb-weather-${w.id}"><i class="bi bi-cloud-haze"></i> Weathers</label></div><div class="ml-auto"><button class="text-xs px-2 py-0.5 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700" onclick="showWebhookEventsModal(${w.originalIndex})"><i class="bi bi-list-check"></i> Select</button></div></div></div><script>(function(){const m=document.getElementById('wb-moon-${w.id}');if(m)m.indeterminate=${moonSubs>0 && moonSubs<totalMoons};const w=document.getElementById('wb-weather-${w.id}');if(w)w.indeterminate=${weatherSubs>0 && weatherSubs<totalWeathers};})();<\/script>`;
             };
-
             let html = '';
-            if(activeWebhooks.length > 0) {
-                html += `<h6 class="text-green-600 text-xs font-bold mb-2">Active Webhooks</h6>` + activeWebhooks.map(renderItem).join('');
-            }
-            if(inactiveWebhooks.length > 0) {
-                html += `<h6 class="text-gray-500 text-xs font-bold mb-2 mt-4">Inactive Webhooks</h6>` + inactiveWebhooks.map(renderItem).join('');
-            }
-            
+            if(activeWebhooks.length) html += `<h6 class="text-green-600 text-xs font-bold mb-2">Active</h6>` + activeWebhooks.map(renderItem).join('');
+            if(inactiveWebhooks.length) html += `<h6 class="text-gray-500 text-xs font-bold mb-2 mt-4">Inactive</h6>` + inactiveWebhooks.map(renderItem).join('');
             c.innerHTML = html;
         };
 
         function toggleWebhookSubscription(webhookId, type) {
             const targetItems = moonWeatherList.filter(i => i.type === type);
             if (targetItems.length === 0) { showToast(`No ${type}s to assign.`, 'info'); return; }
-
             const allSubscribed = targetItems.every(i => (i.webhookIds || []).includes(webhookId));
-            
             targetItems.forEach(item => {
                 if (!item.webhookIds) item.webhookIds = [];
-                if (allSubscribed) {
-                    item.webhookIds = item.webhookIds.filter(id => id !== webhookId);
-                } else {
-                    if (!item.webhookIds.includes(webhookId)) item.webhookIds.push(webhookId);
-                }
+                if (allSubscribed) item.webhookIds = item.webhookIds.filter(id => id !== webhookId);
+                else if (!item.webhookIds.includes(webhookId)) item.webhookIds.push(webhookId);
             });
-            
-            saveSettings();
-            renderList();
-            renderWebhookList();
-            showToast(`${allSubscribed ? "Unsubscribed from" : "Subscribed to"} all ${type}s.`);
+            saveSettings(); renderList(); renderWebhookList(); showToast(`${allSubscribed ? "Unsubscribed from" : "Subscribed to"} all ${type}s.`);
         }
 
         function showWebhookEventsModal(webhookIndex) {
@@ -1787,16 +1017,10 @@
             const webhook = webhookList[webhookIndex];
             webhookEventsModalTitle.innerHTML = `Select events for <strong>${webhook.description}</strong>:`;
             if(webhookEventsSearchInput) webhookEventsSearchInput.value = "";
-            renderWebhookEventsList(webhook.id);
-            webhookEventsModal.classList.remove('hidden');
-            webhookEventsModal.classList.add('flex');
+            renderWebhookEventsList(webhook.id); webhookEventsModal.classList.remove('hidden'); webhookEventsModal.classList.add('flex');
         }
 
-        function hideWebhookEventsModal() {
-            webhookEventsModal.classList.add('hidden');
-            webhookEventsModal.classList.remove('flex');
-            currentEditingWebhookIndex = -1;
-        }
+        function hideWebhookEventsModal() { webhookEventsModal.classList.add('hidden'); webhookEventsModal.classList.remove('flex'); currentEditingWebhookIndex = -1; }
 
         function renderWebhookEventsList(webhookId, filterText = "") {
             const sortedEvents = [...moonWeatherList].sort((a, b) => {
@@ -1804,209 +1028,99 @@
                 if(b.multiplier !== a.multiplier) return b.multiplier - a.multiplier;
                 return a.name.localeCompare(b.name);
             });
-
-            if (sortedEvents.length === 0) {
-                webhookEventsListContainer.innerHTML = '<div class="p-3 bg-yellow-100 text-yellow-800 rounded text-xs">No events found.</div>';
-                return;
-            }
-
-            let html = '';
-            let lastType = null;
-            
+            if (sortedEvents.length === 0) { webhookEventsListContainer.innerHTML = '<div class="p-3 bg-yellow-100 text-yellow-800 rounded text-xs">No events found.</div>'; return; }
+            let html = ''; let lastType = null;
             sortedEvents.forEach(item => {
                 if (filterText && !item.name.toLowerCase().includes(filterText.toLowerCase())) return;
-                
                 if (item.type !== lastType) {
                     const typeColor = item.type === 'Moon' ? 'text-blue-600' : 'text-cyan-600';
                     html += `<div class="text-xs font-bold ${typeColor} bg-gray-100 dark:bg-gray-800 border-b dark:border-gray-700 py-1 sticky top-0 mb-1 z-10">${item.type}s</div>`;
                     lastType = item.type;
                 }
-
                 const isChecked = (item.webhookIds || []).includes(webhookId) ? 'checked' : '';
-                
-                html += `
-                <div class="webhook-select-item flex items-center justify-between p-2 border-b dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" onclick="toggleWebhookEventCheckbox('${item.id}')">
-                    <div class="overflow-hidden mr-2">
-                        <div class="flex items-center gap-1 text-sm font-bold">${item.name}</div>
-                        <div class="text-xs text-gray-500">${item.multiplier}x Multiplier</div>
-                    </div>
-                    <div class="m-0">
-                        <input class="webhook-event-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" type="checkbox" value="${item.id}" id="weCheck-${item.id}" ${isChecked} onclick="event.stopPropagation()">
-                    </div>
-                </div>`;
+                html += `<div class="webhook-select-item flex items-center justify-between p-2 border-b dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" onclick="toggleWebhookEventCheckbox('${item.id}')"><div class="overflow-hidden mr-2"><div class="flex items-center gap-1 text-sm font-bold">${item.name}</div><div class="text-xs text-gray-500">${item.multiplier}x</div></div><div class="m-0"><input class="webhook-event-checkbox rounded border-gray-300 text-blue-600" type="checkbox" value="${item.id}" id="weCheck-${item.id}" ${isChecked} onclick="event.stopPropagation()"></div></div>`;
             });
             webhookEventsListContainer.innerHTML = html || '<div class="text-center text-gray-400 text-xs p-3">No matching events found.</div>';
         }
 
-        function filterWebhookEventsSelection() {
-            if (currentEditingWebhookIndex === -1) return;
-            const webhookId = webhookList[currentEditingWebhookIndex].id;
-            const filterText = webhookEventsSearchInput.value.trim();
-            renderWebhookEventsList(webhookId, filterText);
-        }
-
-        function toggleWebhookEventCheckbox(id) {
-            const cb = document.getElementById(`weCheck-${id}`);
-            if (cb) cb.checked = !cb.checked;
-        }
-
-        function toggleSelectAllEventsForWebhook(selectAll) {
-            const checkboxes = document.querySelectorAll('.webhook-event-checkbox');
-            checkboxes.forEach(cb => cb.checked = selectAll);
-        }
+        function filterWebhookEventsSelection() { if (currentEditingWebhookIndex === -1) return; renderWebhookEventsList(webhookList[currentEditingWebhookIndex].id, webhookEventsSearchInput.value.trim()); }
+        function toggleWebhookEventCheckbox(id) { const cb = document.getElementById(`weCheck-${id}`); if (cb) cb.checked = !cb.checked; }
+        function toggleSelectAllEventsForWebhook(selectAll) { document.querySelectorAll('.webhook-event-checkbox').forEach(cb => cb.checked = selectAll); }
 
         function saveWebhookEvents() {
             if (currentEditingWebhookIndex === -1) return;
             const webhookId = webhookList[currentEditingWebhookIndex].id;
-            const checkboxes = document.querySelectorAll('.webhook-event-checkbox');
-            
-            checkboxes.forEach(cb => {
+            document.querySelectorAll('.webhook-event-checkbox').forEach(cb => {
                 const itemId = parseInt(cb.value);
                 const item = moonWeatherList.find(i => i.id === itemId);
                 if (item) {
                     if (!item.webhookIds) item.webhookIds = [];
-                    if (cb.checked) {
-                        if (!item.webhookIds.includes(webhookId)) item.webhookIds.push(webhookId);
-                    } else {
-                        item.webhookIds = item.webhookIds.filter(id => id !== webhookId);
-                    }
+                    if (cb.checked) { if (!item.webhookIds.includes(webhookId)) item.webhookIds.push(webhookId); } 
+                    else { item.webhookIds = item.webhookIds.filter(id => id !== webhookId); }
                 }
             });
-
-            saveSettings();
-            renderList();
-            renderWebhookList();
-            hideWebhookEventsModal();
-            showToast(`Events updated.`);
+            saveSettings(); renderList(); renderWebhookList(); hideWebhookEventsModal(); showToast(`Events updated.`);
         }
 
         function toggleWb(i) { webhookList[i].active = !webhookList[i].active; saveSettings(); renderWebhookList(); }
+        function removeWebhook(i) { if(confirm(`Delete webhook?`)) { webhookList.splice(i,1); saveSettings(); renderWebhookList(); showToast(`Webhook deleted.`); } }
         
-        function removeWebhook(i) { 
-            const wb = webhookList[i];
-            if(confirm(`Delete webhook "${wb.description}"?`)) { 
-                webhookList.splice(i,1); 
-                saveSettings(); 
-                renderWebhookList(); 
-                showToast(`Webhook "${wb.description}" deleted.`); 
-            } 
-        }
-
         function updateSearchDatalist() {
-            const dl = document.getElementById('eventNamesList');
-            dl.innerHTML = '';
-            const allNames = new Set();
+            const dl = document.getElementById('eventNamesList'); dl.innerHTML = ''; const allNames = new Set();
             moonWeatherList.forEach(i => allNames.add(i.name));
             const evs = JSON.parse(localStorage.getItem('dailyEvents')) || {};
             Object.values(evs).flat().forEach(e => allNames.add(e.name));
-            [...allNames].sort().forEach(n => {
-                const opt = document.createElement('option');
-                opt.value = n;
-                dl.appendChild(opt);
-            });
+            [...allNames].sort().forEach(n => { const opt = document.createElement('option'); opt.value = n; dl.appendChild(opt); });
         }
 
-        // RENDER HISTORY
         function renderRecentEvents() {
             const date = document.getElementById('eventDatePicker').value;
             const evs = JSON.parse(localStorage.getItem('dailyEvents')) || {};
             const dayEvents = evs[date] || [];
             const container = document.getElementById('recentEventsList');
-            
             if(!dayEvents.length) { container.innerHTML='<p class="text-center text-gray-400 text-xs mt-4">No events found.</p>'; return; }
-            
             const search = document.getElementById('eventSearchInput').value.toLowerCase();
             const typeFilter = document.querySelector('input[name="typeFilter"]:checked').value;
-            
             let filtered = dayEvents.map((e, index) => ({...e, originalIndex: index})).filter(e => {
                 if(typeFilter !== 'All' && e.type !== typeFilter) return false;
                 if(search && !e.name.toLowerCase().includes(search)) return false;
                 return true;
             });
-            
             filtered.sort((a,b) => eventSortOrder === 'desc' ? b.start - a.start : a.start - b.start);
-
             container.innerHTML = `<div class="flex flex-col">` + filtered.map(e => `
-                <div class="slide-reveal-wrapper flex group border-b border-gray-100 dark:border-gray-700 last:border-0 relative h-[60px]">
-                    <div class="bg-white dark:bg-gray-800 p-2 flex-grow relative z-10 transition-transform">
-                        <div class="flex justify-between">
-                            <strong class="text-sm">${e.name}</strong>
-                            <small class="text-gray-500 text-xs">${new Date(e.start).toLocaleTimeString()}</small>
-                        </div>
-                        <div class="text-gray-500 text-xs">Duration: ${formatDuration(e.duration)}</div>
-                    </div>
-                    <div class="slide-reveal-action">
-                        <div class="w-full flex items-center justify-center bg-red-500 hover:bg-red-600 text-white cursor-pointer" onclick="deleteHistoryItem('${date}', ${e.originalIndex})">
-                            <i class="bi bi-trash"></i>
-                        </div>
-                    </div>
-                </div>
-            `).join('') + `</div>`;
+                <div class="slide-reveal-wrapper flex group border-b border-gray-100 dark:border-gray-700 last:border-0 relative h-[60px]"><div class="bg-white dark:bg-gray-800 p-2 flex-grow relative z-10 transition-transform"><div class="flex justify-between"><strong class="text-sm">${e.name}</strong><small class="text-gray-500 text-xs">${new Date(e.start).toLocaleTimeString()}</small></div><div class="text-gray-500 text-xs">Duration: ${formatDuration(e.duration)}</div></div><div class="slide-reveal-action"><div class="w-full flex items-center justify-center bg-red-500 hover:bg-red-600 text-white cursor-pointer" onclick="deleteHistoryItem('${date}', ${e.originalIndex})"><i class="bi bi-trash"></i></div></div></div>`).join('') + `</div>`;
         }
-        
         function deleteHistoryItem(date, index) {
             const evs = JSON.parse(localStorage.getItem('dailyEvents')) || {};
             if(evs[date] && evs[date][index]) {
-                const eventName = evs[date][index].name;
-                evs[date].splice(index, 1);
-                
-                // Cleanup empty dates
-                if (evs[date].length === 0) delete evs[date];
-                
+                evs[date].splice(index, 1); if (evs[date].length === 0) delete evs[date];
                 localStorage.setItem('dailyEvents', JSON.stringify(evs));
-                renderRecentEvents();
-                try { updateItemListDropdown(); } catch(e){}
-                updateEventStatistics();
-                showToast(`Event "${eventName}" deleted from history.`);
+                renderRecentEvents(); try { updateItemListDropdown(); } catch(e){} updateEventStatistics(); showToast(`Event deleted.`);
             }
         }
-
         function clearHistory() {
-            if(confirm("Are you sure you want to clear the entire event history? This cannot be undone.")) {
-                localStorage.removeItem('dailyEvents');
-                renderRecentEvents();
-                try { updateItemListDropdown(); } catch(e){}
-                updateEventStatistics();
-                showToast("History cleared.");
+            if(confirm("Clear entire history?")) {
+                localStorage.removeItem('dailyEvents'); renderRecentEvents(); try { updateItemListDropdown(); } catch(e){} updateEventStatistics(); showToast("History cleared.");
             }
         }
+        function toggleEventSortOrder() { eventSortOrder = eventSortOrder === 'desc' ? 'asc' : 'desc'; renderRecentEvents(); }
 
-        // --- Statistics & Charting Logic (RESTORED) ---
         function getTimeRange() {
-            const s = document.getElementById('statsDateStart').value.split('-');
-            const e = document.getElementById('statsDateEnd').value.split('-');
-            const start = new Date(s[0], s[1]-1, s[2], 0, 0, 0);
-            const end = new Date(e[0], e[1]-1, e[2], 23, 59, 59, 999);
-            return { start, end };
+            const s = document.getElementById('statsDateStart').value.split('-'); const e = document.getElementById('statsDateEnd').value.split('-');
+            return { start: new Date(s[0], s[1]-1, s[2], 0, 0, 0), end: new Date(e[0], e[1]-1, e[2], 23, 59, 59, 999) };
         }
-
         function updateItemListDropdown() {
             const { start, end } = getTimeRange();
             const typeFilter = document.querySelector('input[name="statsTypeFilter"]:checked').value;
-            const dataList = document.getElementById('statsItemDataList');
             const dailyEvents = JSON.parse(localStorage.getItem('dailyEvents')) || {};
             const availableItems = new Set();
-
             Object.keys(dailyEvents).forEach(dateKey => {
-                const events = dailyEvents[dateKey];
-                events.forEach(event => {
-                    if (event.start >= start.getTime() && event.start <= end.getTime()) {
-                        if (typeFilter === 'All' || event.type === typeFilter) {
-                            availableItems.add(event.name);
-                        }
-                    }
-                });
+                dailyEvents[dateKey].forEach(event => { if (event.start >= start.getTime() && event.start <= end.getTime()) { if (typeFilter === 'All' || event.type === typeFilter) availableItems.add(event.name); } });
             });
-
-            dataList.innerHTML = '';
-            Array.from(availableItems).sort().forEach(name => {
-                const option = document.createElement('option');
-                option.value = name;
-                dataList.appendChild(option);
-            });
+            const dataList = document.getElementById('statsItemDataList'); dataList.innerHTML = '';
+            Array.from(availableItems).sort().forEach(name => { const option = document.createElement('option'); option.value = name; dataList.appendChild(option); });
             updateEventStatistics(); 
         };
-
         function getItemColor(name, type) {
             const n = name.toLowerCase();
             if (n.includes('blood') || n.includes('red')) return 'rgba(220, 53, 69, 0.7)';
@@ -2016,105 +1130,42 @@
             if (type === 'Moon') return 'rgba(111, 66, 193, 0.7)';
             return 'rgba(253, 126, 20, 0.7)';
         }
-
         function updateEventStatistics() {
             const dailyEvents = JSON.parse(localStorage.getItem('dailyEvents')) || {};
             const { start, end } = getTimeRange();
             const typeFilter = document.querySelector('input[name="statsTypeFilter"]:checked').value;
             const itemFilter = document.getElementById('statsItemFilter').value.toLowerCase();
             const metric = document.getElementById('statsMetricFilter').value; 
-            
             const aggregated = {};
-            
             Object.keys(dailyEvents).forEach(dateKey => {
                 dailyEvents[dateKey].forEach(event => {
                     if (event.start >= start.getTime() && event.start <= end.getTime()) {
                         if ((typeFilter === 'All' || event.type === typeFilter) && (!itemFilter || event.name.toLowerCase().includes(itemFilter))) {
                             if (!aggregated[event.name]) aggregated[event.name] = { count: 0, totalDuration: 0, type: event.type };
-                            aggregated[event.name].count++;
-                            aggregated[event.name].totalDuration += event.duration;
+                            aggregated[event.name].count++; aggregated[event.name].totalDuration += event.duration;
                         }
                     }
                 });
             });
-            
             const labels = [], data = [], colors = [];
-            const sortedKeys = Object.keys(aggregated).sort((a, b) => {
-                const va = metric === 'count' ? aggregated[a].count : aggregated[a].totalDuration;
-                const vb = metric === 'count' ? aggregated[b].count : aggregated[b].totalDuration;
-                return vb - va;
-            });
-
+            const sortedKeys = Object.keys(aggregated).sort((a, b) => (metric === 'count' ? aggregated[b].count - aggregated[a].count : aggregated[b].totalDuration - aggregated[a].totalDuration));
             sortedKeys.forEach(key => {
-                labels.push(key);
-                data.push(metric === 'count' ? aggregated[key].count : (aggregated[key].totalDuration / aggregated[key].count / 60000));
+                labels.push(key); data.push(metric === 'count' ? aggregated[key].count : (aggregated[key].totalDuration / aggregated[key].count / 60000));
                 colors.push(getItemColor(key, aggregated[key].type));
             });
-
             const placeholder = document.getElementById('chartPlaceholder');
-            if (data.length === 0) {
-                placeholder.style.display = 'block';
-                if (eventStatsChartInstance) { eventStatsChartInstance.destroy(); eventStatsChartInstance = null; }
-            } else {
-                placeholder.style.display = 'none';
-                renderEventStatsChart(data, labels, colors, metric === 'avgTime' ? "Avg Time" : "Occurrences", metric);
-            }
+            if (data.length === 0) { placeholder.style.display = 'block'; if (eventStatsChartInstance) { eventStatsChartInstance.destroy(); eventStatsChartInstance = null; } } 
+            else { placeholder.style.display = 'none'; renderEventStatsChart(data, labels, colors, metric === 'avgTime' ? "Avg Time" : "Occurrences", metric); }
         };
-
         function renderEventStatsChart(data, labels, bgColors, labelText, metricType) {
             const ctx = document.getElementById('eventStatsChart').getContext('2d');
             if (eventStatsChartInstance) eventStatsChartInstance.destroy();
-            
             eventStatsChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: labels, datasets: [{ label: labelText, data: data, backgroundColor: bgColors, borderWidth: 1 }] },
+                type: 'bar', data: { labels: labels, datasets: [{ label: labelText, data: data, backgroundColor: bgColors, borderWidth: 1 }] },
                 options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    scales: { 
-                        y: { 
-                            beginAtZero: true,
-                            ticks: {
-                                color: document.documentElement.classList.contains('dark') ? '#cbd5e0' : '#4a5568',
-                                callback: function(value) {
-                                    if (metricType === 'avgTime') {
-                                        const sec = Math.round(value * 60);
-                                        const m = Math.floor(sec / 60);
-                                        const s = sec % 60;
-                                        return `${m}m ${s}s`;
-                                    }
-                                    return value;
-                                }
-                            }
-                        },
-                        x: {
-                            ticks: { color: document.documentElement.classList.contains('dark') ? '#cbd5e0' : '#4a5568' }
-                        }
-                    },
-                    plugins: {
-                        legend: { labels: { color: document.documentElement.classList.contains('dark') ? '#cbd5e0' : '#4a5568' } },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed.y !== null) {
-                                        if (metricType === 'avgTime') {
-                                            const sec = Math.round(context.parsed.y * 60);
-                                            const m = Math.floor(sec / 60);
-                                            const s = sec % 60;
-                                            label += `${m}m ${s}s`;
-                                        } else {
-                                            label += context.parsed.y;
-                                        }
-                                    }
-                                    return label;
-                                }
-                            }
-                        }
-                    }
+                    responsive: true, maintainAspectRatio: false, 
+                    scales: { y: { beginAtZero: true, ticks: { color: document.documentElement.classList.contains('dark') ? '#cbd5e0' : '#4a5568', callback: function(value) { return metricType === 'avgTime' ? `${Math.floor(value)}m` : value; } } }, x: { ticks: { color: document.documentElement.classList.contains('dark') ? '#cbd5e0' : '#4a5568' } } },
+                    plugins: { legend: { labels: { color: document.documentElement.classList.contains('dark') ? '#cbd5e0' : '#4a5568' } } }
                 }
             });
         };
@@ -2124,250 +1175,99 @@
             if(input.files[0]) {
                 display.textContent = input.files[0].name;
                 Papa.parse(input.files[0], { header:true, skipEmptyLines:true, complete: (res) => {
-                    let c=0;
-                    res.data.forEach(row => {
+                    let c=0; res.data.forEach(row => {
                         const n=row.Name||row.name, t=row.Type||row.type, m=parseFloat(row.Multiplier||row.multiplier);
-                        if(n && t && m && !moonWeatherList.some(x=>x.name===n)) {
-                            moonWeatherList.push({id:Date.now()+c, name:n, type:t, multiplier:m, chances: row.Chances||row.chances||""});
-                            c++;
-                        }
+                        if(n && t && m && !moonWeatherList.some(x=>x.name===n)) { moonWeatherList.push({id:Date.now()+c, name:n, type:t, multiplier:m, chances: row.Chances||row.chances||""}); c++; }
                     });
                     if(c>0) { saveSettings(); renderList(); showToast(`Imported ${c} items`); }
                 }});
-            } else {
-                display.textContent = "Choose CSV...";
-            }
+            } else display.textContent = "Choose CSV...";
         }
         function exportEvents() {
             const csv = Papa.unparse(moonWeatherList.map(i => ({Name:i.name, Type:i.type, Multiplier:i.multiplier, Chances:i.chances||""})));
-            const blob = new Blob([csv], {type:'text/csv'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = 'fyp_events.csv';
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            showToast("Exported CSV file.");
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+            a.download = 'fyp_events.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a); showToast("Exported CSV.");
         }
 
         function sendDiscordNotification(item, status, dur) {
             const activeHooks = webhookList.filter(w => w.active);
             if(!activeHooks.length) return;
-            
-            const msg = status === 'start' 
-                ? `${item.name} (Gives **${item.multiplier}x!**) **has started!**` 
-                : `${item.name} **ended!** (Duration: ${formatDuration(dur)})`;
-
+            const msg = status === 'start' ? `${item.name} (Gives **${item.multiplier}x!**) **has started!**` : `${item.name} **ended!** (Duration: ${formatDuration(dur)})`;
             activeHooks.forEach(h => {
-                fetch(h.url, { 
-                    method:'POST', 
-                    headers:{'Content-Type':'application/json'}, 
-                    body:JSON.stringify({content: msg}) 
+                addLog(`Sending [${status.toUpperCase()}] notification to "${h.description}"`); // Updated log message
+                fetch(h.url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({content: msg}) })
+                .then(res => {
+                    if(!res.ok) addLog(`Webhook failed: ${res.status}`);
                 })
-                .then(r => {
-                    if (r.ok) addLog(`[DISCORD] Sent ${status} notification to "${h.description}"`);
-                    else addLog(`[DISCORD] Failed to send ${status} notification to "${h.description}"`);
-                })
-                .catch(e => addLog(`[DISCORD] Error sending ${status} notification to "${h.description}": ${e.message}`));
+                .catch(e => addLog(`Discord Error: ${e.message}`));
             });
         }
-        
         function addRecentEvent(item, dur, start) {
             const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const k = `${year}-${month}-${day}`;
-            
+            const k = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
             const evs = JSON.parse(localStorage.getItem('dailyEvents')) || {};
             if(!evs[k]) evs[k] = [];
             evs[k].push({name:item.name, type:item.type, duration:dur, start});
             localStorage.setItem('dailyEvents', JSON.stringify(evs));
-            renderRecentEvents();
-            updateItemListDropdown();
+            renderRecentEvents(); updateItemListDropdown();
         }
-        
         function openTab(e,t) {
-            // Hide all tab contents
             document.querySelectorAll('.tab-content').forEach(x => x.classList.add('hidden'));
-            
-            // Reset all nav links
-            document.querySelectorAll('.nav-link').forEach(x => {
-                x.classList.remove('font-bold', 'bg-white', 'text-blue-600', 'border-b-2', 'border-blue-600', 'dark:bg-gray-800');
-                x.classList.add('font-medium', 'text-gray-600', 'hover:bg-gray-200', 'dark:text-gray-400', 'dark:hover:bg-gray-700');
-            });
-
-            // Show selected tab content
+            document.querySelectorAll('.nav-link').forEach(x => { x.classList.remove('font-bold', 'bg-white', 'text-blue-600', 'border-b-2', 'border-blue-600', 'dark:bg-gray-800'); x.classList.add('font-medium', 'text-gray-600', 'hover:bg-gray-200', 'dark:text-gray-400', 'dark:hover:bg-gray-700'); });
             document.getElementById(t).classList.remove('hidden');
-            
-            // Highlight selected nav link
-            const link = e.currentTarget;
-            link.classList.remove('font-medium', 'text-gray-600', 'hover:bg-gray-200', 'dark:text-gray-400', 'dark:hover:bg-gray-700');
-            link.classList.add('font-bold', 'bg-white', 'text-blue-600', 'border-b-2', 'border-blue-600', 'dark:bg-gray-800');
+            e.currentTarget.classList.remove('font-medium', 'text-gray-600', 'hover:bg-gray-200', 'dark:text-gray-400', 'dark:hover:bg-gray-700');
+            e.currentTarget.classList.add('font-bold', 'bg-white', 'text-blue-600', 'border-b-2', 'border-blue-600', 'dark:bg-gray-800');
         };
-        
-        // Stub for hideItemWebhookModal if it wasn't defined
-        function hideItemWebhookModal() {
-             document.getElementById('itemWebhookModal').classList.add('hidden');
-             document.getElementById('itemWebhookModal').classList.remove('flex');
-        }
-        function saveItemWebhooks() { hideItemWebhookModal(); } 
 
-        // --- MISSING FUNCTIONS FIX ---
-
-        // Item Modal Functions
         function showItemModal(index) {
             const modal = document.getElementById('itemModal');
-            const title = document.getElementById('modalTitle');
             const idxInput = document.getElementById('itemIndex');
-            
-            // Inputs
             const nameIn = document.getElementById('itemName');
             const typeIn = document.getElementById('itemType');
             const multIn = document.getElementById('itemMultiplier');
             const chanceIn = document.getElementById('itemChances');
-
             idxInput.value = index;
-
-            if (index === -1) {
-                title.textContent = "Add Event";
-                nameIn.value = "";
-                typeIn.value = "Moon";
-                multIn.value = "3";
-                chanceIn.value = "";
-            } else {
-                const item = moonWeatherList[index];
-                if (!item) return; 
-                title.textContent = "Edit Event";
-                nameIn.value = item.name;
-                typeIn.value = item.type;
-                multIn.value = item.multiplier;
-                chanceIn.value = item.chances || "";
-            }
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            nameIn.focus();
+            if (index === -1) { document.getElementById('modalTitle').textContent = "Add Event"; nameIn.value = ""; typeIn.value = "Moon"; multIn.value = "3"; chanceIn.value = ""; } 
+            else { const item = moonWeatherList[index]; document.getElementById('modalTitle').textContent = "Edit Event"; nameIn.value = item.name; typeIn.value = item.type; multIn.value = item.multiplier; chanceIn.value = item.chances || ""; }
+            modal.classList.remove('hidden'); modal.classList.add('flex'); nameIn.focus();
         }
-
-        function hideItemModal() {
-            const modal = document.getElementById('itemModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        function removeItem(index) {
-            const item = moonWeatherList[index];
-            if(confirm(`Are you sure you want to delete "${item.name}"?`)) {
-                moonWeatherList.splice(index, 1);
-                saveSettings();
-                renderList();
-                showToast(`Deleted "${item.name}"`);
-            }
-        }
-
-        // Item Form Submit
+        function hideItemModal() { document.getElementById('itemModal').classList.add('hidden'); document.getElementById('itemModal').classList.remove('flex'); }
+        function removeItem(index) { if(confirm(`Delete "${moonWeatherList[index].name}"?`)) { moonWeatherList.splice(index, 1); saveSettings(); renderList(); showToast(`Deleted.`); } }
         document.getElementById('itemForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const idx = parseInt(document.getElementById('itemIndex').value);
-            const name = document.getElementById('itemName').value.trim();
-            const type = document.getElementById('itemType').value;
-            const mult = parseFloat(document.getElementById('itemMultiplier').value);
-            const chances = document.getElementById('itemChances').value.trim();
-
-            if (!name) { showToast("Name is required", "error"); return; }
-            if (isNaN(mult)) { showToast("Valid multiplier required", "error"); return; }
-
-            if (idx === -1) {
-                // Add
-                moonWeatherList.push({
-                    id: Date.now(),
-                    name, type, multiplier: mult, chances
-                });
-                showToast(`Added "${name}"`);
-            } else {
-                // Edit
-                moonWeatherList[idx].name = name;
-                moonWeatherList[idx].type = type;
-                moonWeatherList[idx].multiplier = mult;
-                moonWeatherList[idx].chances = chances;
-                showToast(`Updated "${name}"`);
-            }
-
-            saveSettings();
-            renderList();
-            hideItemModal();
+            e.preventDefault(); const idx = parseInt(document.getElementById('itemIndex').value);
+            const name = document.getElementById('itemName').value.trim(); const type = document.getElementById('itemType').value;
+            const mult = parseFloat(document.getElementById('itemMultiplier').value); const chances = document.getElementById('itemChances').value.trim();
+            if (idx === -1) { moonWeatherList.push({ id: Date.now(), name, type, multiplier: mult, chances }); showToast(`Added "${name}"`); } 
+            else { moonWeatherList[idx].name = name; moonWeatherList[idx].type = type; moonWeatherList[idx].multiplier = mult; moonWeatherList[idx].chances = chances; showToast(`Updated "${name}"`); }
+            saveSettings(); renderList(); hideItemModal();
         });
 
-        // Webhook Modal Functions
         function showWebhookModal(index) {
             const modal = document.getElementById('webhookModal');
-            const title = document.getElementById('webhookModalTitle');
             const idxInput = document.getElementById('webhookIndex');
             const descIn = document.getElementById('modalWebhookDescription');
             const urlIn = document.getElementById('modalWebhookUrl');
-
             idxInput.value = index;
-
-            if (index === -1) {
-                title.textContent = "Add Webhook";
-                descIn.value = "";
-                urlIn.value = "";
-            } else {
-                const wb = webhookList[index];
-                if (!wb) return;
-                title.textContent = "Edit Webhook";
-                descIn.value = wb.description;
-                urlIn.value = wb.url;
-            }
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            descIn.focus();
+            if (index === -1) { document.getElementById('webhookModalTitle').textContent = "Add Webhook"; descIn.value = ""; urlIn.value = ""; } 
+            else { const wb = webhookList[index]; document.getElementById('webhookModalTitle').textContent = "Edit Webhook"; descIn.value = wb.description; urlIn.value = wb.url; }
+            modal.classList.remove('hidden'); modal.classList.add('flex'); descIn.focus();
         }
-
-        function hideWebhookModal() {
-            const modal = document.getElementById('webhookModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
+        function hideWebhookModal() { document.getElementById('webhookModal').classList.add('hidden'); document.getElementById('webhookModal').classList.remove('flex'); }
         function testNewWebhook() {
             const url = document.getElementById('modalWebhookUrl').value.trim();
-            if (!url) { showToast("Enter a URL first", "error"); return; }
-            
-            fetch(url, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ content: "🔔 **Test notification** from FYP Event Notifier! If you see this, your webhook is working correctly." })
-            }).then(res => {
-                if (res.ok) showToast("Test sent! Check Discord.");
-                else showToast("Failed to send test.", "error");
-            }).catch(err => {
-                showToast("Error: " + err.message, "error");
-            });
+            if (!url) { showToast("Enter URL.", "error"); return; }
+            fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ content: "🔔 **Test** notification from FYP Event Notifier!" }) })
+            .then(res => res.ok ? showToast("Test sent!") : showToast("Failed.", "error")).catch(err => showToast("Error.", "error"));
         }
-
-        // Webhook Form Submit
         document.getElementById('webhookForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const idx = parseInt(document.getElementById('webhookIndex').value);
-            const description = document.getElementById('modalWebhookDescription').value.trim();
-            const url = document.getElementById('modalWebhookUrl').value.trim();
-
-            if (!description || !url) { showToast("All fields required", "error"); return; }
-
-            if (idx === -1) {
-                webhookList.push({ id: Date.now(), description, url, active: true });
-                showToast("Webhook added");
-            } else {
-                webhookList[idx].description = description;
-                webhookList[idx].url = url;
-                showToast("Webhook updated");
-            }
-
-            saveSettings();
-            renderWebhookList();
-            hideWebhookModal();
+            e.preventDefault(); const idx = parseInt(document.getElementById('webhookIndex').value);
+            const description = document.getElementById('modalWebhookDescription').value.trim(); const url = document.getElementById('modalWebhookUrl').value.trim();
+            if (idx === -1) { webhookList.push({ id: Date.now(), description, url, active: true }); showToast("Webhook added"); } 
+            else { webhookList[idx].description = description; webhookList[idx].url = url; showToast("Webhook updated"); }
+            saveSettings(); renderWebhookList(); hideWebhookModal();
         });
+        function hideItemWebhookModal() { document.getElementById('itemWebhookModal').classList.add('hidden'); document.getElementById('itemWebhookModal').classList.remove('flex'); }
+        function saveItemWebhooks() { hideItemWebhookModal(); } 
     </script>
 </body>
 </html>
